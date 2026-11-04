@@ -9,7 +9,8 @@ type Scenario = { key: string; group: string; title: string; expected: string };
 
 const SCENARIOS: Scenario[] = [
   { key: "1", group: "1", title: "Legit invoice from an onboarded merchant", expected: "ALLOW → paid by the vault" },
-  { key: "2", group: "2", title: "Prompt-injected invoice redirects to the attacker", expected: "BLOCK → refused, nothing signed" },
+  { key: "2", group: "2", title: "Prompt-injected invoice, read by the agent's model", expected: "Attacker never paid" },
+  { key: "2b", group: "2", title: "Same invoice, worst case: a model that obeys it", expected: "BLOCK → refused, nothing signed" },
   { key: "3a", group: "3", title: "Hacked agent submits the signed BLOCK anyway", expected: "Vault refuses on-chain" },
   { key: "3b", group: "3", title: "Rewrites BLOCK into ALLOW", expected: "Vault: invalid signature" },
   { key: "3c", group: "3", title: "Forges an ALLOW with its own key", expected: "Vault: invalid signature" },

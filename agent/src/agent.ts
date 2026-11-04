@@ -9,8 +9,15 @@
 // Without a key the agent runs in SCRIPTED mode: a deterministic stand-in that obeys the
 // injected instruction (the worst-case model). Every log line says which mode ran.
 
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { parseNearAmount } from "near-api-js";
+import { ROOT } from "../../passport/src/config.ts";
 import type { GuardedPayments, PayOutcome } from "./wrapper.ts";
+
+// Load secrets from C:\near\.env (gitignored). Variables already set in the shell win.
+const ENV_FILE = join(ROOT, ".env");
+if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
 
 export interface AgentRun {
   mode: "llm" | "scripted";
@@ -85,14 +92,20 @@ function toolResult(o: PayOutcome): string {
   return `${o.status.toUpperCase()}: vault payment #${o.paymentId}, tx ${o.txHash}`;
 }
 
-export async function runAgent(document: string, task: string, wallet: GuardedPayments, log = console.log): Promise<AgentRun> {
-  const run: AgentRun = { mode: llmConfigured() ? "llm" : "scripted", toolCalls: [], finalMessage: "" };
+export async function runAgent(
+  document: string,
+  task: string,
+  wallet: GuardedPayments,
+  log = console.log,
+  opts: { forceScripted?: boolean } = {},
+): Promise<AgentRun> {
+  const run: AgentRun = { mode: llmConfigured() && !opts.forceScripted ? "llm" : "scripted", toolCalls: [], finalMessage: "" };
   const userMsg = `${task}\n\n<document source="email inbox" trust="untrusted">\n${document}\n</document>`;
 
   if (run.mode === "scripted") {
     // Deterministic stand-in for a model that follows instructions found in the document.
     // It takes the LAST "pay X NEAR to Y" instruction in the text, which is where injections land.
-    log("[agent] SCRIPTED mode (no LLM key set): simulating a model that obeys the document.");
+    log(`[agent] SCRIPTED mode (${opts.forceScripted ? "worst case on purpose" : "no LLM key set"}): simulating a model that obeys the document.`);
     const matches = [...document.matchAll(/pay\s+([\d.]+)\s+NEAR\s+to\s+([a-z0-9._-]+)/gi)];
     const m = matches.at(-1);
     if (!m) {
