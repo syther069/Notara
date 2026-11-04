@@ -1,0 +1,13 @@
+{
+  "version": "2026-11-04.1",
+  "warnAboveAmount": { "NEAR": "2000000000000000000000000" },
+  "blockAboveAmount": { "NEAR": "10000000000000000000000000" },
+  "minObservedAgeDays": 30,
+  "minObservedTxCount": 5,
+  "recentDeployDays": 7,
+  "firstPaymentWarnAbove": { "NEAR": "500000000000000000000000" },
+  "allowlist": [],
+  "denylist": [],
+  "blockingCategories": ["Scam", "Phishing", "MaliciousContract", "Impersonation"],
+  "verdictTtlMs": 300000
+}

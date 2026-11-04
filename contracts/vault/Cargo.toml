@@ -1,0 +1,16 @@
+[package]
+name = "agentspend-vault"
+version = "0.1.0"
+edition = "2021"
+description = "AgentSpend Passport vault: holds agent funds, pays only with a fresh signed counterparty verdict, within on-chain caps"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = { workspace = true }
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }
+ed25519-dalek = "2"

@@ -1,0 +1,163 @@
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
+import { Download, LoaderCircle, Plus, RefreshCw } from "lucide-react";
+import { api, type Invoice } from "../lib/api";
+import { nearAmount } from "../lib/format";
+import { Banner, CopyButton, Skeleton, TxLink } from "../components/ui";
+import { NotDeployed, useDeployment, useToast } from "../components/Layout";
+
+export const INVOICE_STATUS: Record<Invoice["status"], { text: string; cls: string }> = {
+  unpaid: { text: "Unpaid", cls: "NEUTRAL" },
+  pending_approval: { text: "Waiting for approval", cls: "WARN" },
+  paid: { text: "Paid", cls: "ALLOW" },
+  refused: { text: "Refused", cls: "BLOCK" },
+  failed: { text: "Failed", cls: "BLOCK" },
+};
+
+export function InvoiceStatus({ s }: { s: Invoice["status"] }) {
+  const x = INVOICE_STATUS[s];
+  return <span className={`badge ${x.cls}`}>{x.text}</span>;
+}
+
+export function InvoicesPage() {
+  const { dep } = useDeployment();
+  const toast = useToast();
+  const [list, setList] = useState<Invoice[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [desc, setDesc] = useState("");
+  const [amount, setAmount] = useState("0.1");
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(() => {
+    api
+      .invoices()
+      .then((r) => {
+        setList(r.invoices);
+        setError(null);
+      })
+      .catch((e) => setError(e.message));
+  }, []);
+  useEffect(load, [load]);
+
+  const amountErr = amount && !/^\d+(\.\d{1,24})?$/.test(amount) ? "Enter a number like 0.25" : null;
+
+  async function create(e: FormEvent) {
+    e.preventDefault();
+    if (!desc.trim() || amountErr) return;
+    setCreating(true);
+    try {
+      const inv = await api.createInvoice({ description: desc.trim(), amountNear: amount });
+      toast(`Invoice ${inv.id} created.`);
+      setDesc("");
+      load();
+    } catch (e: any) {
+      toast(e.message, "error");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="page-head">
+        <h1>Invoices</h1>
+        <p>
+          For merchants: create an invoice and share its link. The customer's AI agent pays it through the Passport and the vault, and the status here
+          comes from the vault's on-chain record.
+        </p>
+        {dep?.accounts && (
+          <p className="small">
+            Paid to the demo merchant <span className="mono">{dep.accounts.merchant}</span>
+          </p>
+        )}
+      </div>
+
+      {!dep?.deployed ? (
+        <NotDeployed />
+      ) : (
+        <form className="card" onSubmit={create} noValidate>
+          <h2>New invoice</h2>
+          <div className="check-form" style={{ gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) auto" }}>
+            <div className="field">
+              <label htmlFor="desc">What is it for?</label>
+              <input id="desc" className="input" maxLength={200} placeholder="1,000 API credits" value={desc} onChange={(e) => setDesc(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="iamt">Amount (NEAR)</label>
+              <input id="iamt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
+              {amountErr && <span className="err">{amountErr}</span>}
+            </div>
+            <button className="btn btn-primary" type="submit" disabled={creating || !desc.trim() || !!amountErr}>
+              {creating ? <LoaderCircle size={16} className="spin" aria-hidden /> : <Plus size={16} aria-hidden />} Create invoice
+            </button>
+          </div>
+          <p className="muted small" style={{ marginTop: 10, marginBottom: 0 }}>
+            NEAR only for now. Stablecoin (NEP-141) invoices are planned; the vault already supports NEP-141 payouts.
+          </p>
+        </form>
+      )}
+
+      <section>
+        <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+          <h2 style={{ margin: 0 }}>All invoices</h2>
+          <div className="row">
+            <button className="btn btn-secondary btn-sm" onClick={load}>
+              <RefreshCw size={14} aria-hidden /> Refresh
+            </button>
+            <a className="btn btn-secondary btn-sm" href="/api/invoices.csv" download>
+              <Download size={14} aria-hidden /> Export CSV
+            </a>
+          </div>
+        </div>
+        {error && (
+          <Banner kind="error">
+            <p>{error}</p>
+          </Banner>
+        )}
+        {list === null ? (
+          !error && <Skeleton />
+        ) : list.length === 0 ? (
+          <p className="muted">No invoices yet. Create one above.</p>
+        ) : (
+          <div className="table-wrap stack-mobile">
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((i) => (
+                  <tr key={i.id}>
+                    <td data-label="Invoice">
+                      <Link to={`/invoices/${i.id}`} className="mono">
+                        {i.id}
+                      </Link>
+                      <div className="muted small">{new Date(i.createdAt).toLocaleString()}</div>
+                    </td>
+                    <td data-label="Description">{i.description}</td>
+                    <td data-label="Amount">
+                      {nearAmount(i.amount)} {i.asset}
+                    </td>
+                    <td data-label="Status">
+                      <InvoiceStatus s={i.status} />
+                    </td>
+                    <td data-label="Payment">{i.txHash ? <TxLink hash={i.txHash} /> : <span className="muted">—</span>}</td>
+                    <td data-label="Link">
+                      <CopyButton text={`${location.origin}/invoices/${i.id}`} label="Copy link" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </>
+  );
+}

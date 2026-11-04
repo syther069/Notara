@@ -1,0 +1,15 @@
+{
+  "network": "testnet",
+  "vault": "spend-vault.agentspend-1104-p6zw.testnet",
+  "registry": "registry.agentspend-1104-p6zw.testnet",
+  "owner": "agentspend-1104-p6zw.testnet",
+  "verifier": "verifier.agentspend-1104-p6zw.testnet",
+  "accounts": {
+    "merchant": "merchant.agentspend-1104-p6zw.testnet",
+    "newShop": "newshop.agentspend-1104-p6zw.testnet",
+    "attacker": "attacker.agentspend-1104-p6zw.testnet"
+  },
+  "allowlist": [
+    "merchant.agentspend-1104-p6zw.testnet"
+  ]
+}

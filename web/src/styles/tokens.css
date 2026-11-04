@@ -1,0 +1,79 @@
+/* Evergreen Ledger theme (design.md section 3). */
+:root {
+  --bg: #0f1f17;
+  --surface: #1e3a2e;
+  --surface-2: #3d4337;
+  --surface-3: #16291f;
+  --border: #3e5a3f;
+  --text: #e4e7d9;
+  --text-muted: #a3ae9c;
+  --accent: #b8d26a;
+  --accent-ink: #0f1f17;
+  --allow: #5fd4a0;
+  --warn: #e8b04b;
+  --block: #e5674f;
+  --fixture: #b9a3e3;
+  --allow-bg: rgba(95, 212, 160, 0.14);
+  --warn-bg: rgba(232, 176, 75, 0.14);
+  --block-bg: rgba(229, 103, 79, 0.14);
+  --fixture-bg: rgba(185, 163, 227, 0.16);
+  --glow: rgba(184, 210, 106, 0.16);
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --r-card: 12px;
+  --r-ctl: 8px;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+  --max: 1120px;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef0e6;
+    --surface: #ffffff;
+    --surface-2: #e3e6d8;
+    --surface-3: #f6f7f0;
+    --border: #c7cbb8;
+    --text: #0f1f17;
+    --text-muted: #3e5a3f;
+    --accent: #4e6b1f;
+    --accent-ink: #ffffff;
+    --allow: #137a52;
+    --warn: #965f00;
+    --block: #b53a24;
+    --fixture: #6b4fb0;
+    --allow-bg: rgba(19, 122, 82, 0.1);
+    --warn-bg: rgba(150, 95, 0, 0.1);
+    --block-bg: rgba(181, 58, 36, 0.1);
+    --fixture-bg: rgba(107, 79, 176, 0.1);
+    --glow: rgba(140, 170, 60, 0.18);
+    --shadow: 0 8px 24px rgba(15, 31, 23, 0.08);
+    color-scheme: light;
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #eef0e6;
+  --surface: #ffffff;
+  --surface-2: #e3e6d8;
+  --surface-3: #f6f7f0;
+  --border: #c7cbb8;
+  --text: #0f1f17;
+  --text-muted: #3e5a3f;
+  --accent: #4e6b1f;
+  --accent-ink: #ffffff;
+  --allow: #137a52;
+  --warn: #965f00;
+  --block: #b53a24;
+  --fixture: #6b4fb0;
+  --allow-bg: rgba(19, 122, 82, 0.1);
+  --warn-bg: rgba(150, 95, 0, 0.1);
+  --block-bg: rgba(181, 58, 36, 0.1);
+  --fixture-bg: rgba(107, 79, 176, 0.1);
+  --glow: rgba(140, 170, 60, 0.18);
+  --shadow: 0 8px 24px rgba(15, 31, 23, 0.08);
+  color-scheme: light;
+}

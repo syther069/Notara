@@ -1,0 +1,15 @@
+[package]
+name = "agentspend-registry"
+version = "0.1.0"
+edition = "2021"
+description = "AgentSpend Passport shared report registry: reports with evidence references, verification status and disputes"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = { workspace = true }
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }

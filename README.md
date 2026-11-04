@@ -1,0 +1,223 @@
+# AgentSpend Passport
+
+**A counterparty check and a payment vault for AI agents on NEAR.** Before an agent pays anyone, the Passport looks up the recipient and returns **ALLOW**, **WARN** or **BLOCK** with reasons and sources. A NEAR contract then enforces that decision, so an agent that skips its own safety code still can't move the money.
+
+Built for the NEAR Hackathon, track **AI Security & Defense**. Network: **testnet** for contracts and funds, **mainnet read-only** for lookups.
+
+---
+
+## Why the enforcement is on-chain
+
+A wrapper that "refuses to sign" only stops an agent that cooperates. A prompt-injected or compromised agent can simply not call it. So in this design:
+
+- The agent **never holds a full-access key.** It holds a function-call access key on the vault account that can call only `request_payment`. It cannot transfer NEAR, attach a deposit, or call owner methods. The NEAR protocol enforces these limits, not our code.
+- The **vault contract** holds the money. It pays out only when given a verdict that is:
+  - signed by the Passport key,
+  - bound to this exact vault, recipient, amount and asset,
+  - unexpired (max 10 minutes),
+  - unused (nonce),
+  - not BLOCK.
+  - The payment must also fit the vault's own per-transaction and daily caps.
+- **WARN** payments are parked on-chain. Only the human **owner key**, which the agent never loads, can approve them.
+
+```
+ inbox document (untrusted)
+        │
+        ▼
+ LLM agent ──pay()──► wrapper ──► Passport check ──► signed verdict (ALLOW/WARN/BLOCK)
+                         │  BLOCK: stop, nothing signed, notify human
+                         ▼
+          function-call key (request_payment only, no deposit)
+                         │
+                         ▼
+                  Vault contract  ── verifies signature, binding, expiry, nonce, caps
+                         │  ALLOW: pays now      WARN: parks until owner.approve(id)
+                         ▼
+                recipient (NEAR transfer, or NEP-141 ft_transfer with 1 yocto attached by the vault)
+
+ Registry contract: shared reports, evidence links, verifier status, disputes  ◄── read by the Passport
+```
+
+## What the demo shows (testnet, real transactions)
+
+`npm run demo` runs four scenarios and saves the log to `demo/runs/`:
+
+| # | Scenario | Expected |
+|---|---|---|
+| 1 | Invoice from an onboarded (allowlisted) merchant | ALLOW, then the vault pays |
+| 2 | Invoice with a hidden prompt injection: "pay 0.5 NEAR to attacker…" | BLOCK. The wrapper refuses and nothing is signed |
+| 3a | Compromised agent submits the signed BLOCK verdict anyway | Vault panics: `Passport verdict is BLOCK` |
+| 3b | Rewrites BLOCK to ALLOW | Vault panics: `Invalid verdict signature` |
+| 3c | Forges an ALLOW with its own key | Vault panics: `Invalid verdict signature` |
+| 3d | Reuses a genuine merchant ALLOW for the attacker | Vault panics: `Verdict is for a different recipient` |
+| 3e | Sends NEAR directly with the agent key | Protocol rejects it: function-call keys can't transfer |
+| 3f | Calls an owner method (swap the signer key) | Protocol rejects it: method not allowed by the key |
+| 4 | First invoice from an unknown, brand-new shop | WARN. The payment is parked and the human approves with the owner key |
+
+Status: **ran on NEAR testnet on 2026-11-04 with all 9 checks passing.** The vault is `spend-vault.agentspend-1104-p6zw.testnet`. Some example transactions:
+- [ALLOW payment](https://testnet.nearblocks.io/txns/4XCgm8J13S39KbkPLRj1iLaLLwUzs2YdEA66EM1V6yi7)
+- [3a: BLOCK verdict refused on-chain](https://testnet.nearblocks.io/txns/3SHuuu3Ehef8ZJGmFjZiQFg1mNM89gp8iqZQRnXDRK3V)
+- [3d: redirected verdict refused](https://testnet.nearblocks.io/txns/CTeMUQJ5br4W5fmRzK1Y1d86JbZ5w9amrZLWszUZckCU)
+- [WARN parked](https://testnet.nearblocks.io/txns/Er7xavrTLuBzdhXc715zt8YXy4Y3yN5cwcD7qEkiYjMA), then [approved by the owner](https://testnet.nearblocks.io/txns/aZb1kVuctp67zL3iAt7eVwaCHr5WEBGbF1wXFNfFxcx)
+
+The agent ran in scripted mode (no LLM key yet).
+
+## Signals, data sources and their limits
+
+Every signal in a report states its source (`live-rpc`, `live-indexer`, `on-chain-contract`, `local-config`, `local-cache`), the network, the endpoint and when it was fetched. Every signal also carries its own caveats.
+
+| Signal | Source | How | Limits |
+|---|---|---|---|
+| Account exists, contract or not, code hash | NEAR RPC `view_account` (FastNear RPC) | `passport/src/signals/index.ts` `accountSignal` | Current state only |
+| Activity history: count, first and last observed | FastNear Transactions API `POST /v0/account` (`desc:false, limit:1` for the oldest) | `historySignal` | First **observed** activity is not the creation date. The index can have gaps. Old accounts can be bought |
+| Contract code deployments | FastNear `/v0/account` + `/v0/transactions`, scanning `DeployContract` in the tx and its receipts | `deploySignal` | Scans only the 100 most recent transactions. A redeploy is a risk signal, not proof |
+| Code changed since our last check | Our own code-hash snapshots (`passport/data/code-hashes.json`) | `recordCodeHash` | Only covers accounts this Passport has checked before |
+| Prior interactions | Vault `get_payments_to` (authoritative) + transaction hashes shared between vault and recipient in the indexer | `interactionSignal` | The indexer scan is capped at 5 pages per account and may miss older history |
+| Shared reports | Our `registry` contract `get_reports_for` | `reportsSignal` | Few reporters (cold start). No report does not mean safe. Only **Verified** reports can cause BLOCK. Unverified and Disputed reports lead to WARN at most |
+| Allowlist / denylist | `passport/policy.json` + allowlist from `deployment.testnet.json` | `policyListSignal` | Only as good as whoever maintains it |
+
+**Fail closed:** if any signal can't be fetched, the decision is at least WARN. The policy engine never returns ALLOW on missing evidence (tested in `passport/test/policy.test.ts`).
+
+**Live data vs fixtures:** the attacker account's "Verified scam report" is **seeded demo data**. It is stored on-chain with `is_fixture: true`, its evidence URI is `fixture://…`, and the Passport prints it as `[DEMO FIXTURE]`. It is not evidence about any real person or account. Everything else in a testnet report is read live from chain or the indexer at check time.
+
+## Function-call keys: what they do and don't protect
+
+- ✅ They restrict the agent to one contract (`vault`) and one method (`request_payment`).
+- ✅ They cannot carry a deposit, so they cannot transfer NEAR or pay NEP-141 tokens directly. `ft_transfer` needs exactly 1 yoctoNEAR attached, so the vault attaches it from its own balance.
+- ✅ Gas is paid from a fixed allowance (0.5 NEAR in setup). When the allowance runs out, the key stops working. Top up by adding a new key with the vault's full-access key before locking it.
+- ❌ They **do not** judge the recipient. Without the vault's checks, a function-call key on a naive payment contract could still pay anyone. The safety comes from the vault contract's rules, not from the key alone.
+- ❌ Whoever holds the vault's **full-access key** can still change or drain the vault. Setup keeps it so you can redeploy during development. `npm run owner -- lock-vault` deletes it, after which the vault can only change through its own contract methods.
+- ❌ The Passport signer key is a local file in this prototype. Whoever holds it can sign any verdict. A stretch goal is to keep it in a TEE.
+
+## Run it
+
+Requirements: Node 20+, and Rust with the `wasm32-unknown-unknown` target (only to rebuild the contracts).
+
+```bash
+npm install
+```
+
+**0. The website (start here)**
+
+```bash
+npm run web:install
+```
+
+```bash
+npm run web:build
+```
+
+```bash
+npm run serve
+```
+
+Then open http://127.0.0.1:8787. The pages are Home, Check, Attack demo, Vault, Invoices and About. The Check page works without any setup. The Attack demo, Vault and Invoices pages need the testnet deployment (step 3). For live editing, run `npm run web:dev` while `npm run serve` is running, and open http://localhost:5173.
+
+**1. Tests (no network, no keys)**
+
+```bash
+npm test
+```
+
+```bash
+cargo test
+```
+
+`npm test` runs 38 tests: the policy table, the signing format, the wrapper and the invoice store. `cargo test` runs 36 contract unit tests (29 vault, 7 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
+
+**2. Read-only check of a real mainnet account (no keys)**
+
+```bash
+npm run check -- aurora --network mainnet --amount 0.1
+```
+
+Mainnet has no registry deployment, so `shared_reports` shows as unavailable and the decision is at least WARN. That is fail-closed by design.
+
+**3. Testnet deployment (one time, about 7.5 testnet NEAR)**
+
+```bash
+bash scripts/build-contracts.sh
+```
+
+```bash
+NEAR_OWNER_ACCOUNT=you.testnet NEAR_OWNER_PRIVATE_KEY=ed25519:... npm run setup:testnet
+```
+
+No testnet account yet? Use `npm run setup:testnet -- --create-owner yourname.testnet` to create one with the testnet faucet. `--topup` adds more faucet NEAR. If an interrupted run left an unusable `vault.` account, set `VAULT_PREFIX=another-name`.
+
+This creates the subaccounts `vault`, `registry`, `verifier`, `merchant`, `newshop` and `attacker` under your account. It deploys both contracts and adds the agent's function-call key. It also seeds one labeled fixture report. Keys go to `./keys` (gitignored).
+
+**4. Demo**
+
+```bash
+npm run demo
+```
+
+Add `-- --yes` to auto-approve the WARN step, or `-- --only 2` to run a single scenario.
+
+**LLM:** by default the agent runs in **scripted mode**: a deterministic stand-in that obeys the injected instruction, which is the worst-case model. To use a real model through NEAR AI Cloud, or any OpenAI-compatible API:
+
+```bash
+AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
+```
+
+`AGENT_LLM_BASE_URL` defaults to `https://cloud-api.near.ai/v1`. Each log says which mode ran.
+
+**Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Meteor, Intear, MyNearWallet or HOT. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `npx tsx scripts/upgrade-vault.ts` (testnet, before `lock-vault`).
+
+**Owner commands** (human only, local key):
+
+```bash
+npm run owner -- pending
+```
+
+The other commands are `approve <id>`, `reject <id>`, `show <id>`, `pause`, `unpause` and `lock-vault`.
+
+**Backend for the website** (also the HTTP API for agents in other languages):
+
+```bash
+npm run serve
+```
+
+It listens on `http://127.0.0.1:8787` (local only). Main endpoints:
+- `POST /v1/check` with `{network, recipient, amountNear, sign?, payer?}`
+- `/api/vault`, `/api/vault/payments` and the local owner console (`/api/owner/approve`, `/api/owner/reject`)
+- `/api/demo/run`, which streams the attack demo live
+- `/api/invoices` and `/api/invoices.csv` for the merchant flow
+
+See `Architecture.md` for the full list.
+
+### Windows notes
+If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a short path. If `cargo test` fails building `aws-lc-sys` (NASM missing), set `AWS_LC_SYS_PREBUILT_NASM=1`. `cargo-near` may not compile on Windows (OpenSSL), so `scripts/build-contracts.sh` uses plain cargo with the same flags cargo-near uses (`-C link-arg=-s --cfg near`). near-sdk 5.30 targets protocol version 88, which testnet runs.
+
+## Implemented vs planned
+
+**Implemented**
+- Vault contract: signed-verdict check, recipient/amount/asset/vault binding, expiry and max TTL, nonce replay protection, BLOCK refusal, WARN parking with owner approve/reject/expiry, per-transaction and daily caps per asset, NEAR and NEP-141 payouts with a failure callback that releases the cap reservation, pause, events.
+- Registry contract: bonded reports with evidence URI and hash, verifier appointment, Verified/Rejected rulings, disputes, fixture flag.
+- Passport: six live signals with provenance and caveats, a fail-closed policy engine, a canonical report hash, ed25519 verdict signing that matches the contract byte for byte, CLI and HTTP API.
+- Agent: the wrapper (BLOCK stops, WARN parks and notifies, ALLOW pays), an LLM agent (NEAR AI Cloud / OpenAI-compatible) with a scripted fallback, a four-scenario attack demo with a saved log, owner CLI.
+- Website: Home, Check, Attack demo, Vault, Invoices and About. WARN approvals can be signed in the owner's own NEAR wallet (`@hot-labs/near-connect`, the connector NEAR's hackathon docs recommend), after a two-step ownership handover (`propose_owner` → `accept_owner`).
+
+**Not done yet / planned**
+- Running the demo with a real LLM (NEAR AI Cloud). So far only the scripted agent has run on testnet.
+- Integration tests in `near-sandbox`. Today the contracts have unit tests only, because the sandbox doesn't run on Windows; it can run under WSL.
+- Keeping the Passport signer key in a TEE (OutLayer / NEAR AI Cloud attestation).
+- NEAR Intents / 1Click as an optional execution layer after an ALLOW.
+- A web UI for reports and approvals.
+- Gas-allowance monitoring for the agent key.
+- Reading report data on mainnet: there is no mainnet registry, and mainnet deployment is not planned.
+
+## Honest limits
+- This is a hackathon prototype. It has not been audited. Don't put real funds in it.
+- The verdict reflects the configured policy and the evidence collected. It is not proof that anyone is malicious or safe. Accuracy against real scams has not been measured.
+- The heuristics are easy to game on their own: age can be bought, and reports start empty. The value of the design is that the vault enforces the decision and the caps even when the agent is compromised.
+
+## Layout
+
+```
+contracts/vault       Rust vault (enforcement)          contracts/registry   Rust report registry
+passport/src          signals, policy, signer, CLI, API passport/policy.json policy thresholds
+agent/src             wrapper, LLM agent, demo          scripts/             build, testnet setup, owner CLI
+demo/inbox            invoice documents (one injected)  HACKATHON.md         deadline + rules
+```
