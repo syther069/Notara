@@ -1,6 +1,6 @@
 import { CircleAlert, CircleX, Info } from "lucide-react";
 import type { CheckResponse, Reason, Signal } from "../lib/api";
-import { codeToWords, DECISION_TEXT, nearAmount, SIGNAL_LABELS } from "../lib/format";
+import { codeToWords, DECISION_TEXT, formatAsset, SIGNAL_LABELS } from "../lib/format";
 import { Badge, CopyButton, FixtureTag, SourceTag } from "./ui";
 
 function SevIcon({ s }: { s: Reason["severity"] }) {
@@ -49,7 +49,7 @@ function ReasonRow({ r }: { r: Reason }) {
 
 export function DecisionCard({ res }: { res: CheckResponse }) {
   const r = res.report;
-  const amt = r.request.asset === "NEAR" ? `${nearAmount(r.request.amount)} NEAR` : `${r.request.amount} ${r.request.asset}`;
+  const amt = formatAsset(r.request.amount, r.request.asset);
   const bars = Array.from({ length: r.coverage.total }, (_, i) => i < r.coverage.ok);
   return (
     <div className={`card decision-card ${r.decision}`} aria-live="polite">
@@ -114,6 +114,8 @@ function signalSummary(s: Signal): string {
       return `${d.vaultPayments.executed} paid via vault · ${d.sharedIndexedTxs} shared txs`;
     case "shared_reports":
       return d.reports.length ? `${d.reports.length} report(s): ${d.reports.map((r: any) => `${r.category} (${r.status})`).join(", ")}` : "no reports";
+    case "token_registration":
+      return d.registered ? "can receive this token" : "not registered: a transfer would fail";
     case "policy_lists":
       return d.denylisted ? "on denylist" : d.allowlisted ? "on allowlist" : "not listed";
     default:

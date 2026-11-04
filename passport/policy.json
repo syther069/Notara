@@ -1,13 +1,27 @@
 {
-  "version": "2026-11-04.1",
-  "warnAboveAmount": { "NEAR": "2000000000000000000000000" },
-  "blockAboveAmount": { "NEAR": "10000000000000000000000000" },
+  "version": "2026-11-05.1",
+  "warnAboveAmount": {
+    "NEAR": "2000000000000000000000000",
+    "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af": "25000000"
+  },
+  "blockAboveAmount": {
+    "NEAR": "10000000000000000000000000",
+    "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af": "200000000"
+  },
   "minObservedAgeDays": 30,
   "minObservedTxCount": 5,
   "recentDeployDays": 7,
-  "firstPaymentWarnAbove": { "NEAR": "500000000000000000000000" },
+  "firstPaymentWarnAbove": {
+    "NEAR": "500000000000000000000000",
+    "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af": "5000000"
+  },
   "allowlist": [],
   "denylist": [],
-  "blockingCategories": ["Scam", "Phishing", "MaliciousContract", "Impersonation"],
+  "blockingCategories": [
+    "Scam",
+    "Phishing",
+    "MaliciousContract",
+    "Impersonation"
+  ],
   "verdictTtlMs": 300000
 }

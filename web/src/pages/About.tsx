@@ -99,13 +99,12 @@ export function AboutPage() {
               <li>Passport with six live checks and signed verdicts</li>
               <li>Agent wrapper and attack demo (9/9 checks passed on testnet)</li>
               <li>Owner approvals signed in your own NEAR wallet</li>
-              <li>NEAR invoices with CSV export</li>
+              <li>USDC (Circle testnet) and NEAR invoices with CSV export</li>
             </ul>
           </div>
           <div className="card">
             <h3>Planned</h3>
             <ul className="small" style={{ paddingLeft: 18, marginBottom: 0 }}>
-              <li>Stablecoin (NEP-141) invoices</li>
               <li>Passport signing key in a TEE</li>
               <li>NEAR Intents for paying from other chains</li>
               <li>Demo with a real LLM (NEAR AI Cloud)</li>

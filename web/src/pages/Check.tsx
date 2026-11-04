@@ -15,20 +15,23 @@ export function CheckPage() {
   const [recipient, setRecipient] = useState(params.get("account") ?? "");
   const [amount, setAmount] = useState(params.get("amount") ?? "0.1");
   const [network, setNetwork] = useState<"testnet" | "mainnet">(params.get("network") === "mainnet" ? "mainnet" : "testnet");
+  // USDC here is Circle's testnet token, so it only applies on testnet.
+  const [currency, setCurrency] = useState<"NEAR" | "USDC">(params.get("asset") === "USDC" && params.get("network") !== "mainnet" ? "USDC" : "NEAR");
+  const maxDecimals = currency === "USDC" && network === "testnet" ? 6 : 24;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [res, setRes] = useState<CheckResponse | null>(null);
 
   const accountErr = recipient && !ACCOUNT_RE.test(recipient.trim()) ? "Use lowercase letters, digits, - _ and dots (e.g. alice.testnet)" : null;
-  const amountErr = amount && !/^\d+(\.\d{1,24})?$/.test(amount) ? "Enter a number like 0.25" : null;
+  const amountErr = amount && !new RegExp(`^\\d+(\\.\\d{1,${maxDecimals}})?$`).test(amount) ? "Enter a number like 0.25" : null;
 
-  async function run(r = recipient, a = amount, n = network) {
+  async function run(r = recipient, a = amount, n = network, c: "NEAR" | "USDC" = n === "mainnet" ? "NEAR" : currency) {
     setError(null);
     setRes(null);
     setLoading(true);
-    setParams({ account: r.trim(), amount: a, network: n }, { replace: true });
+    setParams({ account: r.trim(), amount: a, network: n, asset: c }, { replace: true });
     try {
-      setRes(await api.check({ network: n, recipient: r.trim(), amountNear: a }));
+      setRes(await api.check({ network: n, recipient: r.trim(), amountDecimal: a, asset: c }));
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -84,8 +87,21 @@ export function CheckPage() {
             {accountErr && <span className="err">{accountErr}</span>}
           </div>
           <div className="field">
-            <label htmlFor="amt">Amount (NEAR)</label>
-            <input id="amt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
+            <label htmlFor="amt">Amount</label>
+            <div className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
+              <input id="amt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
+              <select
+                className="input"
+                style={{ width: "auto" }}
+                aria-label="Currency"
+                value={network === "mainnet" ? "NEAR" : currency}
+                disabled={network === "mainnet"}
+                onChange={(e) => setCurrency(e.target.value as "NEAR" | "USDC")}
+              >
+                <option value="NEAR">NEAR</option>
+                <option value="USDC">USDC</option>
+              </select>
+            </div>
             {amountErr && <span className="err">{amountErr}</span>}
           </div>
           <div className="field">

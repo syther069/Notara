@@ -71,6 +71,16 @@ export interface VaultSummary {
   spentTodayYocto: string;
   spentTodayNear: string;
   pendingOwner: string | null;
+  usdc: {
+    asset: string;
+    enabled: boolean;
+    balance: string;
+    spentToday: string;
+    spentTodayUnits: string;
+    perTx: string | null;
+    daily: string | null;
+    dailyUnits: string | null;
+  };
   localOwnerKey: boolean;
   config: {
     owner: string;
@@ -127,7 +137,7 @@ const post = <T>(path: string, body: unknown) => req<T>(path, { method: "POST", 
 
 export const api = {
   health: () => req<{ ok: boolean; deployed: boolean; agentMode: string; signerPublicKey: string | null }>("/v1/health"),
-  check: (b: { network: string; recipient: string; amountNear: string }) => post<CheckResponse>("/v1/check", b),
+  check: (b: { network: string; recipient: string; amountDecimal: string; asset?: string }) => post<CheckResponse>("/v1/check", b),
   deployment: () => req<Deployment>("/api/deployment"),
   vault: () => req<VaultSummary>("/api/vault"),
   payments: () => req<{ payments: Payment[] }>("/api/vault/payments"),
@@ -144,6 +154,6 @@ export const api = {
   demoStatus: () => req<{ running: boolean }>("/api/demo/status"),
   invoices: () => req<{ invoices: Invoice[] }>("/api/invoices"),
   invoice: (id: string) => req<Invoice>(`/api/invoices/${encodeURIComponent(id)}`),
-  createInvoice: (b: { description: string; amountNear: string }) => post<Invoice>("/api/invoices", b),
+  createInvoice: (b: { description: string; amountDecimal: string; asset: string }) => post<Invoice>("/api/invoices", b),
   payInvoice: (id: string) => post<{ invoice: Invoice; check?: CheckResponse; log: string[] }>(`/api/invoices/${encodeURIComponent(id)}/pay`, {}),
 };

@@ -123,7 +123,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 38 tests: the policy table, the signing format, the wrapper and the invoice store. `cargo test` runs 36 contract unit tests (29 vault, 7 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
+`npm test` runs 46 tests: the policy table (including USDC limits), the signing format, the wrapper and the invoice store. `cargo test` runs 36 contract unit tests (29 vault, 7 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
 
 **2. Read-only check of a real mainnet account (no keys)**
 
@@ -164,6 +164,20 @@ AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
 `AGENT_LLM_BASE_URL` defaults to `https://cloud-api.near.ai/v1`. Each log says which mode ran.
 
 **Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Meteor, Intear, MyNearWallet or HOT. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `npx tsx scripts/upgrade-vault.ts` (testnet, before `lock-vault`).
+
+**USDC invoices (Real-World Money):** invoices can be in **Circle's testnet USDC on NEAR** (contract `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`, 6 decimals).
+
+```bash
+npm run owner -- enable-usdc
+```
+
+This sets the USDC caps on the vault (50 per payment, 100 per day). It also registers the owner, vault, merchant and new shop with the token (0.00125 NEAR each). Next, get testnet USDC at https://faucet.circle.com (network: NEAR testnet, address: your owner account), then:
+
+```bash
+npm run owner -- fund-usdc 15
+```
+
+`npm run owner -- balances` shows NEAR and USDC for every demo account. Until the vault has USDC, a USDC payment fails safely: the vault marks it Failed and releases the cap. That has been tested live on testnet.
 
 **Owner commands** (human only, local key):
 

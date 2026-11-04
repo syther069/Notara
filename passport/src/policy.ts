@@ -5,7 +5,8 @@
 // The engine never returns ALLOW on missing evidence.
 
 import type { Policy } from "./config.ts";
-import type { AccountSignal, DeploySignal, HistorySignal, InteractionSignal, RegistryReport } from "./signals/index.ts";
+import { formatAmount } from "./assets.ts";
+import type { AccountSignal, DeploySignal, HistorySignal, InteractionSignal, RegistryReport, TokenRegistrationSignal } from "./signals/index.ts";
 import type { Decision, PaymentRequest, Reason, SignalResult } from "./types.ts";
 
 const rank: Record<Decision, number> = { ALLOW: 0, WARN: 1, BLOCK: 2 };
@@ -15,8 +16,7 @@ function get<T>(signals: SignalResult[], name: string): SignalResult<T> | undefi
   return signals.find((s) => s.name === name) as SignalResult<T> | undefined;
 }
 
-const fmt = (yocto: string, asset: string) =>
-  asset === "NEAR" ? `${(Number(BigInt(yocto) / 10n ** 18n) / 1e6).toString()} NEAR` : `${yocto} units of ${asset}`;
+const fmt = (units: string, asset: string) => formatAmount(units, asset);
 
 export function evaluate(
   req: PaymentRequest,
@@ -185,6 +185,17 @@ export function evaluate(
         evidence: inter.sharedTxSample.map((h) => `tx:${h}`),
       });
     }
+  }
+
+  // ---- token registration (payout would fail)
+  const tok = get<TokenRegistrationSignal>(signals, "token_registration")?.data;
+  if (tok && !tok.registered) {
+    add({
+      code: "RECIPIENT_NOT_REGISTERED_FOR_TOKEN",
+      severity: "warn",
+      message: `Recipient is not registered with ${formatAmount("0", tok.token).replace(/^0 /, "")}, so the token transfer would fail. The recipient must register (storage_deposit) first.`,
+      signals: ["token_registration"],
+    });
   }
 
   // ---- shared reports

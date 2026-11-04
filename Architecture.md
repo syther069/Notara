@@ -63,7 +63,7 @@ request ─► collectSignals ─► evaluate (policy) ─► buildReport ─►
 
 | File | Job |
 |---|---|
-| `signals/index.ts` | Six collectors: account state, activity history, contract deploys, prior interactions, shared reports, policy lists. Each returns status, source, endpoint, time, data, caveats. |
+| `signals/index.ts` | Collectors: account state, activity history, contract deploys, prior interactions, shared reports, policy lists, and for tokens, NEP-145 token registration. Each returns status, source, endpoint, time, data, caveats. |
 | `signals/codeHashCache.ts` | Remembers contract code hashes to detect changes. |
 | `near.ts` | Plain `fetch` wrappers for NEAR RPC and FastNear (timeouts, error mapping). |
 | `policy.ts` | Rules → ALLOW / WARN / BLOCK. No I/O. Fail-closed. |
@@ -71,7 +71,8 @@ request ─► collectSignals ─► evaluate (policy) ─► buildReport ─►
 | `verdict.ts` | Canonical message, report hash, signer key. |
 | (moved) | The HTTP API now lives in `server/index.ts` (see 2.6). |
 | `cli.ts`, `format.ts` | Terminal output. |
-| `policy.json` | Thresholds, allow/deny lists, verdict lifetime. |
+| `policy.json` | Thresholds (per asset), allow/deny lists, verdict lifetime. |
+| `assets.json`, `src/assets.ts` | Asset registry (NEAR, Circle testnet USDC) and unit conversion. |
 
 ### 2.4 Agent (`agent/src`, TypeScript)
 | File | Job |
@@ -120,7 +121,8 @@ Stack choice: **Vite + React + TypeScript**, plain CSS. Reason: fast to build, e
 | `POST /api/invoices` | `{ description, amountNear, merchant?, asset? }` | new invoice (merchant defaults to the demo merchant) |
 | `GET /api/invoices/:id` | – | one invoice |
 | `POST /api/invoices/:id/pay` | – | the customer's agent pays through wrapper → vault; returns invoice, Passport report, log |
-| `GET /api/invoices.csv` | – | CSV for the accountant (formula-injection safe) |
+| `GET /api/invoices.csv` | – | CSV for the accountant (formula-injection safe), amounts in the asset's own unit plus `currency` and `asset_contract` columns |
+| `GET /api/assets` | – | supported assets (`passport/assets.json`): NEAR and Circle testnet USDC |
 
 Errors are JSON `{ error }` with 400 (bad input), 404, 409 (testnet not set up, demo already running, invoice already paid) or 500.
 

@@ -25,7 +25,7 @@ test("create validates input", () => {
   assert.throws(() => inv.createInvoice({ merchant: "Bad Account!", description: "x", amount: NEAR }), /merchant/);
   assert.throws(() => inv.createInvoice({ merchant: "m.testnet", description: "", amount: NEAR }), /Description/);
   assert.throws(() => inv.createInvoice({ merchant: "m.testnet", description: "x", amount: "0" }), /Amount/);
-  assert.throws(() => inv.createInvoice({ merchant: "m.testnet", description: "x", amount: NEAR, asset: "usdc.testnet" }), /Only NEAR/);
+  assert.throws(() => inv.createInvoice({ merchant: "m.testnet", description: "x", amount: NEAR, asset: "usdc.testnet" }), /Unsupported asset/);
 });
 
 test("vault status maps to invoice status", () => {
@@ -43,4 +43,13 @@ test("CSV quotes cells and neutralizes formula injection", () => {
   assert.match(header, /^"invoice_id","created_at"/);
   assert.match(row, /"'=HYPERLINK\(""x""\) and ""quotes"", commas"/);
   assert.match(row, /"https:\/\/testnet.nearblocks.io\/txns\/ABC"/);
+});
+
+test("USDC invoices: created with the token contract id and exported in USDC", async () => {
+  const { USDC_TESTNET, getAsset, formatUnits } = await import("../../passport/src/assets.ts");
+  const i = inv.createInvoice({ merchant: "m.testnet", description: "API credits", amount: "2500000", asset: USDC_TESTNET });
+  assert.equal(i.asset, USDC_TESTNET);
+  const csv = inv.toCsv([i], "https://testnet.nearblocks.io", (u, a) => formatUnits(u, getAsset(a)!));
+  const row = csv.trim().split("\r\n")[1];
+  assert.match(row, /"2.5","USDC","3e2210e1/);
 });

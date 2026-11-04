@@ -92,10 +92,10 @@ Three pieces working together:
 - What function-call keys can and cannot protect.
 - Implemented vs planned list.
 
-### 6.6 Merchant payment flow (for the Real-World Money track)
+### 6.6 Merchant payment flow (for the Real-World Money track) — built 2026-11-05
 The Real-World Money judges want something "a normal company could use right away". Plan:
 - **Invoice page:** a merchant creates an invoice (amount, description). It gets a shareable link, and the customer's AI agent pays it through the Passport and vault.
-- **Stablecoin payment:** pay in a NEP-141 stablecoin (testnet USDC-style token) as well as NEAR. The vault already supports NEP-141 with the required 1 yoctoNEAR deposit.
+- **Stablecoin payment (built):** invoices in **Circle's testnet USDC on NEAR** (`3e2210e1…b8af`, 6 decimals) as well as NEAR. The vault pays it with `ft_transfer` and attaches the 1 yoctoNEAR deposit itself. Policy: WARN above 25 USDC, BLOCK above 200 USDC, and WARN on a first payment above 5 USDC. Vault caps: 50 USDC per payment, 100 USDC per day. The Passport also warns when the recipient isn't registered with the token.
 - **Clear status:** each invoice shows a trustworthy status (unpaid, waiting for approval, paid, refused) with the transaction link.
 - **CSV export:** the merchant can download paid invoices as a CSV an accountant can read.
 - **Stretch:** NEAR Intents (1Click) so the customer can pay from other chains or tokens. Most of this is mainnet-oriented, so check that before planning on it.

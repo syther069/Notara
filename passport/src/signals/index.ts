@@ -244,7 +244,27 @@ export function reportsSignal(n: Network, recipient: string) {
   );
 }
 
-// ---------------------------------------------------------------- 6. local policy lists
+// ---------------------------------------------------------------- 6. token registration (NEP-141 only)
+
+export interface TokenRegistrationSignal {
+  token: string;
+  registered: boolean;
+}
+
+/** NEP-145: a token transfer to an account that never registered storage fails. */
+export function tokenRegistrationSignal(n: Network, token: string, recipient: string) {
+  return run<TokenRegistrationSignal>(
+    "token_registration",
+    rpcSource(n),
+    ["Only says whether the recipient can receive this token. Not a trust signal."],
+    async () => {
+      const bal = await viewFunction<unknown>(n, token, "storage_balance_of", { account_id: recipient });
+      return { token, registered: bal !== null && bal !== undefined };
+    },
+  );
+}
+
+// ---------------------------------------------------------------- 7. local policy lists
 
 export function policyListSignal(n: Network, recipient: string, policy: Policy): Promise<SignalResult> {
   const deny = policy.denylist.find((d) => d.account === recipient);
@@ -282,5 +302,6 @@ export async function collectSignals(req: PaymentRequest, policy: Policy): Promi
     reportsSignal(n, req.recipient),
     policyListSignal(n, req.recipient, policy),
   ]);
+  if (req.asset !== "NEAR" && exists) rest.push(await tokenRegistrationSignal(n, req.asset, req.recipient));
   return [acct, ...rest];
 }

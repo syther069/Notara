@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Bot, LoaderCircle, RefreshCw } from "lucide-react";
 import { api, type CheckResponse, type Invoice } from "../lib/api";
-import { nearAmount } from "../lib/format";
+import { formatAsset } from "../lib/format";
 import { AccountLink, Banner, Skeleton, TxLink } from "../components/ui";
 import { CheckResult } from "../components/CheckResult";
 import { useToast } from "../components/Layout";
@@ -74,7 +74,7 @@ export function InvoicePage() {
             </div>
             <h1 style={{ marginTop: 16 }}>{inv.description}</h1>
             <div className="amount">
-              {nearAmount(inv.amount)} {inv.asset}
+              {formatAsset(inv.amount, inv.asset)}
             </div>
             <dl className="kv" style={{ marginTop: 16 }}>
               <dt>Pay to</dt>

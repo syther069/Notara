@@ -5,6 +5,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ROOT } from "../passport/src/config.ts";
+import { getAsset, listAssets } from "../passport/src/assets.ts";
 
 export type InvoiceStatus = "unpaid" | "pending_approval" | "paid" | "refused" | "failed";
 
@@ -52,7 +53,7 @@ export function getInvoice(id: string): Invoice | undefined {
 
 export function createInvoice(input: { merchant: string; description: string; amount: string; asset?: string }): Invoice {
   const asset = input.asset ?? "NEAR";
-  if (asset !== "NEAR") throw new Error("Only NEAR invoices are supported in this version (stablecoin is planned).");
+  if (!getAsset(asset)) throw new Error(`Unsupported asset ${asset}. Supported: ${listAssets().map((a) => a.symbol).join(", ")}`);
   if (!ACCOUNT_RE.test(input.merchant) || input.merchant.length > 64) throw new Error("Invalid merchant account id");
   const description = String(input.description ?? "").trim();
   if (!description || description.length > 200) throw new Error("Description is required (max 200 characters)");
@@ -107,14 +108,15 @@ const csvCell = (v: unknown) => {
   return `"${safe.replace(/"/g, '""')}"`;
 };
 
-export function toCsv(list: Invoice[], explorer: string, formatAmount: (a: string) => string): string {
-  const header = ["invoice_id", "created_at", "description", "amount", "asset", "merchant", "status", "decision", "vault_payment_id", "tx_hash", "explorer_url", "paid_at"];
+export function toCsv(list: Invoice[], explorer: string, formatAmount: (units: string, asset: string) => string): string {
+  const header = ["invoice_id", "created_at", "description", "amount", "currency", "asset_contract", "merchant", "status", "decision", "vault_payment_id", "tx_hash", "explorer_url", "paid_at"];
   const rows = list.map((i) => [
     i.id,
     i.createdAt,
     i.description,
-    formatAmount(i.amount),
-    i.asset,
+    formatAmount(i.amount, i.asset),
+    getAsset(i.asset)?.symbol ?? i.asset,
+    i.asset === "NEAR" ? "" : i.asset,
     i.merchant,
     i.status,
     i.decision ?? "",

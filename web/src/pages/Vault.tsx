@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, LoaderCircle, RefreshCw, Wallet, X } from "lucide-react";
 import { EVM_WALLET_ID, useWallet } from "../lib/wallet";
 import { api, type Payment, type VaultSummary } from "../lib/api";
-import { nearAmount, timeAgo } from "../lib/format";
+import { formatAsset, nearAmount, timeAgo, unitsToDecimal } from "../lib/format";
 import { AccountLink, Badge, Banner, Skeleton } from "../components/ui";
 import { NotDeployed, useDeployment, useToast } from "../components/Layout";
 
@@ -72,7 +72,7 @@ function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => v
         <div>
           <Badge d={p.decision} />
           <h3 style={{ marginTop: 10 }}>
-            #{p.id} · {nearAmount(p.amount)} {p.asset}
+            #{p.id} · {formatAsset(p.amount, p.asset)}
           </h3>
           <AccountLink id={p.recipient} />
           <p className="muted small" style={{ margin: "6px 0 0" }}>
@@ -84,7 +84,7 @@ function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => v
         <div className="banner warn" style={{ marginTop: 14 }}>
           <div>
             <p style={{ fontWeight: 700 }}>
-              {confirm === "approve" ? `Pay ${nearAmount(p.amount)} NEAR to this account?` : "Reject this payment?"}
+              {confirm === "approve" ? `Pay ${formatAsset(p.amount, p.asset)} to this account?` : "Reject this payment?"}
             </p>
             <p className="small">
               {confirm === "approve"
@@ -110,7 +110,7 @@ function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => v
           <button className="btn btn-danger btn-sm" onClick={() => setConfirm("reject")} aria-label={`Reject payment ${p.id}`}>
             <X size={14} aria-hidden /> Reject
           </button>
-          <a className="btn btn-secondary btn-sm" href={`/check?account=${encodeURIComponent(p.recipient)}&amount=${nearAmount(p.amount)}&network=testnet`}>
+          <a className="btn btn-secondary btn-sm" href={`/check?account=${encodeURIComponent(p.recipient)}&amount=${unitsToDecimal(p.amount, p.asset)}&asset=${p.asset === "NEAR" ? "NEAR" : "USDC"}&network=testnet`}>
             Re-check recipient
           </a>
         </div>
@@ -150,6 +150,10 @@ export function VaultPage() {
 
   const cap = summary?.config.caps.NEAR;
   const spentPct = cap ? Math.min(100, Number((BigInt(summary!.spentTodayYocto) * 100n) / BigInt(cap.daily))) : 0;
+  const usdcPct =
+    summary?.usdc.dailyUnits && BigInt(summary.usdc.dailyUnits) > 0n
+      ? Math.min(100, Number((BigInt(summary.usdc.spentTodayUnits) * 100n) / BigInt(summary.usdc.dailyUnits)))
+      : 0;
   const pending = payments?.filter((p) => p.status === "PendingApproval") ?? [];
   const shown = payments?.filter((p) => filter === "all" || p.status === filter) ?? [];
 
@@ -198,6 +202,49 @@ export function VaultPage() {
               <span style={{ width: `${spentPct}%` }} />
             </div>
           </div>
+        </div>
+      )}
+      {summary &&
+        (summary.usdc.enabled ? (
+          <div className="grid-4" style={{ marginTop: 16 }}>
+            <div className="card stat">
+              <div className="label">USDC balance</div>
+              <div className="value">{summary.usdc.balance} USDC</div>
+              <div className="muted small">Circle testnet USDC</div>
+            </div>
+            <div className="card stat">
+              <div className="label">USDC per-payment cap</div>
+              <div className="value">{summary.usdc.perTx} USDC</div>
+            </div>
+            <div className="card stat">
+              <div className="label">USDC daily cap</div>
+              <div className="value">{summary.usdc.daily} USDC</div>
+            </div>
+            <div className="card stat">
+              <div className="label">USDC spent today</div>
+              <div className="value">{summary.usdc.spentToday} USDC</div>
+              <div className="progress" aria-label={`${usdcPct}% of USDC daily cap used`}>
+                <span style={{ width: `${usdcPct}%` }} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="muted small" style={{ marginTop: 12 }}>
+            USDC isn't enabled on this vault yet. Run <code>npm run owner -- enable-usdc</code>.
+          </p>
+        ))}
+      {summary?.usdc.enabled && summary.usdc.balance === "0" && (
+        <div style={{ marginTop: 16 }}>
+          <Banner kind="warn" title="The vault has no USDC yet">
+            <p>
+              Get testnet USDC at{" "}
+              <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">
+                faucet.circle.com
+              </a>{" "}
+              (network: NEAR testnet, address: <span className="mono">{summary.config.owner}</span>), then run{" "}
+              <code>npm run owner -- fund-usdc 15</code>. Until then, USDC payments fail safely and the vault releases the cap.
+            </p>
+          </Banner>
         </div>
       )}
       {summary?.config.paused && (
@@ -265,7 +312,7 @@ export function VaultPage() {
                       <AccountLink id={p.recipient} />
                     </td>
                     <td data-label="Amount">
-                      {nearAmount(p.amount)} {p.asset}
+                      {formatAsset(p.amount, p.asset)}
                     </td>
                     <td data-label="Verdict">
                       <Badge d={p.decision} />

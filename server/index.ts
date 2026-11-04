@@ -14,10 +14,10 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import { parseNearAmount } from "near-api-js";
 import { check } from "../passport/src/check.ts";
 import { NETWORKS, ROOT, loadDeployment } from "../passport/src/config.ts";
 import { nearAmount } from "../passport/src/format.ts";
+import { USDC_TESTNET, formatUnits, getAsset, listAssets, resolveAsset, toUnits } from "../passport/src/assets.ts";
 import { viewAccount, viewFunction } from "../passport/src/near.ts";
 import { loadSigner } from "../passport/src/verdict.ts";
 import type { Network } from "../passport/src/types.ts";
@@ -66,12 +66,15 @@ function requireDeployment() {
 
 const explorerTx = (h: string) => `${NETWORKS[NET].explorer}/txns/${h}`;
 
-function toYocto(amountNear: unknown): string {
-  const s = String(amountNear ?? "").trim();
-  if (!/^\d+(\.\d{1,24})?$/.test(s)) throw new HttpError(400, "Amount must be a number like 0.25");
-  const y = parseNearAmount(s as `${number}`);
-  if (!y || BigInt(y) <= 0n) throw new HttpError(400, "Amount must be greater than 0");
-  return y;
+/** Decimal amount in the asset's unit ("12.5" USDC) -> smallest units. */
+function toAssetUnits(amount: unknown, assetId = "NEAR"): string {
+  const asset = resolveAsset(assetId);
+  if (!asset) throw new HttpError(400, `Unsupported asset ${assetId}`);
+  try {
+    return toUnits(String(amount ?? ""), asset);
+  } catch (e: any) {
+    throw new HttpError(400, e.message);
+  }
 }
 
 // ---------------------------------------------------------------- vault + owner
@@ -84,6 +87,12 @@ async function vaultSummary() {
     viewFunction<string>(NET, d.vault, "get_spent_today", { asset: "NEAR" }),
     viewFunction<string | null>(NET, d.vault, "get_pending_owner").catch(() => null),
   ]);
+  const usdc = getAsset(USDC_TESTNET)!;
+  const [usdcBalance, usdcSpent] = await Promise.all([
+    viewFunction<string>(NET, USDC_TESTNET, "ft_balance_of", { account_id: d.vault }).catch(() => "0"),
+    viewFunction<string>(NET, d.vault, "get_spent_today", { asset: USDC_TESTNET }).catch(() => "0"),
+  ]);
+  const usdcCap = config.caps?.[USDC_TESTNET];
   return {
     vault: d.vault,
     explorer: `${NETWORKS[NET].explorer}/address/${d.vault}`,
@@ -92,6 +101,16 @@ async function vaultSummary() {
     spentTodayYocto: spent,
     spentTodayNear: nearAmount(spent),
     pendingOwner,
+    usdc: {
+      asset: USDC_TESTNET,
+      enabled: !!usdcCap,
+      balance: formatUnits(usdcBalance, usdc),
+      spentToday: formatUnits(usdcSpent, usdc),
+      spentTodayUnits: usdcSpent,
+      perTx: usdcCap ? formatUnits(usdcCap.per_tx, usdc) : null,
+      daily: usdcCap ? formatUnits(usdcCap.daily, usdc) : null,
+      dailyUnits: usdcCap?.daily ?? null,
+    },
     /** True when keys/owner.json on this machine is still the vault owner (local owner console works). */
     localOwnerKey: hasKey("owner") && accountFromKey(NET, "owner").accountId === config.owner,
     config,
@@ -289,15 +308,20 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (m === "POST" && path === "/v1/check") {
     const b = await readJson(req);
     const network = b.network === "mainnet" ? "mainnet" : "testnet";
-    const amount = b.amountNear !== undefined ? toYocto(b.amountNear) : String(b.amount ?? "");
+    const assetId = b.asset ? resolveAsset(String(b.asset))?.id ?? String(b.asset) : "NEAR";
+    // amountNear is kept for older clients; amountDecimal is in the asset's own unit (e.g. USDC).
+    const decimal = b.amountDecimal ?? b.amountNear;
+    const amount = decimal !== undefined ? toAssetUnits(decimal, assetId) : String(b.amount ?? "");
     // On testnet, check "as the vault" by default so prior vault payments are part of the evidence.
     const payer = b.payer ?? (network === "testnet" ? loadDeployment(NET)?.vault : undefined);
     try {
-      return send(res, 200, await check({ network, payer, recipient: String(b.recipient ?? "").trim(), amount, asset: b.asset ?? "NEAR" }, { sign: !!b.sign }));
+      return send(res, 200, await check({ network, payer, recipient: String(b.recipient ?? "").trim(), amount, asset: assetId }, { sign: !!b.sign }));
     } catch (e: any) {
       throw new HttpError(400, e?.message ?? String(e));
     }
   }
+
+  if (m === "GET" && path === "/api/assets") return send(res, 200, { assets: listAssets() });
 
   if (m === "GET" && path === "/api/deployment") {
     const d = loadDeployment(NET);
@@ -344,14 +368,16 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   }
   if (m === "GET" && path === "/api/invoices.csv") {
     res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
-    return res.end(toCsv(listInvoices(), NETWORKS[NET].explorer, nearAmount));
+    return res.end(toCsv(listInvoices(), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
   }
   if (m === "POST" && path === "/api/invoices") {
     const b = await readJson(req);
     const d = loadDeployment(NET);
     const merchant = String(b.merchant ?? d?.accounts?.merchant ?? "");
     try {
-      return send(res, 201, createInvoice({ merchant, description: b.description, amount: toYocto(b.amountNear), asset: b.asset }));
+      const assetId = resolveAsset(String(b.asset ?? "NEAR"))?.id;
+      if (!assetId) throw new HttpError(400, `Unsupported asset ${b.asset}`);
+      return send(res, 201, createInvoice({ merchant, description: b.description, amount: toAssetUnits(b.amountDecimal ?? b.amountNear, assetId), asset: assetId }));
     } catch (e: any) {
       if (e instanceof HttpError) throw e;
       throw new HttpError(400, e.message);

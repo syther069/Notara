@@ -3,9 +3,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { evaluate } from "../src/policy.ts";
 import { loadPolicy } from "../src/config.ts";
+import { USDC_TESTNET, formatUnits, getAsset, toUnits } from "../src/assets.ts";
 import type { PaymentRequest, SignalResult } from "../src/types.ts";
 
 const policy = loadPolicy();
+const USDC = USDC_TESTNET;
 const NEAR = (n: number) => (BigInt(Math.round(n * 1000)) * 10n ** 21n).toString();
 const req = (amount = NEAR(0.1), recipient = "shop.testnet"): PaymentRequest => ({
   network: "testnet",
@@ -130,6 +132,11 @@ const cases: [string, PaymentRequest, SignalResult[], "ALLOW" | "WARN" | "BLOCK"
     "ALLOW",
   ],
   ["unknown asset warns", { ...req("100"), asset: "usdc.fakes.testnet" }, healthy(), "WARN", "NO_ASSET_POLICY"],
+  ["small USDC payment to known recipient is fine", { ...req("2000000"), asset: USDC }, healthy({ token_registration: sig("token_registration", { token: USDC, registered: true }) }), "ALLOW"],
+  ["USDC above 25 needs a human", { ...req("30000000"), asset: USDC }, healthy({ token_registration: sig("token_registration", { token: USDC, registered: true }) }), "WARN", "AMOUNT_OVER_WARN_LIMIT"],
+  ["USDC above 200 is blocked", { ...req("250000000"), asset: USDC }, healthy({ token_registration: sig("token_registration", { token: USDC, registered: true }) }), "BLOCK", "AMOUNT_OVER_BLOCK_LIMIT"],
+  ["recipient not registered for USDC warns", { ...req("2000000"), asset: USDC }, healthy({ token_registration: sig("token_registration", { token: USDC, registered: false }) }), "WARN", "RECIPIENT_NOT_REGISTERED_FOR_TOKEN"],
+  ["USDC registration lookup down -> WARN", { ...req("2000000"), asset: USDC }, healthy({ token_registration: sig("token_registration", undefined, "error") }), "WARN", "SIGNAL_UNAVAILABLE"],
 ];
 
 for (const [name, r, s, expected, code] of cases) {
@@ -156,4 +163,18 @@ test("policy: reasons are sorted block, warn, info", () => {
   const out = evaluate(req(NEAR(3)), healthy({ shared_reports: report("Verified") }), policy);
   const sev = out.reasons.map((r) => r.severity);
   assert.deepEqual(sev, [...sev].sort((a, b) => ["block", "warn", "info"].indexOf(a) - ["block", "warn", "info"].indexOf(b)));
+});
+
+test("assets: USDC units round-trip", () => {
+  const usdc = getAsset(USDC)!;
+  assert.equal(toUnits("12.5", usdc), "12500000");
+  assert.equal(formatUnits("12500000", usdc), "12.5");
+  assert.equal(formatUnits("1", usdc), "0.000001");
+  assert.throws(() => toUnits("0.0000001", usdc), /at most 6 decimals/);
+  assert.throws(() => toUnits("0", usdc), /greater than 0/);
+});
+
+test("policy: USDC amounts are shown in USDC, not raw units", () => {
+  const out = evaluate({ ...req("30000000"), asset: USDC }, healthy(), policy);
+  assert.match(out.reasons.find((r) => r.code === "AMOUNT_OVER_WARN_LIMIT")!.message, /30 USDC.*25 USDC/);
 });

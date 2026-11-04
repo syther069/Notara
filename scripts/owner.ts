@@ -7,11 +7,16 @@
 //   npm run owner -- show <id>            payment + the Passport report hash it was based on
 //   npm run owner -- pause | unpause
 //   npm run owner -- lock-vault           delete the vault's full-access key (irreversible: no more upgrades)
+//   npm run owner -- enable-usdc          USDC cap on the vault + token registration for vault/merchant/newshop
+//   npm run owner -- fund-usdc <amount>   move testnet USDC from the owner to the vault (get it at faucet.circle.com)
+//   npm run owner -- balances             NEAR and USDC balances of owner, vault and demo accounts
 
 import { NETWORKS, loadDeployment } from "../passport/src/config.ts";
 import { viewFunction } from "../passport/src/near.ts";
 import { accountFromKey, readKey } from "../agent/src/keys.ts";
 import { nearAmount } from "../passport/src/format.ts";
+import { USDC_TESTNET, formatUnits, getAsset, toUnits } from "../passport/src/assets.ts";
+import { viewAccount } from "../passport/src/near.ts";
 
 const network = "testnet" as const;
 
@@ -57,8 +62,69 @@ async function main() {
       console.log("[owner] The vault can now only change through its own contract methods.");
       break;
     }
+    case "enable-usdc": {
+      const usdc = getAsset(USDC_TESTNET)!;
+      const cfg: any = await viewFunction(network, dep.vault, "get_config");
+      if (!cfg.caps[USDC_TESTNET]) {
+        const r: any = await owner.callFunctionRaw({
+          contractId: dep.vault,
+          methodName: "set_cap",
+          args: { asset: USDC_TESTNET, per_tx: toUnits("50", usdc), daily: toUnits("100", usdc) },
+        });
+        console.log(`[owner] USDC caps set (50 per payment, 100 per day): ${link(r.transaction.hash)}`);
+      } else console.log("[owner] USDC caps already set");
+      // The owner too, so the Circle faucet can send USDC to it.
+      const accounts = [owner.accountId, dep.vault, dep.accounts?.merchant, dep.accounts?.newShop].filter(Boolean) as string[];
+      for (const acct of accounts) {
+        const reg = await viewFunction<unknown>(network, USDC_TESTNET, "storage_balance_of", { account_id: acct });
+        if (reg) {
+          console.log(`[owner] ${acct} already registered with USDC`);
+          continue;
+        }
+        const bounds: any = await viewFunction(network, USDC_TESTNET, "storage_balance_bounds");
+        const r: any = await owner.callFunctionRaw({
+          contractId: USDC_TESTNET,
+          methodName: "storage_deposit",
+          args: { account_id: acct, registration_only: true },
+          deposit: BigInt(bounds.min),
+          gas: 30_000_000_000_000n,
+        });
+        console.log(`[owner] registered ${acct} with USDC (paid ${nearAmount(bounds.min)} NEAR storage): ${link(r.transaction.hash)}`);
+      }
+      break;
+    }
+    case "fund-usdc": {
+      const usdc = getAsset(USDC_TESTNET)!;
+      if (!id) throw new Error("usage: owner fund-usdc <amount, e.g. 15>");
+      const units = toUnits(id, usdc);
+      const have = await viewFunction<string>(network, USDC_TESTNET, "ft_balance_of", { account_id: owner.accountId });
+      if (BigInt(have) < BigInt(units))
+        throw new Error(`Owner has only ${formatUnits(have, usdc)} USDC. Get testnet USDC at ${usdc.faucet} (network: NEAR testnet, address: ${owner.accountId}).`);
+      const r: any = await owner.callFunctionRaw({
+        contractId: USDC_TESTNET,
+        methodName: "ft_transfer",
+        args: { receiver_id: dep.vault, amount: units, memo: "fund AgentSpend vault" },
+        deposit: 1n,
+        gas: 30_000_000_000_000n,
+      });
+      console.log(`[owner] sent ${id} USDC to the vault: ${link(r.transaction.hash)}`);
+      break;
+    }
+    case "balances": {
+      const usdc = getAsset(USDC_TESTNET)!;
+      const accounts = [owner.accountId, dep.vault, dep.accounts?.merchant, dep.accounts?.newShop].filter(Boolean) as string[];
+      for (const acct of accounts) {
+        const [a, bal, reg] = await Promise.all([
+          viewAccount(network, acct),
+          viewFunction<string>(network, USDC_TESTNET, "ft_balance_of", { account_id: acct }).catch(() => "0"),
+          viewFunction<unknown>(network, USDC_TESTNET, "storage_balance_of", { account_id: acct }).catch(() => null),
+        ]);
+        console.log(`${acct.padEnd(46)} ${nearAmount(a?.amount ?? "0").padStart(12)} NEAR  ${formatUnits(bal, usdc).padStart(10)} USDC  ${reg ? "" : "(not registered for USDC)"}`);
+      }
+      break;
+    }
     default:
-      console.log("usage: owner pending | show <id> | approve <id> | reject <id> | pause | unpause | lock-vault");
+      console.log("usage: owner pending | show <id> | approve <id> | reject <id> | pause | unpause | lock-vault | enable-usdc | fund-usdc <amount> | balances");
   }
 }
 

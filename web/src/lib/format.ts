@@ -33,6 +33,7 @@ export const SIGNAL_LABELS: Record<string, string> = {
   prior_interactions: "Prior payments",
   shared_reports: "Shared reports",
   policy_lists: "Allow / deny lists",
+  token_registration: "Token registration",
 };
 
 export const DECISION_TEXT: Record<string, string> = {
@@ -40,3 +41,27 @@ export const DECISION_TEXT: Record<string, string> = {
   WARN: "Something is missing or unusual. A human must approve.",
   BLOCK: "A serious policy rule applies. The payment is refused.",
 };
+
+// ---------------------------------------------------------------- assets
+// Mirrors passport/assets.json (the backend's registry, also served at /api/assets).
+export const USDC_TESTNET = "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
+export const ASSETS: Record<string, { symbol: string; decimals: number; label: string }> = {
+  NEAR: { symbol: "NEAR", decimals: 24, label: "NEAR" },
+  [USDC_TESTNET]: { symbol: "USDC", decimals: 6, label: "USDC (Circle testnet)" },
+};
+
+export const assetSymbol = (id: string) => ASSETS[id]?.symbol ?? (id.length > 20 ? `${id.slice(0, 8)}…` : id);
+
+/** Smallest units -> decimal string in the asset's own unit ("0.3", "2.5"). */
+export function unitsToDecimal(units: string | undefined, assetId: string): string {
+  const a = ASSETS[assetId];
+  if (!a) return units ?? "0";
+  if (!units || !/^\d+$/.test(units)) return "0";
+  const s = units.padStart(a.decimals + 1, "0");
+  const whole = s.slice(0, s.length - a.decimals).replace(/^0+(?=\d)/, "");
+  const frac = s.slice(s.length - a.decimals).slice(0, 6).replace(/0+$/, "");
+  return frac ? `${whole}.${frac}` : whole;
+}
+
+/** "0.3 NEAR", "2.5 USDC" */
+export const formatAsset = (units: string | undefined, assetId: string) => `${unitsToDecimal(units, assetId)} ${assetSymbol(assetId)}`;

@@ -234,6 +234,7 @@ async function main() {
   log(`\nWrote ${DEP_FILE}`);
   log(`Explorer: ${NETWORKS.testnet.explorer}/address/${vault}`);
   log(`\nNext: npm run demo`);
+  log(`For USDC invoices: npm run owner -- enable-usdc, get testnet USDC at https://faucet.circle.com, then npm run owner -- fund-usdc 15`);
 }
 
 main().catch((e) => {

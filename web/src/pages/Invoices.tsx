@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Download, LoaderCircle, Plus, RefreshCw } from "lucide-react";
 import { api, type Invoice } from "../lib/api";
-import { nearAmount } from "../lib/format";
+import { ASSETS, formatAsset, USDC_TESTNET } from "../lib/format";
 import { Banner, CopyButton, Skeleton, TxLink } from "../components/ui";
 import { NotDeployed, useDeployment, useToast } from "../components/Layout";
 
@@ -25,8 +25,10 @@ export function InvoicesPage() {
   const [list, setList] = useState<Invoice[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [desc, setDesc] = useState("");
-  const [amount, setAmount] = useState("0.1");
+  const [amount, setAmount] = useState("2");
+  const [asset, setAsset] = useState<string>(USDC_TESTNET);
   const [creating, setCreating] = useState(false);
+  const decimals = ASSETS[asset].decimals;
 
   const load = useCallback(() => {
     api
@@ -39,14 +41,15 @@ export function InvoicesPage() {
   }, []);
   useEffect(load, [load]);
 
-  const amountErr = amount && !/^\d+(\.\d{1,24})?$/.test(amount) ? "Enter a number like 0.25" : null;
+  const amountErr =
+    amount && !new RegExp(`^\\d+(\\.\\d{1,${decimals}})?$`).test(amount) ? `Enter a number like 2.5 (max ${decimals} decimals)` : null;
 
   async function create(e: FormEvent) {
     e.preventDefault();
     if (!desc.trim() || amountErr) return;
     setCreating(true);
     try {
-      const inv = await api.createInvoice({ description: desc.trim(), amountNear: amount });
+      const inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset });
       toast(`Invoice ${inv.id} created.`);
       setDesc("");
       load();
@@ -77,22 +80,34 @@ export function InvoicesPage() {
       ) : (
         <form className="card" onSubmit={create} noValidate>
           <h2>New invoice</h2>
-          <div className="check-form" style={{ gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr) auto" }}>
+          <div className="check-form">
             <div className="field">
               <label htmlFor="desc">What is it for?</label>
               <input id="desc" className="input" maxLength={200} placeholder="1,000 API credits" value={desc} onChange={(e) => setDesc(e.target.value)} />
             </div>
             <div className="field">
-              <label htmlFor="iamt">Amount (NEAR)</label>
+              <label htmlFor="iamt">Amount ({ASSETS[asset].symbol})</label>
               <input id="iamt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
               {amountErr && <span className="err">{amountErr}</span>}
+            </div>
+            <div className="field">
+              <label id="cur-label">Currency</label>
+              <div className="segmented" role="group" aria-labelledby="cur-label">
+                <button type="button" aria-pressed={asset === USDC_TESTNET} onClick={() => setAsset(USDC_TESTNET)}>
+                  USDC
+                </button>
+                <button type="button" aria-pressed={asset === "NEAR"} onClick={() => setAsset("NEAR")}>
+                  NEAR
+                </button>
+              </div>
             </div>
             <button className="btn btn-primary" type="submit" disabled={creating || !desc.trim() || !!amountErr}>
               {creating ? <LoaderCircle size={16} className="spin" aria-hidden /> : <Plus size={16} aria-hidden />} Create invoice
             </button>
           </div>
           <p className="muted small" style={{ marginTop: 10, marginBottom: 0 }}>
-            NEAR only for now. Stablecoin (NEP-141) invoices are planned; the vault already supports NEP-141 payouts.
+            USDC is Circle's testnet USDC on NEAR (a NEP-141 token). The vault pays it with <code>ft_transfer</code>, attaching the required 1 yoctoNEAR
+            itself, because the agent's limited key can't attach deposits.
           </p>
         </form>
       )}
@@ -142,7 +157,7 @@ export function InvoicesPage() {
                     </td>
                     <td data-label="Description">{i.description}</td>
                     <td data-label="Amount">
-                      {nearAmount(i.amount)} {i.asset}
+                      {formatAsset(i.amount, i.asset)}
                     </td>
                     <td data-label="Status">
                       <InvoiceStatus s={i.status} />
