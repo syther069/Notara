@@ -36,18 +36,18 @@ The product has two actions:
 - [x] Identity proof: website ownership via `https://<site>/.well-known/near.txt`. X accounts not done (needs X API access).
 - [x] Signed links: the merchant's mainnet wallet signs recipient, amount and description (NEP-413, `near-sign-verify`, key checked via FastNear). Checkout shows signed / not signed / signature no longer valid. Not yet tested with a real wallet.
 - [x] Checkout safety panel with plain facts ("Looks OK / Be careful / Blocked"). Never says "safe".
-- [ ] "Report this link" button (waits for the mainnet registry).
+- [x] "Report this account" button, shown once the mainnet registry is deployed. Deploy script ready, not run.
 - [ ] Mainnet report registry, so mainnet checks are not always WARN. Costs about 2-3 real NEAR. **Owner approval and signature required.**
 
 ### Merchant experience
-- [ ] First screen: "Create a payment link".
-- [ ] Wallet sign-in and dashboard: status, refunds, CSV export.
-- [ ] Plain words for users: "Looks OK", "Be careful", "Blocked". Technical terms stay in the docs.
-- [ ] Attack demo moves to its own security page (real model + fooled model).
+- [x] First screen: "Payment links people can trust" with Create a payment link / Send money.
+- [x] Dashboard on Get paid: "Only mine" for the connected mainnet wallet, refund reasons, per-merchant CSV.
+- [x] Plain words for users: "Looks OK", "Be careful", "Blocked". Technical terms stay in the docs.
+- [x] Attack demo moved to /security (old /demo redirects).
 
 ### Public launch
-- [ ] Database instead of the local invoice file.
-- [ ] No owner, signer-admin or vault-admin keys on the public server. Demo-only actions stay local.
+- [x] SQLite (built into Node) instead of JSON files, with a one-time import.
+- [x] Public mode (`NOTARA_PUBLIC=1`): no owner key, no demo, no verdict signing on a public server.
 - [ ] Run `lock-vault` and hand vault ownership to the wallet before submission.
 - [ ] Fresh-clone test. README matches what runs.
 

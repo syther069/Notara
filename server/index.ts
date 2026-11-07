@@ -23,14 +23,17 @@ import { loadSigner } from "../passport/src/verdict.ts";
 import type { Network } from "../passport/src/types.ts";
 import { accountFromKey, hasKey } from "../agent/src/keys.ts";
 import { llmConfigured } from "../agent/src/agent.ts";
-import { refuseReason, runOnce } from "./guard.ts";
+import { LOCAL_ONLY, refuseReason, runOnce } from "./guard.ts";
 import { createCheckout, isDone, overallStatus, payTokens, readCheckout } from "./checkout.ts";
+import { fetchTx, receivedInTx } from "./nearpay.ts";
 import { MAX_SENDS_PER_DAY, ensureClaimGas, ensureUsdcStorage, isImplicit, usdcBalance } from "./sends.ts";
 import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, verifyLinkToken } from "./merchants.ts";
 import { createInvoice, getInvoice, type Invoice, listInvoices, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? "127.0.0.1";
+/** Public mode: no owner key, no agent demo, no verdict signing. For a public deploy. */
+const PUBLIC = process.env.NOTARA_PUBLIC === "1";
 process.env.PASSPORT_URL ??= `http://127.0.0.1:${PORT}`; // the agent code and demo runs ask this server
 const MAX_BODY = 16 * 1024;
 const NET: Network = "testnet";
@@ -117,7 +120,7 @@ async function vaultSummary() {
       dailyUnits: usdcCap?.daily ?? null,
     },
     /** True when keys/owner.json on this machine is still the vault owner (local owner console works). */
-    localOwnerKey: hasKey("owner") && accountFromKey(NET, "owner").accountId === config.owner,
+    localOwnerKey: !PUBLIC && hasKey("owner") && accountFromKey(NET, "owner").accountId === config.owner,
     config,
   };
 }
@@ -380,13 +383,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   const m = req.method ?? "GET";
   const refused = refuseReason(m, path, req.headers);
   if (refused) throw new HttpError(403, refused);
+  if (PUBLIC && LOCAL_ONLY.test(path)) throw new HttpError(404, "Not available on the public site. This runs locally only.");
 
   if (m === "GET" && path === "/v1/health") {
     let signer: string | null = null;
     try {
       signer = loadSigner().getPublicKey().toString();
     } catch {}
-    return send(res, 200, { ok: true, signerPublicKey: signer, deployed: !!loadDeployment(NET), agentMode: llmConfigured() ? "llm" : "scripted" });
+    return send(res, 200, { ok: true, public: PUBLIC, signerPublicKey: signer, deployed: !!loadDeployment(NET), agentMode: llmConfigured() ? "llm" : "scripted" });
   }
 
   if (m === "POST" && path === "/v1/check") {
@@ -399,7 +403,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     // On testnet, check "as the vault" by default so prior vault payments are part of the evidence.
     const payer = b.payer ?? (network === "testnet" ? loadDeployment(NET)?.vault : undefined);
     try {
-      return send(res, 200, await check({ network, payer, recipient: String(b.recipient ?? "").trim(), amount, asset: assetId }, { sign: !!b.sign }));
+      return send(res, 200, await check({ network, payer, recipient: String(b.recipient ?? "").trim(), amount, asset: assetId }, { sign: !!b.sign && !PUBLIC }));
     } catch (e: any) {
       throw new HttpError(400, e?.message ?? String(e));
     }
@@ -409,8 +413,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 
   if (m === "GET" && path === "/api/deployment") {
     const d = loadDeployment(NET);
-    if (!d) return send(res, 200, { deployed: false, network: NET });
-    return send(res, 200, { deployed: true, ...d, explorer: NETWORKS[NET].explorer, agentMode: llmConfigured() ? "llm" : "scripted" });
+    const mainnetRegistry = loadDeployment("mainnet")?.registry;
+    if (!d) return send(res, 200, { deployed: false, network: NET, mainnetRegistry });
+    return send(res, 200, { deployed: true, ...d, mainnetRegistry, explorer: NETWORKS[NET].explorer, agentMode: llmConfigured() ? "llm" : "scripted" });
   }
 
   if (m === "GET" && path === "/api/vault") return send(res, 200, await vaultSummary());
@@ -446,7 +451,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 
   // invoices
   if (m === "GET" && path === "/api/invoices") {
-    const list = listInvoices();
+    const merchant = url.searchParams.get("merchant");
+    const list = listInvoices().filter((i) => !merchant || i.merchant === merchant);
     const refreshed = await Promise.all(list.map((i) => (i.status === "pending_approval" || i.checkouts?.length ? refreshInvoice(i.id).catch(() => i) : i)));
     return send(res, 200, { invoices: refreshed.map(publicInvoice) });
   }
@@ -466,6 +472,24 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     const inv = createInvoice({ merchant: account, description: String(b.note ?? "").trim().slice(0, 120) || "Money sent by link", amount, asset: USDC_MAINNET });
     return send(res, 201, publicInvoice(updateInvoice(inv.id, { kind: "send" })));
+  }
+  const nm = path.match(/^\/api\/invoices\/(INV-\d{4,})\/near-tx$/);
+  if (nm && m === "POST") {
+    const b = await readJson(req);
+    const txHash = String(b.txHash ?? "");
+    const signerId = String(b.signerId ?? "");
+    if (!/^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(txHash) || !signerId) throw new HttpError(400, "txHash and signerId are required");
+    const inv = await refreshInvoice(nm[1]);
+    if (inv.asset !== USDC_MAINNET) throw new HttpError(409, "Only mainnet USDC links can be paid from a NEAR wallet");
+    if (inv.status === "paid") return send(res, 200, publicInvoice(inv));
+    if (listInvoices().some((i) => i.nearTx === txHash)) throw new HttpError(409, "This transaction already paid another invoice");
+    const tx = await fetchTx("mainnet", txHash, signerId).catch((e) => {
+      throw new HttpError(400, `Couldn't read the transaction: ${e.message}`);
+    });
+    const got = receivedInTx(tx, USDC_MAINNET, inv.merchant);
+    if (got < BigInt(inv.amount)) throw new HttpError(400, `The transaction sent ${formatUnits(got.toString(), getAsset(USDC_MAINNET)!)} USDC to ${inv.merchant}, not the ${formatUnits(inv.amount, getAsset(USDC_MAINNET)!)} USDC needed`);
+    const paid = updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `https://nearblocks.io/txns/${txHash}`, paidAt: new Date().toISOString() });
+    return send(res, 200, publicInvoice(paid));
   }
   const sm = path.match(/^\/api\/sends\/(INV-\d{4,})(\/activate)?$/);
   if (sm) {
@@ -505,7 +529,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (m === "GET" && path === "/api/checkout/tokens") return send(res, 200, { tokens: await payTokens() });
   if (m === "GET" && path === "/api/invoices.csv") {
     res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
-    return res.end(toCsv(listInvoices(), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
+    const merchant = url.searchParams.get("merchant");
+    return res.end(toCsv(listInvoices().filter((i) => !merchant || i.merchant === merchant), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
   }
   if (m === "POST" && path === "/api/invoices") {
     const b = await readJson(req);
@@ -517,6 +542,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       if (assetId === USDC_MAINNET && !(await viewAccount("mainnet", merchant))) throw new HttpError(400, `${merchant} does not exist on NEAR mainnet`);
       const fields = { merchant, description: String(b.description ?? "").trim(), amount: toAssetUnits(b.amountDecimal ?? b.amountNear, assetId), asset: assetId };
       if (b.signedToken) await verifyLinkToken(String(b.signedToken), fields, true).catch((e) => { throw new HttpError(400, `Signature check failed: ${e.message}`); });
+      // Step 1 fallback: register a new merchant for USDC so payouts can't fail on storage. Best effort.
+      if (assetId === USDC_MAINNET) await ensureUsdcStorage(merchant).catch((e) => console.warn(`USDC storage for ${merchant} not sponsored: ${e.message}`));
       const inv = createInvoice(fields);
       return send(res, 201, publicInvoice(b.signedToken ? updateInvoice(inv.id, { signedToken: String(b.signedToken) }) : inv));
     } catch (e: any) {

@@ -1,7 +1,9 @@
 // What a customer sees before paying: a plain verdict, the good facts, the concerns. The
 // technical report stays one click away for anyone who wants it.
 
-import { CircleAlert, CircleCheck, CircleX } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { CircleAlert, CircleCheck, CircleX, Flag, LoaderCircle } from "lucide-react";
+import { useWallet } from "../lib/wallet";
 import type { CheckResponse, Decision, MerchantProfile } from "../lib/api";
 import { DecisionCard, ReasonList } from "./CheckResult";
 
@@ -49,7 +51,7 @@ const Fact = ({ kind, children }: { kind: "good" | "bad" | "warn"; children: Rea
   </li>
 );
 
-export function SafetyPanel({ check, merchant, signature, signedBy }: { check: CheckResponse | null; merchant?: MerchantProfile | null; signature?: "valid" | "invalid" | "none"; signedBy?: string }) {
+export function SafetyPanel({ check, merchant, signature, signedBy, registry }: { check: CheckResponse | null; merchant?: MerchantProfile | null; signature?: "valid" | "invalid" | "none"; signedBy?: string; registry?: string }) {
   if (!check) return <div className="card muted">Checking who you're paying…</div>;
   const r = check.report;
   const h = HEADLINE[r.decision];
@@ -89,6 +91,7 @@ export function SafetyPanel({ check, merchant, signature, signedBy }: { check: C
       <p className="muted small" style={{ margin: "8px 0 0" }}>
         We check facts, not intentions. A real, verified person can still be dishonest, so only pay people you expect to pay.
       </p>
+      {registry && r.request.network === "mainnet" && <ReportForm registry={registry} subject={r.request.recipient} />}
       <details style={{ marginTop: 8 }}>
         <summary className="small">Technical details</summary>
         <div className="stack" style={{ marginTop: 8 }}>
@@ -97,5 +100,58 @@ export function SafetyPanel({ check, merchant, signature, signedBy }: { check: C
         </div>
       </details>
     </div>
+  );
+}
+
+/** Files a report in the shared on-chain registry, signed by the reporter's own wallet (0.01 NEAR bond). */
+function ReportForm({ registry, subject }: { registry: string; subject: string }) {
+  const w = useWallet();
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState("Scam");
+  const [description, setDescription] = useState("");
+  const [evidence, setEvidence] = useState("");
+  const [state, setState] = useState<{ busy?: boolean; done?: string; error?: string }>({});
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setState({ busy: true });
+    try {
+      const hash = await w.call(registry, "submit_report", { subject, category, description: description.trim(), evidence_uri: evidence.trim(), evidence_hash: null }, 30, { network: "mainnet", deposit: "10000000000000000000000" });
+      setState({ done: hash });
+    } catch (err: any) {
+      setState({ error: err.message });
+    }
+  }
+
+  if (!open)
+    return (
+      <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(true)}>
+        <Flag size={14} aria-hidden /> Report this account
+      </button>
+    );
+  if (state.done)
+    return (
+      <p className="small" style={{ marginTop: 8 }}>
+        Report filed. It shows as unverified until a verifier checks it.{" "}
+        <a href={`https://nearblocks.io/txns/${state.done}`} target="_blank" rel="noreferrer">View transaction</a>
+      </p>
+    );
+  return (
+    <form className="stack" style={{ marginTop: 12 }} onSubmit={submit}>
+      <select className="input" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="What happened">
+        {["Scam", "Phishing", "Impersonation", "MaliciousContract", "Other"].map((c) => (
+          <option key={c}>{c}</option>
+        ))}
+      </select>
+      <input className="input" maxLength={500} placeholder="What happened?" value={description} onChange={(e) => setDescription(e.target.value)} required />
+      <input className="input" maxLength={300} placeholder="Link to evidence (transaction, screenshot, post)" value={evidence} onChange={(e) => setEvidence(e.target.value)} required />
+      <p className="hint" style={{ margin: 0 }}>Signed by your NEAR wallet with a 0.01 NEAR bond, so reports aren't free to spam. False reports can be disputed.</p>
+      <div className="row">
+        <button className="btn btn-danger btn-sm" disabled={state.busy || !description.trim() || !evidence.trim()}>
+          {state.busy && <LoaderCircle size={14} className="spin" aria-hidden />} File report
+        </button>
+        {state.error && <span className="err">{state.error}</span>}
+      </div>
+    </form>
   );
 }

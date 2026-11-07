@@ -1,17 +1,13 @@
 // Merchant identity: wallet-signed payment links (NEP-413) and website ownership proofs.
-// Stored locally in data/merchants.json.
+// Stored in SQLite (server/db.ts).
 
 import { lookup } from "node:dns/promises";
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { isIP } from "node:net";
-import { join } from "node:path";
 import { verify } from "near-sign-verify";
-import { ROOT } from "../passport/src/config.ts";
+import { docs } from "./db.ts";
 import { formatAmount } from "../passport/src/assets.ts";
 
 export const SIGN_RECIPIENT = "notara";
-const DIR = process.env.NOTARA_DATA_DIR ?? join(ROOT, "data");
-const FILE = join(DIR, "merchants.json");
 
 export interface Merchant {
   account: string;
@@ -37,17 +33,8 @@ export async function verifyLinkToken(token: string, l: Parameters<typeof linkMe
   return r.accountId;
 }
 
-function load(): Record<string, Merchant> {
-  return existsSync(FILE) ? JSON.parse(readFileSync(FILE, "utf8")) : {};
-}
-
-function save(all: Record<string, Merchant>) {
-  mkdirSync(DIR, { recursive: true });
-  writeFileSync(`${FILE}.tmp`, JSON.stringify(all, null, 2));
-  renameSync(`${FILE}.tmp`, FILE);
-}
-
-export const getMerchant = (account: string): Merchant => load()[account] ?? { account };
+const store = docs<Merchant>("merchants");
+export const getMerchant = (account: string): Merchant => store.get(account) ?? { account };
 
 /** "https://Shop.example.com/x" -> "shop.example.com". Throws on anything that isn't a public hostname. */
 export function normalizeWebsite(input: string): string {
@@ -80,12 +67,9 @@ export async function checkWebsite(account: string, website: string): Promise<Me
     const text = res.ok ? (await res.text()).slice(0, 2000) : "";
     ok = text.split(/\s+/).includes(account);
   } catch {}
-  const all = load();
+  const saved = store.get(account);
   const result = { account, website: host, websiteVerified: ok, websiteCheckedAt: new Date().toISOString() };
   // Save only proofs and re-checks of a saved site, so nobody can pin an unconfirmed claim on someone else's profile.
-  if (ok || all[account]?.website === host) {
-    all[account] = result;
-    save(all);
-  }
+  if (ok || saved?.website === host) store.put(account, result.websiteCheckedAt, result);
   return result;
 }

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { refuseReason, runOnce } from "../guard.ts";
+import { LOCAL_ONLY, refuseReason, runOnce } from "../guard.ts";
 
 const local = { host: "127.0.0.1:8787", "content-type": "application/json" };
 
@@ -35,4 +35,16 @@ test("paying the same invoice twice at once runs the payment only once", async (
   assert.deepEqual([a, b], ["paid", undefined]);
   assert.equal(payments, 1);
   assert.equal(await runOnce("INV-1", pay), "paid", "free again once finished");
+});
+
+test("a public deploy accepts its own hostname and nothing else", () => {
+  const hosts = new Set(["localhost", "127.0.0.1", "notara.example"]);
+  const pub = { host: "notara.example", "content-type": "application/json", origin: "https://notara.example", "sec-fetch-site": "same-origin" };
+  assert.equal(refuseReason("POST", "/api/invoices", pub, hosts), null);
+  assert.ok(refuseReason("POST", "/api/invoices", { ...pub, host: "evil.example", origin: "https://evil.example" }, hosts));
+});
+
+test("owner and demo routes are marked local-only; customer routes are not", () => {
+  for (const p of ["/api/owner/approve", "/api/owner/propose", "/api/demo/run", "/api/invoices/INV-0001/pay"]) assert.ok(LOCAL_ONLY.test(p), p);
+  for (const p of ["/api/invoices/INV-0001/quote", "/api/invoices/INV-0001/near-tx", "/api/sends", "/v1/check", "/api/demo/logs"]) assert.ok(!LOCAL_ONLY.test(p), p);
 });

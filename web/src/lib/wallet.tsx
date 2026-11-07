@@ -12,6 +12,8 @@ export const EVM_WALLET_ID = "ethereum-wallets";
 
 type WalletState = {
   accountId: string | null;
+  /** Which network the connected wallet is on. Payment links use mainnet; the vault demo uses testnet. */
+  network: "mainnet" | "testnet";
   ready: boolean;
   busy: boolean;
   error: string | null;
@@ -23,12 +25,15 @@ type WalletState = {
    * returns the exact text to sign. Returns the token for the backend and the signer.
    */
   signLink: (message: (accountId: string) => Promise<string>) => Promise<{ token: string; accountId: string }>;
-  /** Sign and send one function call (no deposit) with the connected wallet. Returns the tx hash. */
-  call: (contractId: string, methodName: string, args: object, gasTgas?: number) => Promise<string>;
+  /** Sign and send one function call with the connected wallet. Returns the tx hash. */
+  call: (contractId: string, methodName: string, args: object, gasTgas?: number, opts?: { network?: "mainnet" | "testnet"; deposit?: string }) => Promise<string>;
+  /** Pay USDC on NEAR mainnet straight from the user's wallet. Returns the tx hash and payer. */
+  payUsdc: (token: string, receiver: string, amount: string) => Promise<{ txHash: string; signerId: string }>;
 };
 
 const Ctx = createContext<WalletState>({
   accountId: null,
+  network: NETWORK,
   ready: false,
   busy: false,
   error: null,
@@ -38,6 +43,9 @@ const Ctx = createContext<WalletState>({
     throw new Error("Wallet not ready");
   },
   call: async () => {
+    throw new Error("Wallet not ready");
+  },
+  payUsdc: async () => {
     throw new Error("Wallet not ready");
   },
 });
@@ -50,6 +58,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [network, setNetwork] = useState<"mainnet" | "testnet">(NETWORK);
+  const switchTo = useCallback(async (c: NearConnector, n: "mainnet" | "testnet") => {
+    const switched = await ensureNetwork(c, n);
+    if (switched) {
+      setAccountId(null);
+      setNetwork(n);
+    }
+    return switched;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +99,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     setError(null);
     try {
-      await ensureNetwork(c, NETWORK);
+      await switchTo(c, NETWORK);
       const wallet = await c.connect(walletId ? { walletId } : undefined);
       const accounts = await wallet.getAccounts({ network: NETWORK });
       setAccountId(accounts[0]?.accountId ?? null);
@@ -103,7 +120,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const signLink = useCallback(async (message: (accountId: string) => Promise<string>) => {
     const c = connectorRef.current;
     if (!c) throw new Error("Wallet not ready");
-    const switched = await ensureNetwork(c, "mainnet");
+    const switched = await switchTo(c, "mainnet");
     const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
     const wallet = existing?.wallet ?? (await c.connect());
     const account = (existing?.accounts ?? (await wallet.getAccounts({ network: "mainnet" })))[0]?.accountId;
@@ -114,18 +131,48 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       recipient: "notara",
     });
     return { token, accountId: account };
-  }, []);
+  }, [switchTo]);
+
+  const payUsdc = useCallback(
+    async (token: string, receiver: string, amount: string) => {
+      const c = connectorRef.current;
+      if (!c) throw new Error("Wallet not ready");
+      const switched = await switchTo(c, "mainnet");
+      const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
+      const wallet = existing?.wallet ?? (await c.connect());
+      const signerId = (existing?.accounts ?? (await wallet.getAccounts({ network: "mainnet" })))[0]?.accountId;
+      if (!signerId) throw new Error("No mainnet account in this wallet");
+      setAccountId(signerId);
+      const fc = (methodName: string, args: object, deposit: string) => ({ type: "FunctionCall" as const, params: { methodName, args, gas: "30000000000000", deposit } });
+      const out: any = await wallet.signAndSendTransaction({
+        network: "mainnet",
+        signerId,
+        receiverId: token,
+        // Registers the merchant for USDC if needed (refunded if already registered), then pays.
+        actions: [fc("storage_deposit", { account_id: receiver, registration_only: true }, "1250000000000000000000"), fc("ft_transfer", { receiver_id: receiver, amount, memo: "Notara payment" }, "1")],
+      });
+      if (out?.status?.Failure) throw new Error("The payment failed on-chain");
+      return { txHash: out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "", signerId };
+    },
+    [switchTo],
+  );
 
   const call = useCallback(
-    async (contractId: string, methodName: string, args: object, gasTgas = 100) => {
+    async (contractId: string, methodName: string, args: object, gasTgas = 100, opts: { network?: "mainnet" | "testnet"; deposit?: string } = {}) => {
       const c = connectorRef.current;
-      if (!c || !accountId) throw new Error("Connect a wallet first");
-      const wallet = await c.wallet();
+      if (!c) throw new Error("Wallet not ready");
+      const net = opts.network ?? NETWORK;
+      const switched = await switchTo(c, net);
+      const existing = switched || !accountId ? null : await c.getConnectedWallet().catch(() => null);
+      const wallet = existing?.wallet ?? (await c.connect());
+      const signerId = existing?.accounts?.[0]?.accountId ?? (await wallet.getAccounts({ network: net }))[0]?.accountId;
+      if (!signerId) throw new Error("Connect a wallet first");
+      setAccountId(signerId);
       const out: any = await wallet.signAndSendTransaction({
-        network: NETWORK,
-        signerId: accountId,
+        network: net,
+        signerId,
         receiverId: contractId,
-        actions: [{ type: "FunctionCall", params: { methodName, args, gas: String(BigInt(gasTgas) * 10n ** 12n), deposit: "0" } }],
+        actions: [{ type: "FunctionCall", params: { methodName, args, gas: String(BigInt(gasTgas) * 10n ** 12n), deposit: opts.deposit ?? "0" } }],
       });
       const failure = out?.status?.Failure;
       if (failure) {
@@ -134,12 +181,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
       return out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "";
     },
-    [accountId],
+    [accountId, switchTo],
   );
 
   const value = useMemo(
-    () => ({ accountId, ready, busy, error, connect, disconnect, signLink, call }),
-    [accountId, ready, busy, error, connect, disconnect, signLink, call],
+    () => ({ accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc }),
+    [accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

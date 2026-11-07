@@ -49,6 +49,8 @@ export interface Deployment {
   accounts?: { merchant: string; newShop: string; attacker: string };
   explorer?: string;
   agentMode?: "llm" | "scripted";
+  /** Mainnet report registry, once deployed (deployment.mainnet.json). */
+  mainnetRegistry?: string;
 }
 
 export interface Payment {
@@ -195,7 +197,7 @@ export const api = {
     return r.text();
   },
   demoStatus: () => req<{ running: boolean }>("/api/demo/status"),
-  invoices: () => req<{ invoices: Invoice[] }>("/api/invoices"),
+  invoices: (merchant?: string) => req<{ invoices: Invoice[] }>(`/api/invoices${merchant ? `?merchant=${encodeURIComponent(merchant)}` : ""}`),
   invoice: (id: string) => req<Invoice>(`/api/invoices/${encodeURIComponent(id)}`),
   linkMessage: (b: { merchant: string; description: string; amountDecimal: string; asset: string }) => post<{ message: string }>("/api/links/message", b),
   merchant: (account: string) => req<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}`),
@@ -203,6 +205,7 @@ export const api = {
   createSend: (b: { amountDecimal: string; implicitAccount: string; note?: string }) => post<Invoice>("/api/sends", b),
   getSend: (id: string) => req<SendState>(`/api/sends/${encodeURIComponent(id)}`),
   activateSend: (id: string) => post<SendState>(`/api/sends/${encodeURIComponent(id)}/activate`, {}),
+  nearTx: (id: string, b: { txHash: string; signerId: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/near-tx`, b),
   payTokens: () => req<{ tokens: PayToken[] }>("/api/checkout/tokens"),
   quote: (id: string, b: { originAsset: string; refundTo: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/quote`, b),
   createInvoice: (b: { description: string; amountDecimal: string; asset: string; merchant?: string; signedToken?: string }) => post<Invoice>("/api/invoices", b),

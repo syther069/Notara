@@ -163,6 +163,7 @@ export function DemoPage() {
   return (
     <>
       <div className="page-head">
+        <p className="eyebrow">Security · AI agents</p>
         <h1>Watch a prompt-injected agent get stopped</h1>
         <p>
           An AI accounts-payable agent reads invoices and pays them from a NEAR testnet vault. One invoice hides an instruction to pay an attacker. Every
@@ -171,6 +172,7 @@ export function DemoPage() {
         <div className="row">
           <span className="tag">{agentMode === "llm" || dep?.agentMode === "llm" ? "Agent: real LLM" : "Agent: scripted (obeys the hidden text)"}</span>
           {dep?.vault && <span className="tag mono">vault {dep.vault}</span>}
+          <Link to="/vault">Open the vault and approvals →</Link>
         </div>
       </div>
 

@@ -1,0 +1,34 @@
+{
+  "status": {
+    "SuccessValue": ""
+  },
+  "transaction": {
+    "hash": "8itP2NCXgJLrMMmhH2DGo7UcWEoyejcLGMiA83KmLQ2F",
+    "signer_id": "agentspend-1104-p6zw.testnet",
+    "receiver_id": "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af"
+  },
+  "receipts_outcome": [
+    {
+      "id": "7Ht8F3jsuuymEy22Z6QXspuvTbuFj7mu9jqpperDw81t",
+      "outcome": {
+        "executor_id": "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [
+          "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"agentspend-1104-p6zw.testnet\",\"new_owner_id\":\"spend-vault.agentspend-1104-p6zw.testnet\",\"amount\":\"15000000\",\"memo\":\"fund AgentSpend vault\"}]}"
+        ]
+      }
+    },
+    {
+      "id": "9go6e1Z3bPvTW4kBbe7pUPiSbhsWM4LpmiHnzUz38Pe3",
+      "outcome": {
+        "executor_id": "agentspend-1104-p6zw.testnet",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": []
+      }
+    }
+  ]
+}

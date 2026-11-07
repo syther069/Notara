@@ -54,15 +54,17 @@ export function InvoicesPage() {
   const [creating, setCreating] = useState(false);
   const decimals = ASSETS[asset].decimals;
 
+  const [mine, setMine] = useState(false);
+  const owner = mine && wallet.network === "mainnet" ? wallet.accountId ?? undefined : undefined;
   const load = useCallback(() => {
     api
-      .invoices()
+      .invoices(owner)
       .then((r) => {
         setList(r.invoices);
         setError(null);
       })
       .catch((e) => setError(e.message));
-  }, []);
+  }, [owner]);
   useEffect(load, [load]);
 
   const amountErr =
@@ -154,12 +156,17 @@ export function InvoicesPage() {
 
       <section>
         <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-          <h2 style={{ margin: 0 }}>All invoices</h2>
+          <h2 style={{ margin: 0 }}>{owner ? `My links (${owner})` : "All links and invoices"}</h2>
           <div className="row">
             <button className="btn btn-secondary btn-sm" onClick={load}>
               <RefreshCw size={14} aria-hidden /> Refresh
             </button>
-            <a className="btn btn-secondary btn-sm" href="/api/invoices.csv" download>
+            {wallet.accountId && wallet.network === "mainnet" && (
+              <label className="row small" style={{ gap: 6 }}>
+                <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} /> Only mine
+              </label>
+            )}
+            <a className="btn btn-secondary btn-sm" href={`/api/invoices.csv${owner ? `?merchant=${encodeURIComponent(owner)}` : ""}`} download>
               <Download size={14} aria-hidden /> Export CSV
             </a>
           </div>
@@ -201,6 +208,8 @@ export function InvoicesPage() {
                     </td>
                     <td data-label="Status">
                       <InvoiceStatus s={i.status} />
+                      {i.checkouts?.at(-1)?.refundReason && <div className="muted small">{i.checkouts.at(-1)!.refundReason}</div>}
+                      {i.kind === "send" && <div className="muted small">send link</div>}
                     </td>
                     <td data-label="Payment">{i.txUrl ? <a href={i.txUrl} target="_blank" rel="noreferrer">View</a> : i.txHash ? <TxLink hash={i.txHash} /> : <span className="muted">—</span>}</td>
                     <td data-label="Link">

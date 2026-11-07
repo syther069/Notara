@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import { Layout } from "./components/Layout";
@@ -37,7 +37,8 @@ createRoot(document.getElementById("root")!).render(
         <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="check" element={<CheckPage />} />
-          <Route path="demo" element={<DemoPage />} />
+          <Route path="security" element={<DemoPage />} />
+          <Route path="demo" element={<Navigate to="/security" replace />} />
           <Route path="vault" element={<VaultPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="invoices/:id" element={<InvoicePage />} />

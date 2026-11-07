@@ -28,11 +28,10 @@ function storedTheme(): "light" | "dark" | null {
 
 const LINKS = [
   ["/", "Home"],
-  ["/check", "Check"],
-  ["/demo", "Attack demo"],
-  ["/vault", "Vault"],
-  ["/invoices", "Invoices"],
+  ["/invoices", "Get paid"],
   ["/send", "Send"],
+  ["/check", "Check"],
+  ["/security", "Security"],
   ["/about", "About"],
 ] as const;
 
@@ -200,6 +199,7 @@ function WalletButton() {
       <span className="wallet-chip" title={`Connected: ${w.accountId}`}>
         <Wallet size={14} aria-hidden />
         <span className="mono wallet-id">{w.accountId}</span>
+        <span className="small muted">{w.network}</span>
         <button onClick={w.disconnect} aria-label="Disconnect wallet">
           <LogOut size={14} />
         </button>

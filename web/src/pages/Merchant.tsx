@@ -7,11 +7,12 @@ import { api, type CheckResponse, type MerchantProfile } from "../lib/api";
 import { USDC_MAINNET } from "../lib/format";
 import { AccountLink, Banner, Skeleton } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
-import { useToast } from "../components/Layout";
+import { useDeployment, useToast } from "../components/Layout";
 
 export function MerchantPage() {
   const { account = "" } = useParams();
   const toast = useToast();
+  const { dep } = useDeployment();
   const [profile, setProfile] = useState<MerchantProfile | null>(null);
   const [check, setCheck] = useState<CheckResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export function MerchantPage() {
         </Banner>
       )}
 
-      <SafetyPanel check={check} merchant={profile} />
+      <SafetyPanel check={check} merchant={profile} registry={dep?.mainnetRegistry} />
 
       {!profile ? (
         <Skeleton lines={3} />

@@ -123,7 +123,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 58 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status, link signing and send-link keys. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
+`npm test` runs 65 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode and the database import. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
 
 **2. Read-only check of a real mainnet account (no keys)**
 
@@ -167,6 +167,20 @@ AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
 **Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Meteor, Intear, MyNearWallet or HOT. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `npx tsx scripts/upgrade-contract.ts vault` or `registry` (testnet, before `lock-vault`).
 
 **Any-chain payment links (real money, NEAR mainnet):** on the Invoices page, choose **USDC, any chain** and enter your mainnet account. The customer opens `/pay/<id>`, sees the safety check, picks a token, and gets a one-time NEAR Intents deposit address. The merchant receives exact USDC on NEAR, and we never hold the money. NEAR Intents has no testnet, so this uses real funds: keep amounts small. Optionally put `ONECLICK_JWT=...` in `.env` to avoid the unauthenticated fee. **Status: tested up to creating a real deposit address. No real payment has been made yet.**
+
+**Pay from a NEAR wallet:** customers who already hold USDC on NEAR click **Pay with NEAR wallet**. Their wallet registers the merchant for USDC if needed and sends `ft_transfer`. The server then reads the finished transaction from NEAR RPC (archival as a fallback) and marks the link paid only if the USDC token's own `ft_transfer` event shows the full amount reaching the merchant. One transaction can't pay two links. **Status: built and tested against a real recorded transfer; not yet run with real funds.**
+
+**Mainnet report registry (needs approval and about 2.3 NEAR):**
+
+```bash
+NEAR_MAINNET_OWNER=you.near NEAR_MAINNET_OWNER_KEY=ed25519:... npx tsx scripts/setup-mainnet-registry.ts --yes
+```
+
+Once `deployment.mainnet.json` exists, mainnet checks read real reports, and the safety panel shows **Report this account** (signed by the reporter's wallet, 0.01 NEAR bond). **Status: script written, not run.**
+
+**Public mode:** for a public deploy, set `NOTARA_PUBLIC=1` and `NOTARA_PUBLIC_HOST=your.domain`. Owner approvals, the agent demo and verdict signing are switched off, and the owner key is never loaded. Payment links, send links, checks and Merchant Passport keep working.
+
+**Storage:** Node's built-in SQLite in `data/notara.db` (Node 22.13+). On first start, old `data/*.json` files are imported once and kept as `*.imported`.
 
 **Send by link (real money):** open `/send`, enter an amount (up to 25 USDC), and you get a link. Fund it from any chain, then send the link to anyone. They open it and move the USDC to their NEAR account; gas and USDC setup are paid by a sponsor account, so they need no NEAR. The key lives only in the link's `#` part, which browsers don't send to servers. It needs `SPONSOR_ACCOUNT` and `SPONSOR_PRIVATE_KEY` (a mainnet account with a little NEAR) in `.env`. **Status: built, not yet tested with real funds.**
 

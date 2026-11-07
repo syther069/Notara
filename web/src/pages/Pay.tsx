@@ -6,6 +6,8 @@ import { api, type Checkout, type CheckResponse, type Invoice, type MerchantProf
 import { formatAsset, unitsToDecimal } from "../lib/format";
 import { AccountLink, Banner, CopyButton, Skeleton } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
+import { useWallet } from "../lib/wallet";
+import { useDeployment } from "../components/Layout";
 import { InvoiceStatus } from "./Invoices";
 
 const STATE: Record<string, string> = {
@@ -27,6 +29,23 @@ export function PayPage() {
   const [refundTo, setRefundTo] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const wallet = useWallet();
+  const { dep } = useDeployment();
+  const [nearBusy, setNearBusy] = useState(false);
+
+  async function payFromNear() {
+    if (!inv) return;
+    setNearBusy(true);
+    setError(null);
+    try {
+      const { txHash, signerId } = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount);
+      setInv(await api.nearTx(inv.id, { txHash, signerId }));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setNearBusy(false);
+    }
+  }
 
   const load = useCallback(() => {
     api.invoice(id).then(setInv).catch((e) => setError(e.message));
@@ -115,7 +134,7 @@ export function PayPage() {
       ) : isSend ? null : (
         <>
           <h2 style={{ marginBottom: 0 }}>Before you pay</h2>
-          <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} />
+          <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} registry={dep?.mainnetRegistry} />
         </>
       )}
 
@@ -131,8 +150,18 @@ export function PayPage() {
             <p>A serious policy rule applies to this account, so we won't create a payment address.</p>
           </Banner>
         ) : (
+          <>
+          <div className="card stack">
+            <h2>Have USDC on NEAR?</h2>
+            <p className="muted small" style={{ margin: 0 }}>Pay straight from your NEAR wallet (Meteor, HOT, Intear…). It needs a little NEAR for gas.</p>
+            <div>
+              <button type="button" className="btn btn-primary" onClick={payFromNear} disabled={nearBusy}>
+                {nearBusy && <LoaderCircle size={16} className="spin" aria-hidden />} Pay {formatAsset(inv.amount, inv.asset)} with NEAR wallet
+              </button>
+            </div>
+          </div>
           <form className="card stack" onSubmit={getAddress}>
-            <h2>Pay with what you have</h2>
+            <h2>Pay from another chain</h2>
             <div className="field">
               <label htmlFor="token">Token and network you'll pay from</label>
               <select id="token" className="input" value={token} onChange={(e) => setToken(e.target.value)}>
@@ -154,6 +183,7 @@ export function PayPage() {
               </button>
             </div>
           </form>
+          </>
         ))}
 
       {current && !showForm && inv.status !== "paid" && (

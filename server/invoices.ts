@@ -1,10 +1,8 @@
-// Merchant invoices (Real-World Money track). Stored locally in data/invoices.json.
+// Merchant invoices and payment links (Real-World Money track). Stored in SQLite (server/db.ts).
 // An invoice is paid by the customer's agent through Notara + vault, and its status is
 // reconciled from the vault's on-chain payment record (memo "invoice:<id>").
 
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { ROOT } from "../passport/src/config.ts";
+import { docs } from "./db.ts";
 import { getAsset, listAssets } from "../passport/src/assets.ts";
 
 export type InvoiceStatus = "unpaid" | "pending_approval" | "processing" | "paid" | "refused" | "refunded" | "failed";
@@ -43,35 +41,19 @@ export interface Invoice {
   checkouts?: Checkout[];
   /** "send": money sent by link to a one-time account; the receiver claims it. */
   kind?: "send";
+  /** Paid directly from a NEAR wallet: the transaction hash that paid it. */
+  nearTx?: string;
   /** NEP-413 token: the merchant's wallet signed this exact link. */
   signedToken?: string;
   reportHash?: string;
   paidAt?: string;
 }
 
-const DIR = process.env.NOTARA_DATA_DIR ?? join(ROOT, "data");
-const FILE = join(DIR, "invoices.json");
+const store = docs<Invoice>("invoices");
 const ACCOUNT_RE = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 
-function load(): Invoice[] {
-  if (!existsSync(FILE)) return [];
-  return JSON.parse(readFileSync(FILE, "utf8"));
-}
-
-function save(list: Invoice[]) {
-  mkdirSync(DIR, { recursive: true });
-  const tmp = `${FILE}.tmp`;
-  writeFileSync(tmp, JSON.stringify(list, null, 2));
-  renameSync(tmp, FILE); // atomic replace so a crash never leaves half a file
-}
-
-export function listInvoices(): Invoice[] {
-  return load().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-}
-
-export function getInvoice(id: string): Invoice | undefined {
-  return load().find((i) => i.id === id);
-}
+export const listInvoices = (): Invoice[] => store.all();
+export const getInvoice = (id: string): Invoice | undefined => store.get(id);
 
 export function createInvoice(input: { merchant: string; description: string; amount: string; asset?: string }): Invoice {
   const asset = input.asset ?? "NEAR";
@@ -81,10 +63,9 @@ export function createInvoice(input: { merchant: string; description: string; am
   if (!description || description.length > 200) throw new Error("Description is required (max 200 characters)");
   if (!/^\d+$/.test(input.amount) || BigInt(input.amount) <= 0n) throw new Error("Amount must be a positive integer in the smallest unit");
 
-  const list = load();
   const now = new Date().toISOString();
   const inv: Invoice = {
-    id: `INV-${String(list.length + 1).padStart(4, "0")}`,
+    id: `INV-${String(store.count() + 1).padStart(4, "0")}`,
     merchant: input.merchant,
     description,
     amount: input.amount,
@@ -93,18 +74,16 @@ export function createInvoice(input: { merchant: string; description: string; am
     createdAt: now,
     updatedAt: now,
   };
-  list.push(inv);
-  save(list);
+  store.put(inv.id, inv.createdAt, inv);
   return inv;
 }
 
 export function updateInvoice(id: string, patch: Partial<Invoice>): Invoice {
-  const list = load();
-  const i = list.findIndex((x) => x.id === id);
-  if (i < 0) throw new Error(`Unknown invoice ${id}`);
-  list[i] = { ...list[i], ...patch, id, updatedAt: new Date().toISOString() };
-  save(list);
-  return list[i];
+  const cur = store.get(id);
+  if (!cur) throw new Error(`Unknown invoice ${id}`);
+  const next = { ...cur, ...patch, id, updatedAt: new Date().toISOString() };
+  store.put(id, cur.createdAt, next);
+  return next;
 }
 
 /** Map a vault payment status onto an invoice status. */

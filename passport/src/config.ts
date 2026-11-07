@@ -40,6 +40,7 @@ export interface Policy {
 
 export interface Deployment {
   network: Network;
+  /** Testnet only: mainnet has just the report registry (no vault holds real funds). */
   vault: string;
   registry: string;
   owner: string;
