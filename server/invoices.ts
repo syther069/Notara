@@ -4,6 +4,7 @@
 
 import { docs } from "./db.ts";
 import { getAsset, listAssets } from "../passport/src/assets.ts";
+import { notifyPaid } from "./notify.ts";
 
 export type InvoiceStatus = "unpaid" | "pending_approval" | "processing" | "paid" | "refused" | "refunded" | "failed";
 
@@ -14,6 +15,8 @@ export interface Checkout {
   originAsset: string;
   label: string;
   amountIn: string;
+  /** amountIn in the token's base units, for wallets. */
+  amountInUnits?: string;
   refundTo: string;
   deadline: string;
   status: string;
@@ -83,6 +86,7 @@ export function updateInvoice(id: string, patch: Partial<Invoice>): Invoice {
   if (!cur) throw new Error(`Unknown invoice ${id}`);
   const next = { ...cur, ...patch, id, updatedAt: new Date().toISOString() };
   store.put(id, cur.createdAt, next);
+  if (next.status === "paid" && cur.status !== "paid") notifyPaid(next);
   return next;
 }
 

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { KeyPair, baseDecode } from "near-api-js";
-import { fromFragment, newLinkKey, toFragment } from "./linkKey.ts";
+import { fromFragment, isValidNewName, newLinkKey, toFragment } from "./linkKey.ts";
 
 test("a send link's #part restores the same key and implicit account", () => {
   const k = newLinkKey();
@@ -15,4 +15,9 @@ test("a send link's #part restores the same key and implicit account", () => {
 
 test("a damaged #part is rejected, not turned into a different wallet", () => {
   assert.throws(() => fromFragment("#not-a-real-key"));
+});
+
+test("new NEAR names follow NEAR's account rules", () => {
+  for (const ok of ["priya", "priya-design", "shop_42"]) assert.ok(isValidNewName(ok), ok);
+  for (const bad of ["a", "Priya", "-priya", "priya-", "pri--ya", "priya.near", "prí", "a".repeat(60)]) assert.ok(!isValidNewName(bad), bad);
 });

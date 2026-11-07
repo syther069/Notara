@@ -214,6 +214,9 @@ export function InvoicesPage() {
                     <td data-label="Payment">{i.txUrl ? <a href={i.txUrl} target="_blank" rel="noreferrer">View</a> : i.txHash ? <TxLink hash={i.txHash} /> : <span className="muted">—</span>}</td>
                     <td data-label="Link">
                       <CopyButton text={`${location.origin}${i.asset === USDC_MAINNET ? "/pay" : "/invoices"}/${i.id}`} label="Copy link" />
+                      {i.asset === USDC_MAINNET && i.kind !== "send" && (
+                        <CopyButton text={`<script src="${location.origin}/embed.js" data-link="${i.id}"></script>`} label="Copy button for your site" />
+                      )}
                     </td>
                   </tr>
                 ))}

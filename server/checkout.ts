@@ -24,7 +24,13 @@ async function oneClick(path: string, init?: RequestInit): Promise<any> {
 export interface PayToken {
   assetId: string;
   label: string;
+  /** Set for EVM chains, so the website can offer one-click pay from a browser wallet. */
+  chainId?: number;
+  /** ERC-20 address; missing for the chain's native coin. */
+  contract?: string;
 }
+
+const EVM_CHAIN_IDS: Record<string, number> = { eth: 1, base: 8453, arb: 42161, op: 10, pol: 137, bsc: 56, avax: 43114, gnosis: 100 };
 
 let cache: { at: number; tokens: PayToken[] } | undefined;
 
@@ -34,8 +40,12 @@ export async function payTokens(): Promise<PayToken[]> {
   const all: any[] = await oneClick("/tokens");
   const tokens = all
     .filter((t) => SYMBOLS.has(t.symbol) && t.assetId !== `nep141:${USDC_MAINNET}`)
-    .map((t) => ({ assetId: t.assetId, label: `${t.symbol} on ${t.blockchain}` }))
+    .map((t) => ({ assetId: t.assetId, label: `${t.symbol} on ${t.blockchain}`, chainId: EVM_CHAIN_IDS[t.blockchain], contract: EVM_CHAIN_IDS[t.blockchain] ? t.contractAddress : undefined }))
     .sort((a, b) => a.label.localeCompare(b.label));
+  // Some chains list two tokens with the same symbol (e.g. bridged and native USDC): tell them apart.
+  const seen = new Map<string, number>();
+  for (const t of tokens) seen.set(t.label, (seen.get(t.label) ?? 0) + 1);
+  for (const t of tokens) if (seen.get(t.label)! > 1) t.label += ` (${t.assetId.split(":").pop()!.slice(0, 12)}…)`;
   cache = { at: Date.now(), tokens };
   return tokens;
 }
@@ -65,6 +75,7 @@ export async function createCheckout(i: { merchant: string; amount: string; orig
     originAsset: i.originAsset,
     label: i.label,
     amountIn: quote.amountInFormatted,
+    amountInUnits: quote.amountIn,
     refundTo: i.refundTo,
     deadline: quote.deadline ?? deadline,
     status: "PENDING_DEPOSIT",

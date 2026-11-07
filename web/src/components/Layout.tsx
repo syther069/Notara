@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { LoaderCircle, LogOut, Menu, Moon, ShieldCheck, Sun, TriangleAlert, Wallet, X } from "lucide-react";
 import { useWallet } from "../lib/wallet";
 import { api, type Deployment } from "../lib/api";
@@ -150,6 +150,9 @@ export function Layout() {
         <footer className="site-footer">
           <div className="container">
             <span>Built for the NEAR Hackathon · AI Security & Defense · Real-World Money</span>
+            <span>
+              <Link to="/agents">For AI agents</Link> · <a href="/llms.txt">llms.txt</a>
+            </span>
             <span>Data: NEAR RPC and FastNear (live) · Contracts on NEAR testnet</span>
           </div>
         </footer>

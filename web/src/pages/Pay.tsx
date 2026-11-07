@@ -9,6 +9,8 @@ import { SafetyPanel } from "../components/SafetyPanel";
 import { useWallet } from "../lib/wallet";
 import { useDeployment } from "../components/Layout";
 import { InvoiceStatus } from "./Invoices";
+import { evmAccount, evmPay, hasEvmWallet } from "../lib/evm";
+import { QrCode } from "../components/QrCode";
 
 const STATE: Record<string, string> = {
   PENDING_DEPOSIT: "Waiting for your payment.",
@@ -32,6 +34,7 @@ export function PayPage() {
   const wallet = useWallet();
   const { dep } = useDeployment();
   const [nearBusy, setNearBusy] = useState(false);
+  const [evmTx, setEvmTx] = useState<string | null>(null);
 
   async function payFromNear() {
     if (!inv) return;
@@ -89,6 +92,15 @@ export function PayPage() {
     }
   }
 
+  async function evm(fn: () => Promise<void>) {
+    setError(null);
+    try {
+      await fn();
+    } catch (err: any) {
+      setError(err.message ?? String(err));
+    }
+  }
+
   if (error && !inv)
     return (
       <Banner kind="error">
@@ -118,6 +130,14 @@ export function PayPage() {
         <p className="muted" style={{ marginTop: 8 }}>
           {isSend ? "You're funding a send link. The money waits in a one-time account until someone opens the link." : <>Pay to <AccountLink id={inv.merchant} explorer="https://nearblocks.io" /> · <Link to={`/m/${inv.merchant}`}>Merchant Passport</Link></>}
         </p>
+        {!isSend && inv.status !== "paid" && (
+          <details style={{ marginTop: 8 }}>
+            <summary className="small">Show a QR code to pay on a phone</summary>
+            <div style={{ marginTop: 8 }}>
+              <QrCode text={location.href.split("#")[0]} label="QR code for this payment link" />
+            </div>
+          </details>
+        )}
       </div>
 
       {inv.status === "paid" ? (
@@ -175,6 +195,11 @@ export function PayPage() {
             <div className="field">
               <label htmlFor="refund">Your refund address on that network</label>
               <input id="refund" className="input mono" value={refundTo} onChange={(e) => setRefundTo(e.target.value)} autoComplete="off" spellCheck={false} required />
+              {tokens.find((t) => t.assetId === token)?.chainId && hasEvmWallet() && (
+                <button type="button" className="btn btn-ghost" style={{ alignSelf: "start" }} onClick={() => evm(async () => setRefundTo(await evmAccount()))}>
+                  Use my browser wallet's address
+                </button>
+              )}
               <span className="hint">If anything goes wrong, or you overpay, the money comes back here. Use a wallet you control, not an exchange deposit address.</span>
             </div>
             <div>
@@ -193,10 +218,28 @@ export function PayPage() {
             Send <strong>{current.amountIn} {current.label}</strong> to this one-time address:
           </p>
           <div className="doc">{current.depositAddress}</div>
+          {!current.depositMemo && <QrCode text={current.depositAddress} label="QR code of the deposit address" />}
           <div className="row">
             <CopyButton text={current.depositAddress} label="Copy address" />
             <CopyButton text={current.amountIn} label="Copy amount" />
           </div>
+          {(() => {
+            const t = tokens.find((x) => x.assetId === current.originAsset);
+            if (!t?.chainId || !current.amountInUnits || current.depositMemo || current.status !== "PENDING_DEPOSIT") return null;
+            return hasEvmWallet() ? (
+              <div className="stack" style={{ gap: 6 }}>
+                <div>
+                  <button className="btn btn-primary" onClick={() => evm(async () => setEvmTx(await evmPay({ chainId: t.chainId!, contract: t.contract, to: current.depositAddress, units: current.amountInUnits! })))}>
+                    Pay {current.amountIn} {current.label} with MetaMask or another browser wallet
+                  </button>
+                </div>
+                {evmTx && <p className="small mono">Sent: {evmTx}. This page updates when it arrives.</p>}
+                {error && <p className="small" role="alert">{error}</p>}
+              </div>
+            ) : (
+              <p className="small muted">Have MetaMask or Rabby? Install it in this browser to pay in one click.</p>
+            );
+          })()}
           {current.depositMemo && (
             <Banner kind="warn" title="This payment also needs a memo">
               <p className="mono">{current.depositMemo}</p>

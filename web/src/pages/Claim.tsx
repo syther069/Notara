@@ -4,7 +4,7 @@ import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
 import { Account, actions, type KeyPairString } from "near-api-js";
 import { api, type SendState } from "../lib/api";
 import { formatAsset, USDC_MAINNET } from "../lib/format";
-import { fromFragment, type LinkKey } from "../lib/linkKey";
+import { fromFragment, isValidNewName, SEND_LINK_DAYS, type LinkKey } from "../lib/linkKey";
 import { Banner, CopyButton, Skeleton } from "../components/ui";
 
 const RPC = "https://rpc.mainnet.fastnear.com";
@@ -26,6 +26,8 @@ export function ClaimPage() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [created, setCreated] = useState<string | null>(null);
 
   const load = useCallback(() => {
     api.getSend(id).then(setState).catch((e) => setError(e.message));
@@ -41,32 +43,63 @@ export function ClaimPage() {
     if (funded && state && !state.claimReady && !broken) api.activateSend(id).then(setState).catch((e) => setError(e.message));
   }, [funded, state?.claimReady, broken, id]);
 
-  async function claim(e: FormEvent) {
-    e.preventDefault();
-    if (!key || !state) return;
+  const accountExists = async (id: string) =>
+    !!(await api.check({ network: "mainnet", recipient: id, amountDecimal: "0.01", asset: USDC_MAINNET })).report.signals.find((s) => s.name === "account_state")?.data?.exists;
+
+  /** Signed here with the link's key: registers the receiver with USDC if needed, then moves everything. */
+  async function moveUsdc(to: string) {
+    const acct = new Account(key!.account, RPC, key!.secret as KeyPairString);
+    const r: any = await acct.signAndSendTransaction({
+      receiverId: USDC_MAINNET,
+      actions: [
+        actions.functionCall("storage_deposit", { account_id: to, registration_only: true }, 30_000_000_000_000n, 1_250_000_000_000_000_000_000n),
+        actions.functionCall("ft_transfer", { receiver_id: to, amount: state!.balance, memo: "Notara send link" }, 30_000_000_000_000n, 1n),
+      ],
+    });
+    setDone(r.transaction.hash);
+    load();
+  }
+
+  async function run(fn: () => Promise<void>) {
     setBusy(true);
     setError(null);
     try {
-      const to = target.trim().toLowerCase();
-      if (!ACCOUNT_RE.test(to)) throw new Error("Enter a NEAR account like yourname.near");
-      const exists = await api.check({ network: "mainnet", recipient: to, amountDecimal: "0.01", asset: USDC_MAINNET });
-      if (!exists.report.signals.find((s) => s.name === "account_state")?.data?.exists) throw new Error(`${to} doesn't exist on NEAR mainnet`);
-      // Signed here with the link's key. Registers the receiver with USDC if needed, then moves everything.
-      const acct = new Account(key.account, RPC, key.secret as KeyPairString);
-      const r: any = await acct.signAndSendTransaction({
-        receiverId: USDC_MAINNET,
-        actions: [
-          actions.functionCall("storage_deposit", { account_id: to, registration_only: true }, 30_000_000_000_000n, 1_250_000_000_000_000_000_000n),
-          actions.functionCall("ft_transfer", { receiver_id: to, amount: state.balance, memo: "Notara send link" }, 30_000_000_000_000n, 1n),
-        ],
-      });
-      setDone(r.transaction.hash);
-      load();
+      await fn();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
+  }
+
+  function claim(e: FormEvent) {
+    e.preventDefault();
+    if (!key || !state) return;
+    run(async () => {
+      const to = target.trim().toLowerCase();
+      if (!ACCOUNT_RE.test(to)) throw new Error("Enter a NEAR account like yourname.near");
+      if (!(await accountExists(to))) throw new Error(`${to} doesn't exist on NEAR mainnet`);
+      await moveUsdc(to);
+    });
+  }
+
+  /** Creates <name>.near controlled by this link's key (NEAR's account-creation contract), then moves the USDC there. */
+  function createName(e: FormEvent) {
+    e.preventDefault();
+    if (!key || !state) return;
+    run(async () => {
+      const name = newName.trim().toLowerCase();
+      if (!isValidNewName(name)) throw new Error("Use 2+ lowercase letters or digits, with - or _ only between them");
+      const id = `${name}.near`;
+      if (await accountExists(id)) throw new Error(`${id} is taken. Try another name.`);
+      const acct = new Account(key.account, RPC, key.secret as KeyPairString);
+      await acct.signAndSendTransaction({
+        receiverId: "near",
+        actions: [actions.functionCall("create_account", { new_account_id: id, new_public_key: key.publicKey }, 100_000_000_000_000n, 2_000_000_000_000_000_000_000n)],
+      });
+      setCreated(id);
+      await moveUsdc(id);
+    });
   }
 
   if (!key)
@@ -90,6 +123,7 @@ export function ClaimPage() {
     );
 
   const balance = BigInt(state.balance || "0");
+  const expires = Date.parse(inv.createdAt) + SEND_LINK_DAYS * 86_400_000;
   return (
     <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
       <div className="card">
@@ -99,6 +133,14 @@ export function ClaimPage() {
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
         </div>
       </div>
+      {balance > 0n && Date.now() > expires && (
+        <Banner kind="warn" title="This link is past its 7 days">
+          <p>
+            The sender asked for it to be claimed by {new Date(expires).toLocaleDateString()}. If you are the sender, claim it back to your own account below.
+            Nothing stops anyone with the link from claiming it later: the key in the link controls the money.
+          </p>
+        </Banner>
+      )}
 
       {!funded ? (
         <div className="card stack">
@@ -121,7 +163,7 @@ export function ClaimPage() {
       ) : done || balance === 0n ? (
         <Banner kind="ok" title="Claimed">
           <p>
-            The money has left this link.{" "}
+            {created ? `${created} is yours, and the money is in it. To use it in a wallet, import the key below.` : "The money has left this link."}{" "}
             {done && (
               <a href={`https://nearblocks.io/txns/${done}`} target="_blank" rel="noreferrer">
                 View transaction <ExternalLink size={12} aria-hidden />
@@ -146,8 +188,24 @@ export function ClaimPage() {
               </button>
             </div>
           </form>
+          <form className="card stack" onSubmit={createName}>
+            <h2>No NEAR account yet? Get your own name</h2>
+            <div className="field">
+              <label htmlFor="newname">Choose a name</label>
+              <div className="row" style={{ flexWrap: "nowrap", gap: 6 }}>
+                <input id="newname" className="input mono" placeholder="yourname" value={newName} onChange={(e) => setNewName(e.target.value)} autoComplete="off" spellCheck={false} />
+                <span className="mono">.near</span>
+              </div>
+              <span className="hint">Free for you: we create the account and move the money there. Then import its key into a wallet like Meteor to use it.</span>
+            </div>
+            <div>
+              <button className="btn btn-primary" disabled={busy || !newName.trim() || !state.claimReady}>
+                {busy && <LoaderCircle size={16} className="spin" aria-hidden />} Create {newName.trim() || "yourname"}.near and claim
+              </button>
+            </div>
+          </form>
           <details className="card">
-            <summary>No NEAR account yet?</summary>
+            <summary>Or keep the money in this link</summary>
             <p className="small">
               This link is already a NEAR wallet. Import its key into a wallet app (for example Meteor, "import private key") and the USDC is yours there.
             </p>

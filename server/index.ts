@@ -360,6 +360,7 @@ const MIME: Record<string, string> = {
   ".png": "image/png",
   ".ico": "image/x-icon",
   ".json": "application/json",
+  ".txt": "text/plain; charset=utf-8",
   ".woff2": "font/woff2",
 };
 

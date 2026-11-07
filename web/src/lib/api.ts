@@ -100,6 +100,7 @@ export interface Checkout {
   originAsset: string;
   label: string;
   amountIn: string;
+  amountInUnits?: string;
   deadline: string;
   status: string;
   txHash?: string;
@@ -129,6 +130,8 @@ export interface SendState {
 export interface PayToken {
   assetId: string;
   label: string;
+  chainId?: number;
+  contract?: string;
 }
 
 export interface Invoice {

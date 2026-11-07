@@ -11,7 +11,9 @@ import { viewAccount, viewFunction } from "../passport/src/near.ts";
 import { USDC_MAINNET } from "../passport/src/assets.ts";
 
 /** Covers storage for the receiver's own account (0.00125 NEAR) plus gas for the claim transaction. */
-export const CLAIM_GAS_NEAR = 3_000_000_000_000_000_000_000n; // 0.003 NEAR
+// The link account keeps ~0.0018 NEAR locked for its own storage, so this must also cover:
+// USDC storage for the receiver (0.00125), a new .near name (0.002) and claim gas.
+export const CLAIM_GAS_NEAR = 6_500_000_000_000_000_000_000n; // 0.0065 NEAR
 export const MAX_SENDS_PER_DAY = 20; // shortcut: global cap, not per person; add accounts or captcha before real launch
 
 export const isImplicit = (id: string) => /^[0-9a-f]{64}$/.test(id);

@@ -138,3 +138,22 @@ Riskiest unknowns come first, so a bad surprise changes the plan early, not on N
 | 11 | Lock, fresh-clone test, docs | S | 💰 |
 
 Steps 1, 2, 4 and 5 wait on your funds or approval. When they're blocked, I'll do 3 and 6–10 in between, since none of those need money.
+
+---
+
+# Nice-to-have build sequence (items 12–20)
+
+Written 2026-11-07. Same rule: compiles, tests pass and site builds after every step.
+
+| # | Step | Size | Files | How to verify | Flags |
+|---|---|---|---|---|---|
+| 16 | **New NEAR name when claiming.** Link account calls `near.create_account({new_account_id, new_public_key: link key})`, then moves the USDC to the new name. Sponsor gas raised to cover it | M | `server/sends.ts`, `web/src/pages/Claim.tsx` | Testnet probe: `create_account` gave the new account our key as full access (tx 7ZytigBy…). Unit check for name rules | 💰 live test later  ✅ built, not yet tested on mainnet |
+| 14 | **One-click pay with MetaMask / any EVM wallet.** EIP-1193 (`window.ethereum`): switch chain, send ERC-20 `transfer` to the 1Click deposit address. No new dependency. Phantom/Solana left out (needs Solana libraries) | M | `web/src/lib/evm.ts` (new), `web/src/pages/Pay.tsx` | Unit test of ERC-20 call encoding and token parsing | 💰 live test later  ✅ built, not yet tested with a real wallet |
+| 12 | **QR codes** for the deposit address and for payment and send links | S | `web/src/components/QrCode.tsx`, Pay, Send | Scan with a phone camera | 🧩 `qrcode`  ✅ built (Pay and Send pages) |
+| 15 | **Embeddable "Pay with Notara" button**: `<script src=".../embed.js" data-invoice="INV-…">` | S | `web/public/embed.js`, Invoices (copy embed code) | Test page with the snippet opens `/pay/<id>` |  ✅ built, checked in browser |
+| 13 | **Send-link expiry (soft)**: links show an expiry date (7 days); after it, the claim page shows "return to sender" first. It can't be enforced, since whoever holds the key controls the money, and the page says so | S | `server/index.ts`, Send, Claim | Expired link shows the return option |  ✅ built |
+| 18 | **Telegram "You got paid"**: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in `.env`, sent once when a link becomes paid | S | `server/notify.ts` (new), `server/index.ts` | Unit test of message text; live with your bot |  ✅ built, needs a bot token to try |
+| 19 | **Agent API docs**: `/agents` page with curl and JS examples for `/v1/check`, plus `/llms.txt` | S | `web/src/pages/Agents.tsx`, `web/public/llms.txt` | Page renders; examples run against the local server |  ✅ built, curl example checked |
+| 17 | Sponsored USDC setup for new merchants | - | already built (`ensureUsdcStorage` on link creation) | - | |
+| 20 | X account proof | - | **skipped**: needs X API access | - | |
+| C | **Cleanup**: graphify hooks moved to the uncommitted `.claude/settings.local.json`, backup file removed, duplicate pay tokens labeled | S | `.claude/*`, `server/checkout.ts` | `git ls-files .claude` has no machine paths |  ✅ done |

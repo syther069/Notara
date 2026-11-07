@@ -184,6 +184,8 @@ Once `deployment.mainnet.json` exists, mainnet checks read real reports, and the
 
 **Send by link (real money):** open `/send`, enter an amount (up to 25 USDC), and you get a link. Fund it from any chain, then send the link to anyone. They open it and move the USDC to their NEAR account; gas and USDC setup are paid by a sponsor account, so they need no NEAR. The key lives only in the link's `#` part, which browsers don't send to servers. It needs `SPONSOR_ACCOUNT` and `SPONSOR_PRIVATE_KEY` (a mainnet account with a little NEAR) in `.env`. **Status: built, not yet tested with real funds.**
 
+**Extras:** a receiver with no NEAR account can pick a new `name.near` while claiming (created with the link key). Customers with MetaMask or Rabby can pay EVM tokens in one click. Payment pages, deposit addresses and send links have QR codes. Merchants can copy a `<script src=".../embed.js" data-link="INV-…">` "Pay with Notara" button for their site. Send links show a soft 7-day expiry. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env` to get a Telegram message when a link is paid. Agent docs are at `/agents` and `/llms.txt`. **Status: built. New-name claims, one-click EVM pay and Telegram alerts are not yet tested with real funds or a real bot.**
+
 **Trust features on payment links:**
 - **Signed links:** click **Sign with my NEAR wallet and create**. Your mainnet wallet signs who gets paid, how much and for what (NEP-413, verified with `near-sign-verify` and FastNear). The checkout shows whether the signature still checks out.
 - **Website proof:** on your Merchant Passport page (`/m/<account>`), publish your account in `https://yourshop.com/.well-known/near.txt` and press Check.

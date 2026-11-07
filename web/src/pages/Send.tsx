@@ -2,8 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { LoaderCircle, Send as SendIcon } from "lucide-react";
 import { api, type Invoice } from "../lib/api";
-import { newLinkKey, toFragment } from "../lib/linkKey";
+import { newLinkKey, SEND_LINK_DAYS, toFragment } from "../lib/linkKey";
 import { Banner, CopyButton } from "../components/ui";
+import { QrCode } from "../components/QrCode";
 
 export function SendPage() {
   const [amount, setAmount] = useState("5");
@@ -67,6 +68,12 @@ export function SendPage() {
         <div className="card stack">
           <h2>Your link is ready. Save it now.</h2>
           <div className="doc">{made.url}</div>
+          <details>
+            <summary className="small">Show as a QR code (to hand over in person)</summary>
+            <div style={{ marginTop: 8 }}>
+              <QrCode text={made.url} label="QR code of the send link" />
+            </div>
+          </details>
           <div className="row">
             <CopyButton text={made.url} label="Copy link" />
             <Link className="btn btn-primary" to={made.path}>
@@ -75,7 +82,7 @@ export function SendPage() {
           </div>
           <Banner kind="warn" title="This link works like cash">
             <p>
-              Anyone who has it can take the money. Only send it to the person it's for. If they never claim it, open the link yourself to take the money back.
+              Anyone who has it can take the money. Only send it to the person it's for. If they haven't claimed it within {SEND_LINK_DAYS} days ({new Date(Date.now() + SEND_LINK_DAYS * 86_400_000).toLocaleDateString()}), open the link yourself to take the money back.
               We can't recover a lost link: the key exists only in it.
             </p>
           </Banner>

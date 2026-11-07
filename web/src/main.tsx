@@ -12,6 +12,7 @@ import { VaultPage } from "./pages/Vault";
 import { InvoicesPage } from "./pages/Invoices";
 import { InvoicePage } from "./pages/Invoice";
 import { AboutPage } from "./pages/About";
+import { AgentsPage } from "./pages/Agents";
 import { PayPage } from "./pages/Pay";
 import { MerchantPage } from "./pages/Merchant";
 // near-api-js is large: load the send and claim pages only when opened.
@@ -47,6 +48,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="send" element={<Suspense fallback={null}><SendPage /></Suspense>} />
           <Route path="claim/:id" element={<Suspense fallback={null}><ClaimPage /></Suspense>} />
           <Route path="about" element={<AboutPage />} />
+          <Route path="agents" element={<AgentsPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
