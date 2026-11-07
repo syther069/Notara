@@ -1,0 +1,195 @@
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useParams } from "react-router-dom";
+import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { api, type Checkout, type CheckResponse, type Invoice, type MerchantProfile, type PayToken } from "../lib/api";
+import { formatAsset, unitsToDecimal } from "../lib/format";
+import { AccountLink, Banner, CopyButton, Skeleton } from "../components/ui";
+import { SafetyPanel } from "../components/SafetyPanel";
+import { InvoiceStatus } from "./Invoices";
+
+const STATE: Record<string, string> = {
+  PENDING_DEPOSIT: "Waiting for your payment.",
+  KNOWN_DEPOSIT_TX: "We can see your payment. Converting it now.",
+  PROCESSING: "Payment received. Converting it now.",
+  INCOMPLETE_DEPOSIT: "That was less than the amount needed. Send the rest before the deadline, or it will be refunded.",
+  REFUNDED: "This payment was refunded to your refund address.",
+  FAILED: "This payment failed. Any money sent is refunded to your refund address.",
+};
+
+export function PayPage() {
+  const { id = "" } = useParams();
+  const [inv, setInv] = useState<Invoice | null>(null);
+  const [check, setCheck] = useState<CheckResponse | null>(null);
+  const [profile, setProfile] = useState<MerchantProfile | null>(null);
+  const [tokens, setTokens] = useState<PayToken[]>([]);
+  const [token, setToken] = useState("");
+  const [refundTo, setRefundTo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    api.invoice(id).then(setInv).catch((e) => setError(e.message));
+  }, [id]);
+
+  useEffect(load, [load]);
+  useEffect(() => {
+    api.payTokens().then((r) => {
+      setTokens(r.tokens);
+      setToken((t) => t || (r.tokens.find((x) => x.label === "USDC on base") ?? r.tokens[0])?.assetId || "");
+    }).catch((e) => setError(e.message));
+  }, []);
+
+  const asset = inv?.asset;
+  const amount = inv?.amount;
+  const merchant = inv?.merchant;
+  useEffect(() => {
+    if (merchant) api.merchant(merchant).then(setProfile).catch(() => {});
+    if (merchant && amount && asset)
+      api.check({ network: "mainnet", recipient: merchant, amountDecimal: unitsToDecimal(amount, asset), asset }).then(setCheck).catch((e) => setError(e.message));
+  }, [merchant, amount, asset]);
+
+  const current: Checkout | undefined = inv?.checkouts?.at(-1);
+  const waiting = !!current && (inv?.status === "unpaid" || inv?.status === "processing");
+  useEffect(() => {
+    if (!waiting) return;
+    const t = setInterval(load, 5000);
+    return () => clearInterval(t);
+  }, [waiting, load]);
+
+  async function getAddress(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      setInv(await api.quote(id, { originAsset: token, refundTo: refundTo.trim() }));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (error && !inv)
+    return (
+      <Banner kind="error">
+        <p>{error}</p>
+      </Banner>
+    );
+  if (!inv) return <Skeleton lines={5} />;
+
+  const expired = current && current.status === "PENDING_DEPOSIT" && Date.parse(current.deadline) < Date.now();
+  const showForm = inv.status !== "paid" && inv.status !== "processing" && (!current || expired || current.status === "REFUNDED" || current.status === "FAILED");
+  const blocked = check?.report.decision === "BLOCK";
+  const paidCheckout = inv.checkouts?.find((c) => c.status === "SUCCESS");
+
+  return (
+    <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
+      <div className="card">
+        <div className="row" style={{ justifyContent: "space-between" }}>
+          <span className="mono muted">{inv.id}</span>
+          <InvoiceStatus s={inv.status} />
+        </div>
+        <h1 style={{ marginTop: 16 }}>{inv.description}</h1>
+        <div className="invoice-sheet">
+          <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
+        </div>
+        <p className="muted" style={{ marginTop: 8 }}>
+          Pay to <AccountLink id={inv.merchant} explorer="https://nearblocks.io" /> · <Link to={`/m/${inv.merchant}`}>Merchant Passport</Link>
+        </p>
+      </div>
+
+      {inv.status === "paid" ? (
+        <Banner kind="ok" title="Paid">
+          <p>
+            {inv.merchant} received {formatAsset(inv.amount, inv.asset)}.{" "}
+            {paidCheckout?.txUrl && (
+              <a href={paidCheckout.txUrl} target="_blank" rel="noreferrer">
+                View transaction <ExternalLink size={12} aria-hidden />
+              </a>
+            )}
+          </p>
+        </Banner>
+      ) : (
+        <>
+          <h2 style={{ marginBottom: 0 }}>Before you pay</h2>
+          <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} />
+        </>
+      )}
+
+      {error && (
+        <Banner kind="error">
+          <p>{error}</p>
+        </Banner>
+      )}
+
+      {showForm &&
+        (blocked ? (
+          <Banner kind="error" title="Payment refused">
+            <p>A serious policy rule applies to this account, so we won't create a payment address.</p>
+          </Banner>
+        ) : (
+          <form className="card stack" onSubmit={getAddress}>
+            <h2>Pay with what you have</h2>
+            <div className="field">
+              <label htmlFor="token">Token and network you'll pay from</label>
+              <select id="token" className="input" value={token} onChange={(e) => setToken(e.target.value)}>
+                {tokens.map((t) => (
+                  <option key={t.assetId} value={t.assetId}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="refund">Your refund address on that network</label>
+              <input id="refund" className="input mono" value={refundTo} onChange={(e) => setRefundTo(e.target.value)} autoComplete="off" spellCheck={false} required />
+              <span className="hint">If anything goes wrong, or you overpay, the money comes back here. Use a wallet you control, not an exchange deposit address.</span>
+            </div>
+            <div>
+              <button className="btn btn-primary" disabled={busy || !token || !refundTo.trim()}>
+                {busy && <LoaderCircle size={16} className="spin" aria-hidden />} Get payment address
+              </button>
+            </div>
+          </form>
+        ))}
+
+      {current && !showForm && inv.status !== "paid" && (
+        <div className="card stack" aria-live="polite">
+          <h2>Send your payment</h2>
+          <p>
+            Send <strong>{current.amountIn} {current.label}</strong> to this one-time address:
+          </p>
+          <div className="doc">{current.depositAddress}</div>
+          <div className="row">
+            <CopyButton text={current.depositAddress} label="Copy address" />
+            <CopyButton text={current.amountIn} label="Copy amount" />
+          </div>
+          {current.depositMemo && (
+            <Banner kind="warn" title="This payment also needs a memo">
+              <p className="mono">{current.depositMemo}</p>
+            </Banner>
+          )}
+          <Banner kind="warn">
+            <p>
+              Send only {current.label}. Another token or network can lose your money. Pay before {new Date(current.deadline).toLocaleTimeString()}.
+            </p>
+          </Banner>
+          <p className="row" style={{ margin: 0 }}>
+            {current.status === "SUCCESS" ? <CircleCheck size={16} aria-hidden /> : <LoaderCircle size={16} className="spin" aria-hidden />}
+            {STATE[current.status] ?? current.status}
+          </p>
+        </div>
+      )}
+      {current && showForm && STATE[current.status] && current.status !== "PENDING_DEPOSIT" && (
+        <Banner kind="warn">
+          <p>{STATE[current.status]}{current.refundReason ? ` Reason: ${current.refundReason}.` : ""}</p>
+        </Banner>
+      )}
+
+      <p className="muted small">
+        Routed by NEAR Intents. We never hold your money. This is a prototype and has not been audited, so use small amounts.
+      </p>
+    </div>
+  );
+}

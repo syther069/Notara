@@ -9,11 +9,11 @@ function SevIcon({ s }: { s: Reason["severity"] }) {
   return <Info size={20} className="sev-info" aria-label="Info" />;
 }
 
-function Evidence({ e }: { e: string }) {
+function Evidence({ e, network }: { e: string; network: string }) {
   if (e.startsWith("tx:")) {
     const h = e.slice(3);
     return (
-      <a href={`https://testnet.nearblocks.io/txns/${h}`} target="_blank" rel="noreferrer">
+      <a href={`https://${network === "mainnet" ? "" : "testnet."}nearblocks.io/txns/${h}`} target="_blank" rel="noreferrer">
         tx {h}
       </a>
     );
@@ -27,7 +27,7 @@ function Evidence({ e }: { e: string }) {
   return <span>{e}</span>;
 }
 
-function ReasonRow({ r }: { r: Reason }) {
+function ReasonRow({ r, network }: { r: Reason; network: string }) {
   const fixture = r.message.includes("[DEMO FIXTURE]") || r.evidence?.some((e) => e.startsWith("fixture://"));
   return (
     <li className="reason">
@@ -39,7 +39,7 @@ function ReasonRow({ r }: { r: Reason }) {
         <div className="msg">{r.message.replaceAll("[DEMO FIXTURE] ", "")}</div>
         {r.evidence?.map((e) => (
           <div className="ev" key={e}>
-            Evidence: <Evidence e={e} />
+            Evidence: <Evidence e={e} network={network} />
           </div>
         ))}
       </div>
@@ -79,21 +79,21 @@ export function DecisionCard({ res }: { res: CheckResponse }) {
   );
 }
 
-export function ReasonList({ reasons }: { reasons: Reason[] }) {
+export function ReasonList({ reasons, network }: { reasons: Reason[]; network: string }) {
   const main = reasons.filter((r) => r.severity !== "info");
   const info = reasons.filter((r) => r.severity === "info");
   return (
     <div className="card">
       <h2>Why this decision</h2>
       {main.length > 0 ? (
-        <ul className="reasons">{main.map((r, i) => <ReasonRow key={i} r={r} />)}</ul>
+        <ul className="reasons">{main.map((r, i) => <ReasonRow key={i} r={r} network={network} />)}</ul>
       ) : (
         <p className="muted">No warnings or blocking rules were triggered.</p>
       )}
       {info.length > 0 && (
         <details open={main.length === 0}>
           <summary>Other facts we found ({info.length})</summary>
-          <ul className="reasons">{info.map((r, i) => <ReasonRow key={i} r={r} />)}</ul>
+          <ul className="reasons">{info.map((r, i) => <ReasonRow key={i} r={r} network={network} />)}</ul>
         </details>
       )}
     </div>
@@ -187,7 +187,7 @@ export function CheckResult({ res }: { res: CheckResponse }) {
   return (
     <div className="stack">
       <DecisionCard res={res} />
-      <ReasonList reasons={res.report.reasons} />
+      <ReasonList reasons={res.report.reasons} network={res.report.request.network} />
       <EvidenceTable signals={res.report.signals} />
       <p className="muted small">
         Policy {res.report.policyVersion} · generated {new Date(res.report.generatedAt).toLocaleString()}. {res.report.disclaimer}

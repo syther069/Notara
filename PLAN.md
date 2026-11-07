@@ -26,16 +26,17 @@ The product has two actions:
 - [x] Add tests for the last two backend fixes.
 
 ### Payment
-- [ ] Any-chain checkout with 1Click: `EXACT_OUTPUT` quote, one-time deposit address, status tracking, refund address.
+- [x] Any-chain checkout with 1Click: `EXACT_OUTPUT` quote, one-time deposit address, status tracking, refund address. Tested up to the deposit address; no money sent yet.
 - [ ] Prove it with one small real mainnet payment (no Intents testnet exists).
-- [ ] Merchant receives directly in their own account. We never hold funds, and public checkout does not use the vault.
-- [ ] USD pricing in USDC. Clear states: waiting, paid, refunded, failed, expired.
+- [x] Merchant receives directly in their own account. We never hold funds, and public checkout does not use the vault.
+- [x] USD pricing in USDC. Clear states: waiting, processing, paid, refunded, failed, expired.
 
 ### Trust
-- [ ] Merchant Passport page: NEAR name, account age, payments received, reports, disputes.
-- [ ] Identity proof: wallet-signed ownership of a website or X account (`near-sign-verify`, NEP-413).
-- [ ] Tamper-proof invoices: wallet signs amount and recipient. An edited link shows a red warning.
-- [ ] Checkout safety panel with plain facts and "Report this link". Never say "safe". State that verified identity proves ownership, not honesty.
+- [x] Merchant Passport page (`/m/<account>`): NEAR name, account age, payments received, reports.
+- [x] Identity proof: website ownership via `https://<site>/.well-known/near.txt`. X accounts not done (needs X API access).
+- [x] Signed links: the merchant's mainnet wallet signs recipient, amount and description (NEP-413, `near-sign-verify`, key checked via FastNear). Checkout shows signed / not signed / signature no longer valid. Not yet tested with a real wallet.
+- [x] Checkout safety panel with plain facts ("Looks OK / Be careful / Blocked"). Never says "safe".
+- [ ] "Report this link" button (waits for the mainnet registry).
 - [ ] Mainnet report registry, so mainnet checks are not always WARN. Costs about 2-3 real NEAR. **Owner approval and signature required.**
 
 ### Merchant experience

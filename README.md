@@ -123,7 +123,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 50 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store and the backend guards. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
+`npm test` runs 56 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status and link signing. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
 
 **2. Read-only check of a real mainnet account (no keys)**
 
@@ -165,6 +165,15 @@ AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
 `AGENT_LLM_BASE_URL` defaults to `https://cloud-api.near.ai/v1`. Each log says which mode ran.
 
 **Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Meteor, Intear, MyNearWallet or HOT. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `npx tsx scripts/upgrade-contract.ts vault` or `registry` (testnet, before `lock-vault`).
+
+**Any-chain payment links (real money, NEAR mainnet):** on the Invoices page, choose **USDC, any chain** and enter your mainnet account. The customer opens `/pay/<id>`, sees the safety check, picks a token, and gets a one-time NEAR Intents deposit address. The merchant receives exact USDC on NEAR, and we never hold the money. NEAR Intents has no testnet, so this uses real funds: keep amounts small. Optionally put `ONECLICK_JWT=...` in `.env` to avoid the unauthenticated fee. **Status: tested up to creating a real deposit address. No real payment has been made yet.**
+
+**Trust features on payment links:**
+- **Signed links:** click **Sign with my NEAR wallet and create**. Your mainnet wallet signs who gets paid, how much and for what (NEP-413, verified with `near-sign-verify` and FastNear). The checkout shows whether the signature still checks out.
+- **Website proof:** on your Merchant Passport page (`/m/<account>`), publish your account in `https://yourshop.com/.well-known/near.txt` and press Check.
+- **Plain safety panel:** customers see "Looks OK", "Be careful" or "Blocked" with plain reasons, and the technical report one click away.
+
+Not yet tested with a real wallet signature or a real payment.
 
 **USDC invoices (Real-World Money):** invoices can be in **Circle's testnet USDC on NEAR** (contract `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`, 6 decimals).
 

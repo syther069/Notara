@@ -15,6 +15,7 @@ export interface AssetInfo {
 const ASSETS: Record<string, Omit<AssetInfo, "id">> = assetsJson;
 
 export const USDC_TESTNET = "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
+export const USDC_MAINNET = "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1";
 
 export function listAssets(): AssetInfo[] {
   return Object.entries(ASSETS).map(([id, a]) => ({ id, ...a }));

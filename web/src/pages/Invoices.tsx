@@ -2,13 +2,16 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Download, LoaderCircle, Plus, RefreshCw } from "lucide-react";
 import { api, type Invoice } from "../lib/api";
-import { ASSETS, formatAsset, USDC_TESTNET } from "../lib/format";
+import { ASSETS, formatAsset, USDC_MAINNET, USDC_TESTNET } from "../lib/format";
 import { Banner, CopyButton, Skeleton, TxLink } from "../components/ui";
 import { NotDeployed, useDeployment, useToast } from "../components/Layout";
+import { useWallet } from "../lib/wallet";
 
 export const INVOICE_STATUS: Record<Invoice["status"], { text: string; cls: string }> = {
   unpaid: { text: "Unpaid", cls: "NEUTRAL" },
   pending_approval: { text: "Waiting for approval", cls: "WARN" },
+  processing: { text: "Processing", cls: "WARN" },
+  refunded: { text: "Refunded", cls: "NEUTRAL" },
   paid: { text: "Paid", cls: "ALLOW" },
   refused: { text: "Refused", cls: "BLOCK" },
   failed: { text: "Failed", cls: "BLOCK" },
@@ -26,7 +29,28 @@ export function InvoicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState("2");
-  const [asset, setAsset] = useState<string>(USDC_TESTNET);
+  const [asset, setAsset] = useState<string>(USDC_MAINNET);
+  const [merchant, setMerchant] = useState("");
+  const isLink = asset === USDC_MAINNET;
+  const wallet = useWallet();
+  const [signing, setSigning] = useState(false);
+
+  /** The merchant's own mainnet wallet signs the link, so customers can see it really came from them. */
+  async function createSigned() {
+    if (!desc.trim() || amountErr) return;
+    setSigning(true);
+    try {
+      const { token, accountId } = await wallet.signLink(async (account) => (await api.linkMessage({ merchant: account, description: desc.trim(), amountDecimal: amount, asset })).message);
+      const inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset, merchant: accountId, signedToken: token });
+      toast(`Signed payment link ${inv.id} created for ${accountId}.`);
+      setDesc("");
+      load();
+    } catch (e: any) {
+      toast(e.message, "error");
+    } finally {
+      setSigning(false);
+    }
+  }
   const [creating, setCreating] = useState(false);
   const decimals = ASSETS[asset].decimals;
 
@@ -46,11 +70,11 @@ export function InvoicesPage() {
 
   async function create(e: FormEvent) {
     e.preventDefault();
-    if (!desc.trim() || amountErr) return;
+    if (!desc.trim() || amountErr || (isLink && !merchant.trim())) return;
     setCreating(true);
     try {
-      const inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset });
-      toast(`Invoice ${inv.id} created.`);
+      const inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset, merchant: isLink ? merchant.trim() : undefined });
+      toast(`${isLink ? "Payment link" : "Invoice"} ${inv.id} created.`);
       setDesc("");
       load();
     } catch (e: any) {
@@ -93,20 +117,36 @@ export function InvoicesPage() {
             <div className="field">
               <label id="cur-label">Currency</label>
               <div className="segmented" role="group" aria-labelledby="cur-label">
+                <button type="button" aria-pressed={isLink} onClick={() => setAsset(USDC_MAINNET)}>
+                  USDC, any chain
+                </button>
                 <button type="button" aria-pressed={asset === USDC_TESTNET} onClick={() => setAsset(USDC_TESTNET)}>
-                  USDC
+                  USDC test
                 </button>
                 <button type="button" aria-pressed={asset === "NEAR"} onClick={() => setAsset("NEAR")}>
-                  NEAR
+                  NEAR test
                 </button>
               </div>
             </div>
-            <button className="btn btn-primary" type="submit" disabled={creating || !desc.trim() || !!amountErr}>
-              {creating ? <LoaderCircle size={16} className="spin" aria-hidden /> : <Plus size={16} aria-hidden />} Create invoice
+            <button className="btn btn-primary" type="submit" disabled={creating || !desc.trim() || !!amountErr || (isLink && !merchant.trim())}>
+              {creating ? <LoaderCircle size={16} className="spin" aria-hidden /> : <Plus size={16} aria-hidden />} Create
             </button>
           </div>
+          {isLink && (
+            <div className="field" style={{ marginTop: 12 }}>
+              <label htmlFor="merchant">Your NEAR mainnet account (the money goes here)</label>
+              <input id="merchant" className="input mono" placeholder="yourname.near" value={merchant} onChange={(e) => setMerchant(e.target.value)} autoComplete="off" spellCheck={false} />
+              <div className="row" style={{ marginTop: 8 }}>
+                <button type="button" className="btn btn-primary btn-sm" onClick={createSigned} disabled={signing || !desc.trim() || !!amountErr}>
+                  {signing && <LoaderCircle size={14} className="spin" aria-hidden />} Sign with my NEAR wallet and create
+                </button>
+                <span className="hint">Recommended. Your wallet signs who gets paid, how much and for what, and customers see it was really you.</span>
+              </div>
+            </div>
+          )}
           <p className="muted small" style={{ marginTop: 10, marginBottom: 0 }}>
-            USDC is Circle's testnet USDC on NEAR (a NEP-141 token). The vault pays it with <code>ft_transfer</code>, attaching the required 1 yoctoNEAR
+            {isLink ? "Real money: your customer pays from any chain through NEAR Intents and you receive exact USDC on NEAR. " : "Test money only. "}
+            USDC test is Circle's testnet USDC on NEAR (a NEP-141 token). The vault pays it with <code>ft_transfer</code>, attaching the required 1 yoctoNEAR
             itself, because the agent's limited key can't attach deposits.
           </p>
         </form>
@@ -150,7 +190,7 @@ export function InvoicesPage() {
                 {list.map((i) => (
                   <tr key={i.id}>
                     <td data-label="Invoice">
-                      <Link to={`/invoices/${i.id}`} className="mono">
+                      <Link to={i.asset === USDC_MAINNET ? `/pay/${i.id}` : `/invoices/${i.id}`} className="mono">
                         {i.id}
                       </Link>
                       <div className="muted small">{new Date(i.createdAt).toLocaleString()}</div>
@@ -162,9 +202,9 @@ export function InvoicesPage() {
                     <td data-label="Status">
                       <InvoiceStatus s={i.status} />
                     </td>
-                    <td data-label="Payment">{i.txHash ? <TxLink hash={i.txHash} /> : <span className="muted">—</span>}</td>
+                    <td data-label="Payment">{i.txUrl ? <a href={i.txUrl} target="_blank" rel="noreferrer">View</a> : i.txHash ? <TxLink hash={i.txHash} /> : <span className="muted">—</span>}</td>
                     <td data-label="Link">
-                      <CopyButton text={`${location.origin}/invoices/${i.id}`} label="Copy link" />
+                      <CopyButton text={`${location.origin}${i.asset === USDC_MAINNET ? "/pay" : "/invoices"}/${i.id}`} label="Copy link" />
                     </td>
                   </tr>
                 ))}

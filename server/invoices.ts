@@ -7,7 +7,22 @@ import { join } from "node:path";
 import { ROOT } from "../passport/src/config.ts";
 import { getAsset, listAssets } from "../passport/src/assets.ts";
 
-export type InvoiceStatus = "unpaid" | "pending_approval" | "paid" | "refused" | "failed";
+export type InvoiceStatus = "unpaid" | "pending_approval" | "processing" | "paid" | "refused" | "refunded" | "failed";
+
+/** One 1Click deposit address for an any-chain payment link. */
+export interface Checkout {
+  depositAddress: string;
+  depositMemo?: string;
+  originAsset: string;
+  label: string;
+  amountIn: string;
+  refundTo: string;
+  deadline: string;
+  status: string;
+  txHash?: string;
+  txUrl?: string;
+  refundReason?: string;
+}
 
 export interface Invoice {
   id: string;
@@ -23,6 +38,11 @@ export interface Invoice {
   reasons?: string[];
   vaultPaymentId?: string;
   txHash?: string;
+  /** Full explorer link, when the payment isn't on testnet. */
+  txUrl?: string;
+  checkouts?: Checkout[];
+  /** NEP-413 token: the merchant's wallet signed this exact link. */
+  signedToken?: string;
   reportHash?: string;
   paidAt?: string;
 }
@@ -122,7 +142,7 @@ export function toCsv(list: Invoice[], explorer: string, formatAmount: (units: s
     i.decision ?? "",
     i.vaultPaymentId ?? "",
     i.txHash ?? "",
-    i.txHash ? `${explorer}/txns/${i.txHash}` : "",
+    i.txUrl ?? (i.txHash ? `${explorer}/txns/${i.txHash}` : ""),
     i.paidAt ?? "",
   ]);
   return [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n";

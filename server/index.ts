@@ -17,14 +17,16 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 import { check } from "../passport/src/check.ts";
 import { NETWORKS, ROOT, loadDeployment } from "../passport/src/config.ts";
 import { nearAmount } from "../passport/src/format.ts";
-import { USDC_TESTNET, formatUnits, getAsset, listAssets, resolveAsset, toUnits } from "../passport/src/assets.ts";
+import { USDC_MAINNET, USDC_TESTNET, formatUnits, getAsset, listAssets, resolveAsset, toUnits } from "../passport/src/assets.ts";
 import { viewAccount, viewFunction } from "../passport/src/near.ts";
 import { loadSigner } from "../passport/src/verdict.ts";
 import type { Network } from "../passport/src/types.ts";
 import { accountFromKey, hasKey } from "../agent/src/keys.ts";
 import { llmConfigured } from "../agent/src/agent.ts";
 import { refuseReason, runOnce } from "./guard.ts";
-import { createInvoice, getInvoice, listInvoices, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
+import { createCheckout, isDone, overallStatus, payTokens, readCheckout } from "./checkout.ts";
+import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, verifyLinkToken } from "./merchants.ts";
+import { createInvoice, getInvoice, type Invoice, listInvoices, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? "127.0.0.1";
@@ -229,12 +231,82 @@ function readRun(name: string) {
 async function refreshInvoice(id: string) {
   const inv = getInvoice(id);
   if (!inv) throw new HttpError(404, `Unknown invoice ${id}`);
+  if (inv.asset === USDC_MAINNET) return syncCheckouts(inv);
   if (inv.status !== "pending_approval" || inv.vaultPaymentId === undefined) return inv;
   const d = requireDeployment();
   const p: any = await viewFunction(NET, d.vault, "get_payment", { payment_id: inv.vaultPaymentId });
   const status = statusFromVault(p?.status ?? "");
   if (status === inv.status) return inv;
   return updateInvoice(id, { status, paidAt: status === "paid" ? new Date(Number(p.updated_at_ms)).toISOString() : undefined });
+}
+
+// ---------------------------------------------------------------- any-chain payment links
+
+async function syncCheckouts(inv: Invoice) {
+  if (!inv.checkouts?.length || inv.status === "paid") return inv;
+  const checkouts = await Promise.all(inv.checkouts.map((c) => (isDone(c) ? c : readCheckout(c).catch(() => c))));
+  const status = overallStatus(checkouts);
+  const paid = checkouts.find((c) => c.status === "SUCCESS");
+  return updateInvoice(inv.id, { checkouts, status, txHash: paid?.txHash, txUrl: paid?.txUrl, paidAt: paid ? new Date().toISOString() : undefined });
+}
+
+async function quoteInvoice(id: string, b: any) {
+  const inv = await refreshInvoice(id);
+  if (inv.asset !== USDC_MAINNET) throw new HttpError(409, "This invoice is not an any-chain payment link");
+  if (inv.status === "paid" || inv.status === "processing") throw new HttpError(409, `Invoice is already ${inv.status}`);
+  const refundTo = String(b.refundTo ?? "").trim();
+  if (!refundTo || refundTo.length > 128) throw new HttpError(400, "A refund address is required");
+  const token = (await payTokens()).find((t) => t.assetId === b.originAsset);
+  if (!token) throw new HttpError(400, "Unsupported payment token");
+
+  // Same choice again (e.g. a page reload): keep the same address rather than opening a second one.
+  const list = inv.checkouts ?? [];
+  const last = list.at(-1);
+  if (last?.status === "PENDING_DEPOSIT" && last.originAsset === token.assetId && last.refundTo === refundTo && Date.parse(last.deadline) - Date.now() > 600_000) return inv;
+  if (list.length >= 5) throw new HttpError(409, "Too many payment attempts for this link");
+
+  const { report } = await check({ network: "mainnet", recipient: inv.merchant, amount: inv.amount, asset: inv.asset });
+  if (report.decision === "BLOCK") throw new HttpError(403, "A serious policy rule applies to this merchant, so no payment address was created");
+
+  try {
+    const c = await createCheckout({ merchant: inv.merchant, amount: inv.amount, originAsset: token.assetId, refundTo, label: token.label });
+    return updateInvoice(id, { checkouts: [...list, c], status: "unpaid" });
+  } catch (e: any) {
+    throw new HttpError(400, e.message);
+  }
+}
+
+/** Anyone with a link can read it, so refund addresses stay private. */
+const publicInvoice = ({ signedToken, ...i }: Invoice) => ({ ...i, signed: !!signedToken, checkouts: i.checkouts?.map(({ refundTo: _, ...c }) => c) });
+
+const sigCache = new Map<string, { at: number; ok: boolean }>();
+/** Re-checks the merchant's signature (their key may have been removed since), cached 10 minutes. */
+async function withSignature(i: Invoice) {
+  let signature: "valid" | "invalid" | "none" = "none";
+  if (i.signedToken) {
+    const hit = sigCache.get(i.id);
+    let ok = hit && Date.now() - hit.at < 600_000 ? hit.ok : undefined;
+    if (ok === undefined) {
+      ok = await verifyLinkToken(i.signedToken, i, false).then(() => true, () => false);
+      sigCache.set(i.id, { at: Date.now(), ok });
+    }
+    signature = ok ? "valid" : "invalid";
+  }
+  return { ...publicInvoice(i), signature };
+}
+
+async function merchantProfile(account: string) {
+  let m = getMerchant(account);
+  if (m.website && Date.now() - Date.parse(m.websiteCheckedAt ?? "0") > 3_600_000) m = await checkWebsite(account, m.website).catch(() => m);
+  const links = listInvoices().filter((i) => i.merchant === account && i.asset === USDC_MAINNET);
+  const paid = links.filter((i) => i.status === "paid");
+  return {
+    ...m,
+    links: links.length,
+    signedLinks: links.filter((i) => i.signedToken).length,
+    paid: paid.length,
+    paidTotal: formatUnits(paid.reduce((s, i) => s + BigInt(i.amount), 0n).toString(), getAsset(USDC_MAINNET)!),
+  };
 }
 
 async function payInvoice(id: string) {
@@ -245,6 +317,7 @@ async function payInvoice(id: string) {
 
 async function payInvoiceNow(id: string) {
   const inv = await refreshInvoice(id);
+  if (inv.asset === USDC_MAINNET) throw new HttpError(409, "This is a payment link: the customer pays it from the link page");
   if (inv.status === "paid" || inv.status === "pending_approval") throw new HttpError(409, `Invoice is already ${inv.status.replace("_", " ")}`);
   requireDeployment();
   const { buildWallet } = await import("../agent/src/demo.ts");
@@ -373,9 +446,28 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   // invoices
   if (m === "GET" && path === "/api/invoices") {
     const list = listInvoices();
-    const refreshed = await Promise.all(list.map((i) => (i.status === "pending_approval" ? refreshInvoice(i.id).catch(() => i) : i)));
-    return send(res, 200, { invoices: refreshed });
+    const refreshed = await Promise.all(list.map((i) => (i.status === "pending_approval" || i.checkouts?.length ? refreshInvoice(i.id).catch(() => i) : i)));
+    return send(res, 200, { invoices: refreshed.map(publicInvoice) });
   }
+  if (m === "POST" && path === "/api/links/message") {
+    const b = await readJson(req);
+    const asset = resolveAsset(String(b.asset ?? ""))?.id;
+    if (!asset) throw new HttpError(400, "Unsupported asset");
+    return send(res, 200, { recipient: SIGN_RECIPIENT, message: linkMessage({ merchant: String(b.merchant ?? ""), description: String(b.description ?? "").trim(), amount: toAssetUnits(b.amountDecimal, asset), asset }) });
+  }
+  const mm = path.match(/^\/api\/merchants\/([a-z0-9._-]{2,64})(\/website)?$/);
+  if (mm && m === "GET" && !mm[2]) return send(res, 200, await merchantProfile(mm[1]));
+  if (mm && m === "POST" && mm[2]) {
+    const b = await readJson(req);
+    let result;
+    try {
+      result = await checkWebsite(mm[1], String(b.website ?? ""));
+    } catch (e: any) {
+      throw new HttpError(400, e.message);
+    }
+    return send(res, 200, { ...(await merchantProfile(mm[1])), ...result });
+  }
+  if (m === "GET" && path === "/api/checkout/tokens") return send(res, 200, { tokens: await payTokens() });
   if (m === "GET" && path === "/api/invoices.csv") {
     res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
     return res.end(toCsv(listInvoices(), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
@@ -387,15 +479,20 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     try {
       const assetId = resolveAsset(String(b.asset ?? "NEAR"))?.id;
       if (!assetId) throw new HttpError(400, `Unsupported asset ${b.asset}`);
-      return send(res, 201, createInvoice({ merchant, description: b.description, amount: toAssetUnits(b.amountDecimal ?? b.amountNear, assetId), asset: assetId }));
+      if (assetId === USDC_MAINNET && !(await viewAccount("mainnet", merchant))) throw new HttpError(400, `${merchant} does not exist on NEAR mainnet`);
+      const fields = { merchant, description: String(b.description ?? "").trim(), amount: toAssetUnits(b.amountDecimal ?? b.amountNear, assetId), asset: assetId };
+      if (b.signedToken) await verifyLinkToken(String(b.signedToken), fields, true).catch((e) => { throw new HttpError(400, `Signature check failed: ${e.message}`); });
+      const inv = createInvoice(fields);
+      return send(res, 201, publicInvoice(b.signedToken ? updateInvoice(inv.id, { signedToken: String(b.signedToken) }) : inv));
     } catch (e: any) {
       if (e instanceof HttpError) throw e;
       throw new HttpError(400, e.message);
     }
   }
-  const invMatch = path.match(/^\/api\/invoices\/(INV-\d{4,})(\/pay)?$/);
+  const invMatch = path.match(/^\/api\/invoices\/(INV-\d{4,})(\/pay|\/quote)?$/);
   if (invMatch) {
-    if (m === "GET" && !invMatch[2]) return send(res, 200, await refreshInvoice(invMatch[1]));
+    if (m === "GET" && !invMatch[2]) return send(res, 200, await withSignature(await refreshInvoice(invMatch[1])));
+    if (m === "POST" && invMatch[2] === "/quote") return send(res, 200, await withSignature(await quoteInvoice(invMatch[1], await readJson(req))));
     if (m === "POST" && invMatch[2]) return send(res, 200, await payInvoice(invMatch[1]));
   }
 

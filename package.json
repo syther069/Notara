@@ -24,7 +24,8 @@
     "web:build": "npm --prefix web run build"
   },
   "dependencies": {
-    "near-api-js": "7.4.0"
+    "near-api-js": "7.4.0",
+    "near-sign-verify": "0.4.5"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

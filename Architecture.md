@@ -122,6 +122,11 @@ Stack choice: **Vite + React + TypeScript**, plain CSS. Reason: fast to build, e
 | `GET /api/invoices/:id` | – | one invoice |
 | `POST /api/invoices/:id/pay` | – | the customer's agent pays through wrapper → vault; returns invoice, Passport report, log |
 | `GET /api/invoices.csv` | – | CSV for the accountant (formula-injection safe), amounts in the asset's own unit plus `currency` and `asset_contract` columns |
+| `GET /api/checkout/tokens` | – | tokens a customer can pay with (from 1Click, cached 5 minutes) |
+| `POST /api/invoices/:id/quote` | `{ originAsset, refundTo }` | one-time 1Click deposit address for a mainnet USDC payment link. Refused on BLOCK |
+| `POST /api/links/message` | `{ merchant, description, amountDecimal, asset }` | the exact text the merchant's wallet signs (NEP-413) |
+| `GET /api/merchants/:account` | – | Merchant Passport: confirmed website, link and payment counts |
+| `POST /api/merchants/:account/website` | `{ website }` | checks `https://<site>/.well-known/near.txt` lists the account; only confirmed proofs are saved |
 | `GET /api/assets` | – | supported assets (`passport/assets.json`): NEAR and Circle testnet USDC |
 
 Errors are JSON `{ error }` with 400 (bad input), 404, 409 (testnet not set up, demo already running, invoice already paid) or 500.

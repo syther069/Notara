@@ -4,6 +4,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { NearConnector } from "@hot-labs/near-connect";
+import { sign } from "near-sign-verify";
 
 const NETWORK = "testnet" as const;
 /** near-connect manifest id of the EVM option: MetaMask / WalletConnect sign NEAR transactions via evm-on-near.dev. */
@@ -17,6 +18,11 @@ type WalletState = {
   /** Open the wallet picker, or go straight to one wallet (e.g. "ethereum-wallets" for MetaMask & other EVM wallets). */
   connect: (walletId?: string) => Promise<void>;
   disconnect: () => Promise<void>;
+  /**
+   * Sign a payment link with a NEAR mainnet wallet (NEP-413). `message` gets the signer's account and
+   * returns the exact text to sign. Returns the token for the backend and the signer.
+   */
+  signLink: (message: (accountId: string) => Promise<string>) => Promise<{ token: string; accountId: string }>;
   /** Sign and send one function call (no deposit) with the connected wallet. Returns the tx hash. */
   call: (contractId: string, methodName: string, args: object, gasTgas?: number) => Promise<string>;
 };
@@ -28,6 +34,9 @@ const Ctx = createContext<WalletState>({
   error: null,
   connect: async () => {},
   disconnect: async () => {},
+  signLink: async () => {
+    throw new Error("Wallet not ready");
+  },
   call: async () => {
     throw new Error("Wallet not ready");
   },
@@ -73,6 +82,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     setError(null);
     try {
+      await ensureNetwork(c, NETWORK);
       const wallet = await c.connect(walletId ? { walletId } : undefined);
       const accounts = await wallet.getAccounts({ network: NETWORK });
       setAccountId(accounts[0]?.accountId ?? null);
@@ -88,6 +98,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(async () => {
     await connectorRef.current?.disconnect().catch(() => {});
     setAccountId(null);
+  }, []);
+
+  const signLink = useCallback(async (message: (accountId: string) => Promise<string>) => {
+    const c = connectorRef.current;
+    if (!c) throw new Error("Wallet not ready");
+    const switched = await ensureNetwork(c, "mainnet");
+    const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
+    const wallet = existing?.wallet ?? (await c.connect());
+    const account = (existing?.accounts ?? (await wallet.getAccounts({ network: "mainnet" })))[0]?.accountId;
+    if (!account) throw new Error("No mainnet account in this wallet");
+    setAccountId(account);
+    const token = await sign(await message(account), {
+      signer: { signMessage: (p: any) => wallet.signMessage({ ...p, network: "mainnet", signerId: account }) },
+      recipient: "agentspend-passport",
+    });
+    return { token, accountId: account };
   }, []);
 
   const call = useCallback(
@@ -111,6 +137,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [accountId],
   );
 
-  const value = useMemo(() => ({ accountId, ready, busy, error, connect, disconnect, call }), [accountId, ready, busy, error, connect, disconnect, call]);
+  const value = useMemo(
+    () => ({ accountId, ready, busy, error, connect, disconnect, signLink, call }),
+    [accountId, ready, busy, error, connect, disconnect, signLink, call],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+/** Payment links are signed on mainnet; the vault lives on testnet. Returns true if it had to switch. */
+async function ensureNetwork(c: NearConnector, network: "mainnet" | "testnet"): Promise<boolean> {
+  if (c.network === network) return false;
+  await c.disconnect().catch(() => {});
+  c.features = network === "mainnet" ? { mainnet: true, signMessage: true } : { testnet: true, signAndSendTransaction: true };
+  c.network = network;
+  return true;
 }

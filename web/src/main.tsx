@@ -12,6 +12,8 @@ import { VaultPage } from "./pages/Vault";
 import { InvoicesPage } from "./pages/Invoices";
 import { InvoicePage } from "./pages/Invoice";
 import { AboutPage } from "./pages/About";
+import { PayPage } from "./pages/Pay";
+import { MerchantPage } from "./pages/Merchant";
 
 function NotFound() {
   return (
@@ -36,6 +38,8 @@ createRoot(document.getElementById("root")!).render(
           <Route path="vault" element={<VaultPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="invoices/:id" element={<InvoicePage />} />
+          <Route path="pay/:id" element={<PayPage />} />
+          <Route path="m/:account" element={<MerchantPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>

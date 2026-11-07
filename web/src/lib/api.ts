@@ -92,13 +92,47 @@ export interface VaultSummary {
   };
 }
 
+export interface Checkout {
+  depositAddress: string;
+  depositMemo?: string;
+  originAsset: string;
+  label: string;
+  amountIn: string;
+  deadline: string;
+  status: string;
+  txHash?: string;
+  txUrl?: string;
+  refundReason?: string;
+}
+
+export interface MerchantProfile {
+  account: string;
+  website?: string;
+  websiteVerified?: boolean;
+  websiteCheckedAt?: string;
+  links: number;
+  signedLinks: number;
+  paid: number;
+  paidTotal: string;
+}
+
+export interface PayToken {
+  assetId: string;
+  label: string;
+}
+
 export interface Invoice {
   id: string;
   merchant: string;
   description: string;
   amount: string;
   asset: string;
-  status: "unpaid" | "pending_approval" | "paid" | "refused" | "failed";
+  status: "unpaid" | "pending_approval" | "processing" | "paid" | "refused" | "refunded" | "failed";
+  checkouts?: Checkout[];
+  txUrl?: string;
+  signed?: boolean;
+  /** Only on single-invoice reads: does the merchant's wallet signature still check out? */
+  signature?: "valid" | "invalid" | "none";
   createdAt: string;
   updatedAt: string;
   decision?: Decision;
@@ -154,6 +188,11 @@ export const api = {
   demoStatus: () => req<{ running: boolean }>("/api/demo/status"),
   invoices: () => req<{ invoices: Invoice[] }>("/api/invoices"),
   invoice: (id: string) => req<Invoice>(`/api/invoices/${encodeURIComponent(id)}`),
-  createInvoice: (b: { description: string; amountDecimal: string; asset: string }) => post<Invoice>("/api/invoices", b),
+  linkMessage: (b: { merchant: string; description: string; amountDecimal: string; asset: string }) => post<{ message: string }>("/api/links/message", b),
+  merchant: (account: string) => req<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}`),
+  checkWebsite: (account: string, website: string) => post<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}/website`, { website }),
+  payTokens: () => req<{ tokens: PayToken[] }>("/api/checkout/tokens"),
+  quote: (id: string, b: { originAsset: string; refundTo: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/quote`, b),
+  createInvoice: (b: { description: string; amountDecimal: string; asset: string; merchant?: string; signedToken?: string }) => post<Invoice>("/api/invoices", b),
   payInvoice: (id: string) => post<{ invoice: Invoice; check?: CheckResponse; log: string[] }>(`/api/invoices/${encodeURIComponent(id)}/pay`, {}),
 };
