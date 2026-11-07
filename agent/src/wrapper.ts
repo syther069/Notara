@@ -12,7 +12,7 @@ import type { Account } from "near-api-js";
 import { viewFunction } from "../../passport/src/near.ts";
 import type { CheckResponse, Network, PaymentRequest } from "../../passport/src/types.ts";
 
-/** Asks the Passport service over HTTP, so the agent's process never loads the signing key. */
+/** Asks Notara service over HTTP, so the agent's process never loads the signing key. */
 export async function passportCheck(req: PaymentRequest, opts: { sign?: boolean } = {}): Promise<CheckResponse> {
   const url = `${process.env.PASSPORT_URL ?? "http://127.0.0.1:8787"}/v1/check`;
   const res = await fetch(url, {
@@ -22,7 +22,7 @@ export async function passportCheck(req: PaymentRequest, opts: { sign?: boolean 
     signal: AbortSignal.timeout(60_000),
   });
   const body: any = await res.json();
-  if (!res.ok) throw new Error(body.error ?? `Passport returned HTTP ${res.status}`);
+  if (!res.ok) throw new Error(body.error ?? `Notara returned HTTP ${res.status}`);
   return body;
 }
 
@@ -40,7 +40,7 @@ export interface WrapperOptions {
   /** Called on BLOCK and WARN so a human hears about it. */
   notifyHuman?: (msg: string, check: CheckResponse) => void | Promise<void>;
   log?: (line: string) => void;
-  /** Injected in tests. Defaults to the Passport service. */
+  /** Injected in tests. Defaults to Notara service. */
   checker?: typeof passportCheck;
 }
 
@@ -57,11 +57,11 @@ export class GuardedPayments {
     try {
       res = await (this.o.checker ?? passportCheck)({ network: this.o.network, payer: this.o.vaultId, recipient, amount, asset }, { sign: true });
     } catch (e: any) {
-      // Passport unreachable or input invalid: nothing is signed. (Fail closed.)
-      return { status: "error", error: `Passport check failed, payment not attempted: ${e?.message ?? e}` };
+      // Notara unreachable or input invalid: nothing is signed. (Fail closed.)
+      return { status: "error", error: `Notara check failed, payment not attempted: ${e?.message ?? e}` };
     }
     const d = res.report.decision;
-    this.log(`[wrapper] Passport decision for ${recipient}: ${d}`);
+    this.log(`[wrapper] Notara decision for ${recipient}: ${d}`);
 
     if (d === "BLOCK") {
       this.log(`[wrapper] BLOCK -> refusing to sign. No transaction created.`);

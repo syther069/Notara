@@ -38,13 +38,13 @@ export const newNonce = () => BigInt("0x" + randomBytes(8).toString("hex")).toSt
 const KEY_FILE = join(ROOT, "keys", "passport-signer.json");
 
 /**
- * The Passport signer key. In this prototype it is a local file; the stretch goal is to keep it
+ * Notara signer key. In this prototype it is a local file; the stretch goal is to keep it
  * inside a TEE so the operator cannot sign arbitrary verdicts. Env PASSPORT_SIGNER_KEY overrides.
  */
 export function loadSigner(create = false): KeyPair {
   if (process.env.PASSPORT_SIGNER_KEY) return KeyPair.fromString(process.env.PASSPORT_SIGNER_KEY as KeyPairString);
   if (existsSync(KEY_FILE)) return KeyPair.fromString(JSON.parse(readFileSync(KEY_FILE, "utf8")).secret_key);
-  if (!create) throw new Error(`No Passport signer key. Run "npm run setup:testnet" or set PASSPORT_SIGNER_KEY.`);
+  if (!create) throw new Error(`No Notara signer key. Run "npm run setup:testnet" or set PASSPORT_SIGNER_KEY.`);
   const kp = KeyPair.fromRandom("ed25519");
   mkdirSync(join(ROOT, "keys"), { recursive: true });
   writeFileSync(KEY_FILE, JSON.stringify({ public_key: kp.getPublicKey().toString(), secret_key: kp.toString() }, null, 2));

@@ -20,7 +20,7 @@ export function nearAmount(yocto: string): string {
 export function formatReport(r: Report): string {
   const lines: string[] = [];
   const amt = r.request.asset === "NEAR" ? `${nearAmount(r.request.amount)} NEAR` : `${r.request.amount} ${r.request.asset}`;
-  lines.push(`${bold("Passport check")}  ${r.request.recipient}  ${amt}  ${dim(`[${r.request.network}]`)}`);
+  lines.push(`${bold("Notara check")}  ${r.request.recipient}  ${amt}  ${dim(`[${r.request.network}]`)}`);
   lines.push(`Decision: ${decisionColor(r.decision)}   evidence coverage ${r.coverage.ok}/${r.coverage.total} signals` +
     (r.coverage.failed.length ? red(`  (unavailable: ${r.coverage.failed.join(", ")})`) : ""));
   lines.push("");

@@ -4,7 +4,7 @@
 //   npm run owner -- pending              list payments waiting for approval
 //   npm run owner -- approve <id>         approve a WARN payment (vault re-checks caps)
 //   npm run owner -- reject <id>
-//   npm run owner -- show <id>            payment + the Passport report hash it was based on
+//   npm run owner -- show <id>            payment + Notara report hash it was based on
 //   npm run owner -- pause | unpause
 //   npm run owner -- lock-vault           delete the vault's full-access key (irreversible: no more upgrades)
 //   npm run owner -- enable-usdc          USDC cap on the vault + token registration for vault/merchant/newshop
@@ -103,7 +103,7 @@ async function main() {
       const r: any = await owner.callFunctionRaw({
         contractId: USDC_TESTNET,
         methodName: "ft_transfer",
-        args: { receiver_id: dep.vault, amount: units, memo: "fund AgentSpend vault" },
+        args: { receiver_id: dep.vault, amount: units, memo: "fund Notara vault" },
         deposit: 1n,
         gas: 30_000_000_000_000n,
       });

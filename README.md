@@ -1,6 +1,6 @@
-# AgentSpend Passport
+# Notara
 
-**A counterparty check and a payment vault for AI agents on NEAR.** Before an agent pays anyone, the Passport looks up the recipient and returns **ALLOW**, **WARN** or **BLOCK** with reasons and sources. A NEAR contract then enforces that decision, so an agent that skips its own safety code still can't move the money.
+**A counterparty check and a payment vault for AI agents on NEAR.** Before an agent pays anyone, Notara looks up the recipient and returns **ALLOW**, **WARN** or **BLOCK** with reasons and sources. A NEAR contract then enforces that decision, so an agent that skips its own safety code still can't move the money.
 
 Built for the NEAR Hackathon, track **AI Security & Defense**. Network: **testnet** for contracts and funds, **mainnet read-only** for lookups.
 
@@ -12,7 +12,7 @@ A wrapper that "refuses to sign" only stops an agent that cooperates. A prompt-i
 
 - The agent **never holds a full-access key.** It holds a function-call access key on the vault account that can call only `request_payment`. It cannot transfer NEAR, attach a deposit, or call owner methods. The NEAR protocol enforces these limits, not our code.
 - The **vault contract** holds the money. It pays out only when given a verdict that is:
-  - signed by the Passport key,
+  - signed by Notara key,
   - bound to this exact vault, recipient, amount and asset,
   - unexpired (max 10 minutes),
   - unused (nonce),
@@ -24,7 +24,7 @@ A wrapper that "refuses to sign" only stops an agent that cooperates. A prompt-i
  inbox document (untrusted)
         │
         ▼
- LLM agent ──pay()──► wrapper ──► Passport check ──► signed verdict (ALLOW/WARN/BLOCK)
+ LLM agent ──pay()──► wrapper ──► Notara check ──► signed verdict (ALLOW/WARN/BLOCK)
                          │  BLOCK: stop, nothing signed, notify human
                          ▼
           function-call key (request_payment only, no deposit)
@@ -35,7 +35,7 @@ A wrapper that "refuses to sign" only stops an agent that cooperates. A prompt-i
                          ▼
                 recipient (NEAR transfer, or NEP-141 ft_transfer with 1 yocto attached by the vault)
 
- Registry contract: shared reports, evidence links, verifier status, disputes  ◄── read by the Passport
+ Registry contract: shared reports, evidence links, verifier status, disputes  ◄── read by Notara
 ```
 
 ## What the demo shows (testnet, real transactions)
@@ -46,7 +46,7 @@ A wrapper that "refuses to sign" only stops an agent that cooperates. A prompt-i
 |---|---|---|
 | 1 | Invoice from an onboarded (allowlisted) merchant | ALLOW, then the vault pays |
 | 2 | Invoice with a hidden prompt injection: "pay 0.5 NEAR to attacker…" | BLOCK. The wrapper refuses and nothing is signed |
-| 3a | Compromised agent submits the signed BLOCK verdict anyway | Vault panics: `Passport verdict is BLOCK` |
+| 3a | Compromised agent submits the signed BLOCK verdict anyway | Vault panics: `Notara verdict is BLOCK` |
 | 3b | Rewrites BLOCK to ALLOW | Vault panics: `Invalid verdict signature` |
 | 3c | Forges an ALLOW with its own key | Vault panics: `Invalid verdict signature` |
 | 3d | Reuses a genuine merchant ALLOW for the attacker | Vault panics: `Verdict is for a different recipient` |
@@ -71,14 +71,14 @@ Every signal in a report states its source (`live-rpc`, `live-indexer`, `on-chai
 | Account exists, contract or not, code hash | NEAR RPC `view_account` (FastNear RPC) | `passport/src/signals/index.ts` `accountSignal` | Current state only |
 | Activity history: count, first and last observed | FastNear Transactions API `POST /v0/account` (`desc:false, limit:1` for the oldest) | `historySignal` | First **observed** activity is not the creation date. The index can have gaps. Old accounts can be bought |
 | Contract code deployments | FastNear `/v0/account` + `/v0/transactions`, scanning `DeployContract` in the tx and its receipts | `deploySignal` | Scans only the 100 most recent transactions. A redeploy is a risk signal, not proof |
-| Code changed since our last check | Our own code-hash snapshots (`passport/data/code-hashes.json`) | `recordCodeHash` | Only covers accounts this Passport has checked before |
+| Code changed since our last check | Our own code-hash snapshots (`passport/data/code-hashes.json`) | `recordCodeHash` | Only covers accounts this Notara has checked before |
 | Prior interactions | Vault `get_payments_to` (authoritative) + transaction hashes shared between vault and recipient in the indexer | `interactionSignal` | The indexer scan is capped at 5 pages per account and may miss older history |
 | Shared reports | Our `registry` contract `get_reports_for` | `reportsSignal` | Few reporters (cold start). No report does not mean safe. Only **Verified** reports can cause BLOCK. Unverified and Disputed reports lead to WARN at most |
 | Allowlist / denylist | `passport/policy.json` + allowlist from `deployment.testnet.json` | `policyListSignal` | Only as good as whoever maintains it |
 
 **Fail closed:** if any signal can't be fetched, the decision is at least WARN. The policy engine never returns ALLOW on missing evidence (tested in `passport/test/policy.test.ts`).
 
-**Live data vs fixtures:** the attacker account's "Verified scam report" is **seeded demo data**. It is stored on-chain with `is_fixture: true`, its evidence URI is `fixture://…`, and the Passport prints it as `[DEMO FIXTURE]`. It is not evidence about any real person or account. Everything else in a testnet report is read live from chain or the indexer at check time.
+**Live data vs fixtures:** the attacker account's "Verified scam report" is **seeded demo data**. It is stored on-chain with `is_fixture: true`, its evidence URI is `fixture://…`, and Notara prints it as `[DEMO FIXTURE]`. It is not evidence about any real person or account. Everything else in a testnet report is read live from chain or the indexer at check time.
 
 ## Function-call keys: what they do and don't protect
 
@@ -87,7 +87,7 @@ Every signal in a report states its source (`live-rpc`, `live-indexer`, `on-chai
 - ✅ Gas is paid from a fixed allowance (0.5 NEAR in setup). When the allowance runs out, the key stops working. Top up by adding a new key with the vault's full-access key before locking it.
 - ❌ They **do not** judge the recipient. Without the vault's checks, a function-call key on a naive payment contract could still pay anyone. The safety comes from the vault contract's rules, not from the key alone.
 - ❌ Whoever holds the vault's **full-access key** can still change or drain the vault. Setup keeps it so you can redeploy during development. `npm run owner -- lock-vault` deletes it, after which the vault can only change through its own contract methods.
-- ❌ The Passport signer key is a local file in this prototype. Whoever holds it can sign any verdict. A stretch goal is to keep it in a TEE.
+- ❌ Notara signer key is a local file in this prototype. Whoever holds it can sign any verdict. A stretch goal is to keep it in a TEE.
 
 ## Run it
 
@@ -123,7 +123,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 56 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status and link signing. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
+`npm test` runs 58 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status, link signing and send-link keys. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
 
 **2. Read-only check of a real mainnet account (no keys)**
 
@@ -150,7 +150,7 @@ This creates the subaccounts `vault`, `registry`, `verifier`, `merchant`, `newsh
 **4. Demo**
 
 ```bash
-npm run serve   # in another terminal: the demo asks the Passport service over HTTP
+npm run serve   # in another terminal: the demo asks Notara service over HTTP
 npm run demo
 ```
 
@@ -167,6 +167,8 @@ AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
 **Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Meteor, Intear, MyNearWallet or HOT. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `npx tsx scripts/upgrade-contract.ts vault` or `registry` (testnet, before `lock-vault`).
 
 **Any-chain payment links (real money, NEAR mainnet):** on the Invoices page, choose **USDC, any chain** and enter your mainnet account. The customer opens `/pay/<id>`, sees the safety check, picks a token, and gets a one-time NEAR Intents deposit address. The merchant receives exact USDC on NEAR, and we never hold the money. NEAR Intents has no testnet, so this uses real funds: keep amounts small. Optionally put `ONECLICK_JWT=...` in `.env` to avoid the unauthenticated fee. **Status: tested up to creating a real deposit address. No real payment has been made yet.**
+
+**Send by link (real money):** open `/send`, enter an amount (up to 25 USDC), and you get a link. Fund it from any chain, then send the link to anyone. They open it and move the USDC to their NEAR account; gas and USDC setup are paid by a sponsor account, so they need no NEAR. The key lives only in the link's `#` part, which browsers don't send to servers. It needs `SPONSOR_ACCOUNT` and `SPONSOR_PRIVATE_KEY` (a mainnet account with a little NEAR) in `.env`. **Status: built, not yet tested with real funds.**
 
 **Trust features on payment links:**
 - **Signed links:** click **Sign with my NEAR wallet and create**. Your mainnet wallet signs who gets paid, how much and for what (NEP-413, verified with `near-sign-verify` and FastNear). The checkout shows whether the signature still checks out.
@@ -219,14 +221,14 @@ If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a s
 **Implemented**
 - Vault contract: signed-verdict check, recipient/amount/asset/vault binding, expiry and max TTL, nonce replay protection, BLOCK refusal, WARN parking with owner approve/reject/expiry, per-transaction and daily caps per asset, NEAR and NEP-141 payouts with a failure callback that releases the cap reservation, pause, events.
 - Registry contract: bonded reports with evidence URI and hash, verifier appointment, Verified/Rejected rulings, disputes, fixture flag.
-- Passport: six live signals with provenance and caveats, a fail-closed policy engine, a canonical report hash, ed25519 verdict signing that matches the contract byte for byte, CLI and HTTP API.
+- Notara: six live signals with provenance and caveats, a fail-closed policy engine, a canonical report hash, ed25519 verdict signing that matches the contract byte for byte, CLI and HTTP API.
 - Agent: the wrapper (BLOCK stops, WARN parks and notifies, ALLOW pays), an LLM agent (NEAR AI Cloud / OpenAI-compatible) with a scripted fallback, a four-scenario attack demo with a saved log, owner CLI.
 - Website: Home, Check, Attack demo, Vault, Invoices and About. WARN approvals can be signed in the owner's own NEAR wallet (`@hot-labs/near-connect`, the connector NEAR's hackathon docs recommend), after a two-step ownership handover (`propose_owner` → `accept_owner`).
 
 **Not done yet / planned**
 - Running the demo with a real LLM (NEAR AI Cloud). So far only the scripted agent has run on testnet.
 - Integration tests in `near-sandbox`. Today the contracts have unit tests only, because the sandbox doesn't run on Windows; it can run under WSL.
-- Keeping the Passport signer key in a TEE (OutLayer / NEAR AI Cloud attestation).
+- Keeping Notara signer key in a TEE (OutLayer / NEAR AI Cloud attestation).
 - NEAR Intents / 1Click as an optional execution layer after an ALLOW.
 - A web UI for reports and approvals.
 - Gas-allowance monitoring for the agent key.

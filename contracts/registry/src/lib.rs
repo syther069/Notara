@@ -1,11 +1,11 @@
-//! AgentSpend Passport report registry.
+//! Notara report registry.
 //!
 //! Anyone can file a report about an account by posting a small bond (anti-spam).
 //! A report is only evidence to evaluate: it starts as `Unverified`. Only accounts the
 //! owner has appointed as verifiers can mark it `Verified` or `Rejected`. Any account can
 //! dispute a report, which moves it to `Disputed` until a verifier rules again.
 //!
-//! The Passport treats only `Verified` reports as grounds for BLOCK. `Unverified` and
+//! Notara treats only `Verified` reports as grounds for BLOCK. `Unverified` and
 //! `Disputed` reports lead to WARN at most.
 
 use near_sdk::json_types::U64;

@@ -9,8 +9,8 @@ import { verify } from "near-sign-verify";
 import { ROOT } from "../passport/src/config.ts";
 import { formatAmount } from "../passport/src/assets.ts";
 
-export const SIGN_RECIPIENT = "agentspend-passport";
-const DIR = process.env.AGENTSPEND_DATA_DIR ?? join(ROOT, "data");
+export const SIGN_RECIPIENT = "notara";
+const DIR = process.env.NOTARA_DATA_DIR ?? join(ROOT, "data");
 const FILE = join(DIR, "merchants.json");
 
 export interface Merchant {
@@ -22,7 +22,7 @@ export interface Merchant {
 
 /** The exact text the merchant sees and signs in their wallet. */
 export function linkMessage(l: { merchant: string; amount: string; asset: string; description: string }): string {
-  return `AgentSpend payment link\nPay to: ${l.merchant}\nAmount: ${formatAmount(l.amount, l.asset)}\nFor: ${l.description}`;
+  return `Notara payment link\nPay to: ${l.merchant}\nAmount: ${formatAmount(l.amount, l.asset)}\nFor: ${l.description}`;
 }
 
 /** Verifies a NEP-413 token from the merchant's wallet for exactly this link. Returns the signer, or throws. */

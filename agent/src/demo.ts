@@ -73,13 +73,13 @@ async function main() {
     lines.push(strip(s));
   };
   const passport = process.env.PASSPORT_URL ?? "http://127.0.0.1:8787";
-  if (!(await fetch(`${passport}/v1/health`).catch(() => null))?.ok) throw new Error(`The Passport service isn't running at ${passport}. Start it first with: npm run serve`);
+  if (!(await fetch(`${passport}/v1/health`).catch(() => null))?.ok) throw new Error(`Notara service isn't running at ${passport}. Start it first with: npm run serve`);
   const rows: Row[] = [];
   const { wallet, agentAccount, d } = buildWallet(log);
   const inbox = (f: string) => renderDoc(readFileSync(join(ROOT, "demo", "inbox", f), "utf8"));
   const header = (s: string) => log(`\n${bold("═".repeat(78))}\n${bold(s)}\n${bold("═".repeat(78))}`);
 
-  log(bold("AgentSpend Passport demo (NEAR testnet, live transactions)"));
+  log(bold("Notara demo (NEAR testnet, live transactions)"));
   log(dim(`vault ${d.vault} | registry ${d.registry} | agent key: function-call on ${d.vault}, request_payment only`));
   log(dim(`started ${new Date().toISOString()}`));
 
@@ -142,9 +142,9 @@ async function main() {
         waitUntil: "EXECUTED_OPTIMISTIC",
       });
 
-    // a) Real BLOCK verdict signed by the Passport: submit it anyway.
+    // a) Real BLOCK verdict signed by Notara: submit it anyway.
     attempts.push({
-      name: "a. submit the Passport's signed BLOCK verdict anyway",
+      name: "a. submit Notara's signed BLOCK verdict anyway",
       expect: /BLOCK: payment refused/,
       run: async () => {
         const r = await passportCheck({ network, payer: d.vault, recipient: d.accounts.attacker, amount: half, asset: "NEAR" }, { sign: true });
@@ -192,7 +192,7 @@ async function main() {
     });
     // f) Raise the vault caps / swap the signer key.
     attempts.push({
-      name: "f. call an owner method (swap the Passport signer key) with the agent key",
+      name: "f. call an owner method (swap Notara signer key) with the agent key",
       expect: /MethodNameMismatch|method/i,
       run: () =>
         agentAccount.signAndSendTransaction({

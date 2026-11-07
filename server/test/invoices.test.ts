@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 // Isolated data dir for each test run.
-process.env.AGENTSPEND_DATA_DIR = mkdtempSync(join(tmpdir(), "agentspend-inv-"));
+process.env.NOTARA_DATA_DIR = mkdtempSync(join(tmpdir(), "notara-inv-"));
 let inv: typeof import("../invoices.ts");
 before(async () => {
   inv = await import("../invoices.ts");

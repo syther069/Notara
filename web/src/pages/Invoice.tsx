@@ -87,7 +87,7 @@ export function InvoicePage() {
               <dd>{new Date(inv.createdAt).toLocaleString()}</dd>
               {inv.decision && (
                 <>
-                  <dt>Passport verdict</dt>
+                  <dt>Notara verdict</dt>
                   <dd>{inv.decision}</dd>
                 </>
               )}
@@ -140,7 +140,7 @@ export function InvoicePage() {
               </button>
             </div>
             <p className="muted small" style={{ marginTop: 12, marginBottom: 0 }}>
-              The agent pays through the Passport check and the testnet vault. It never holds a key that can send money directly.
+              The agent pays through Notara check and the testnet vault. It never holds a key that can send money directly.
             </p>
           </div>
 
@@ -156,7 +156,7 @@ export function InvoicePage() {
           )}
           {check && (
             <>
-              <h2>Passport check for this payment</h2>
+              <h2>Notara check for this payment</h2>
               <CheckResult res={check} />
             </>
           )}

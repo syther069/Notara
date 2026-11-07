@@ -45,7 +45,7 @@ function lineClass(l: string) {
   if (l.startsWith("[wrapper]")) return "l-wrapper";
   if (l.startsWith("[notify human]") || l.startsWith("[human]")) return "l-human";
   if (l.startsWith("[agent]")) return "l-agent";
-  if (/^[1-4]\.\s|^Summary|^AgentSpend Passport demo/.test(l)) return "l-head";
+  if (/^[1-4]\.\s|^Summary|^Notara demo/.test(l)) return "l-head";
   return "";
 }
 
@@ -266,7 +266,7 @@ export function DemoPage() {
                     className="btn btn-secondary btn-sm"
                     onClick={() => {
                       const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/plain" }));
-                      const a = Object.assign(document.createElement("a"), { href: url, download: viewing ?? "agentspend-demo.log" });
+                      const a = Object.assign(document.createElement("a"), { href: url, download: viewing ?? "notara-demo.log" });
                       a.click();
                       setTimeout(() => URL.revokeObjectURL(url), 1000);
                     }}

@@ -48,7 +48,7 @@ export interface Reason {
 }
 
 export interface Report {
-  version: "agentspend-passport/report/v1";
+  version: "notara/report/v1";
   request: PaymentRequest;
   decision: Decision;
   reasons: Reason[];

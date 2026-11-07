@@ -92,7 +92,7 @@ fn allow_executes_and_reserves_daily() {
 }
 
 #[test]
-#[should_panic(expected = "Passport verdict is BLOCK: payment refused")]
+#[should_panic(expected = "Notara verdict is BLOCK: payment refused")]
 fn block_verdict_refused_on_chain() {
     let mut c = setup();
     ctx(vault_id(), NOW_MS);
@@ -370,7 +370,7 @@ fn typescript_signature_verifies_on_chain() {
 
 #[test]
 fn signing_message_is_stable() {
-    // The Passport (TypeScript) signer has a matching test that must produce this exact string.
+    // Notara (TypeScript) signer has a matching test that must produce this exact string.
     let v = verdict(merchant(), ONE_NEAR, Decision::Allow, 42);
     assert_eq!(
         v.signing_message(),

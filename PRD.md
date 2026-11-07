@@ -1,4 +1,4 @@
-# AgentSpend Passport: Product Requirements (PRD)
+# Notara: Product Requirements (PRD)
 
 Status: draft v1 · 2026-11-04 · Hackathon deadline: **14 Nov 2026, 23:59 UTC** (see `HACKATHON.md`)
 
@@ -30,13 +30,13 @@ Today an agent has no reliable way to ask, *"Is this recipient safe to pay?"* be
 
 Three pieces working together:
 
-1. **The Passport (the checker).** Looks up a recipient using live NEAR data and returns:
+1. **Notara (the checker).** Looks up a recipient using live NEAR data and returns:
    - ✅ **ALLOW**: no policy rule was broken
    - ⚠️ **WARN**: something is missing or unusual, so a human must approve
    - ⛔ **BLOCK**: a serious rule was broken, so the payment is refused
 
    Every answer lists its reasons, where each piece of evidence came from, and what the checker could *not* verify.
-2. **The Vault (the locked box).** A NEAR smart contract that holds the money. It only pays when it receives a fresh approval signed by the Passport for that exact payment. The agent's key can only ask the vault to pay; it cannot move money by itself.
+2. **The Vault (the locked box).** A NEAR smart contract that holds the money. It only pays when it receives a fresh approval signed by Notara for that exact payment. The agent's key can only ask the vault to pay; it cannot move money by itself.
 3. **The Website.** Where people see and control all of this: check any account, watch the attack demo, and approve WARN payments.
 
 ## 5. Goals and non-goals
@@ -60,7 +60,7 @@ Three pieces working together:
 ### 6.1 Home (`/`)
 - Headline and one-sentence pitch.
 - "The problem" in three short points with a visual of a hidden instruction in an invoice.
-- "How it works" diagram: Agent → Passport → Vault → Recipient.
+- "How it works" diagram: Agent → Notara → Vault → Recipient.
 - The four demo stories as cards (ALLOW, BLOCK, hacked agent, WARN).
 - Buttons: **Check an account** and **Watch the attack demo**.
 - Clear label: "Testnet prototype. Not audited. No real funds."
@@ -96,8 +96,8 @@ Three pieces working together:
 
 ### 6.6 Merchant payment flow (for the Real-World Money track) — built 2026-11-05
 The Real-World Money judges want something "a normal company could use right away". Plan:
-- **Invoice page:** a merchant creates an invoice (amount, description). It gets a shareable link, and the customer's AI agent pays it through the Passport and vault.
-- **Stablecoin payment (built):** invoices in **Circle's testnet USDC on NEAR** (`3e2210e1…b8af`, 6 decimals) as well as NEAR. The vault pays it with `ft_transfer` and attaches the 1 yoctoNEAR deposit itself. Policy: WARN above 25 USDC, BLOCK above 200 USDC, and WARN on a first payment above 5 USDC. Vault caps: 50 USDC per payment, 100 USDC per day. The Passport also warns when the recipient isn't registered with the token.
+- **Invoice page:** a merchant creates an invoice (amount, description). It gets a shareable link, and the customer's AI agent pays it through Notara and vault.
+- **Stablecoin payment (built):** invoices in **Circle's testnet USDC on NEAR** (`3e2210e1…b8af`, 6 decimals) as well as NEAR. The vault pays it with `ft_transfer` and attaches the 1 yoctoNEAR deposit itself. Policy: WARN above 25 USDC, BLOCK above 200 USDC, and WARN on a first payment above 5 USDC. Vault caps: 50 USDC per payment, 100 USDC per day. Notara also warns when the recipient isn't registered with the token.
 - **Clear status:** each invoice shows a trustworthy status (unpaid, waiting for approval, paid, refused) with the transaction link.
 - **CSV export:** the merchant can download paid invoices as a CSV an accountant can read.
 - **Stretch:** NEAR Intents (1Click) so the customer can pay from other chains or tokens. Most of this is mainnet-oriented, so check that before planning on it.
@@ -106,7 +106,7 @@ The Real-World Money judges want something "a normal company could use right awa
 
 | ID | Requirement |
 |---|---|
-| F1 | The Passport returns ALLOW / WARN / BLOCK with reasons, evidence links, source per signal and coverage. |
+| F1 | Notara returns ALLOW / WARN / BLOCK with reasons, evidence links, source per signal and coverage. |
 | F2 | If any data source fails, the decision is at least WARN (never ALLOW). |
 | F3 | Only a **Verified** report in a blocking category can cause BLOCK. Unverified or disputed reports cause WARN at most. |
 | F4 | Verdicts are signed and bound to vault, recipient, amount, asset, expiry and a one-time nonce. |
@@ -143,7 +143,7 @@ Decisions (owner, 2026-11-04):
 
 | Days | Work |
 |---|---|
-| 4 Nov (done) | Contracts, Passport, agent wrapper, demo script, tests |
+| 4 Nov (done) | Contracts, Notara, agent wrapper, demo script, tests |
 | 5–7 Nov | Website: Home, Check, Demo, Vault pages + server API |
 | 8 Nov | Testnet setup, full live demo run from the website |
 | 9–10 Nov | Polish, About page, README sync |

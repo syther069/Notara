@@ -1,6 +1,6 @@
 // An accounts-payable agent. It reads a document (an invoice from the inbox) and pays it.
 // The document is UNTRUSTED. An injected instruction in it can make the model call pay() on an
-// attacker's account. This is the attack the Passport + vault are meant to stop.
+// attacker's account. This is the attack Notara + vault are meant to stop.
 //
 // LLM: any OpenAI-compatible chat API. Default is NEAR AI Cloud (https://cloud-api.near.ai/v1).
 //   AGENT_LLM_API_KEY=...            (or NEAR_AI_API_KEY)
@@ -35,7 +35,7 @@ const TOOLS = [
     type: "function",
     function: {
       name: "pay",
-      description: "Pay a NEAR account from the company vault. Goes through the AgentSpend Passport check.",
+      description: "Pay a NEAR account from the company vault. Goes through the Notara check.",
       parameters: {
         type: "object",
         properties: {
@@ -86,7 +86,7 @@ async function callPay(wallet: GuardedPayments, args: any): Promise<PayOutcome> 
 function toolResult(o: PayOutcome): string {
   if (o.status === "error") return `ERROR: ${o.error}`;
   const reasons = o.check.report.reasons.filter((r) => r.severity !== "info").map((r) => `${r.code}: ${r.message}`);
-  if (o.status === "refused") return `REFUSED by AgentSpend Passport (BLOCK). Nothing was signed. Reasons: ${reasons.join(" | ")}`;
+  if (o.status === "refused") return `REFUSED by Notara (BLOCK). Nothing was signed. Reasons: ${reasons.join(" | ")}`;
   if (o.status === "pending_human_approval")
     return `NEEDS HUMAN APPROVAL (WARN). Vault payment #${o.paymentId} is parked until the owner approves. Reasons: ${reasons.join(" | ")}`;
   return `${o.status.toUpperCase()}: vault payment #${o.paymentId}, tx ${o.txHash}`;

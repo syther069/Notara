@@ -76,7 +76,7 @@ function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => v
           </h3>
           <AccountLink id={p.recipient} />
           <p className="muted small" style={{ margin: "6px 0 0" }}>
-            {timeAgo(p.created_at_ms)} · memo: {p.memo ?? "none"} · Passport report <span className="mono">{p.report_hash.slice(0, 12)}…</span>
+            {timeAgo(p.created_at_ms)} · memo: {p.memo ?? "none"} · Notara report <span className="mono">{p.report_hash.slice(0, 12)}…</span>
           </p>
         </div>
       </div>
@@ -88,7 +88,7 @@ function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => v
             </p>
             <p className="small">
               {confirm === "approve"
-                ? "The Passport flagged this payment for a human. The vault will re-check its daily cap before paying."
+                ? "Notara flagged this payment for a human. The vault will re-check its daily cap before paying."
                 : "The money stays in the vault. The agent can't retry this payment."}{" "}
               {signer.kind === "wallet" ? `Your wallet (${signer.accountId}) will ask you to sign.` : signer.kind === "local" ? "Signed by the local demo owner key." : ""}
             </p>
@@ -167,7 +167,7 @@ export function VaultPage() {
           </button>
         </div>
         <p>
-          The smart contract that holds the agent's money. It pays only with a valid Passport verdict, within these limits, and holds WARN payments for you.
+          The smart contract that holds the agent's money. It pays only with a valid Notara verdict, within these limits, and holds WARN payments for you.
         </p>
         {summary && <AccountLink id={summary.vault} />}
       </div>

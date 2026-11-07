@@ -116,6 +116,14 @@ export interface MerchantProfile {
   paidTotal: string;
 }
 
+export interface SendState {
+  invoice: Invoice;
+  /** USDC (6 decimals) held by the link's account right now. */
+  balance: string;
+  /** The link account exists on-chain, so it can pay gas for the claim. */
+  claimReady: boolean;
+}
+
 export interface PayToken {
   assetId: string;
   label: string;
@@ -131,6 +139,7 @@ export interface Invoice {
   checkouts?: Checkout[];
   txUrl?: string;
   signed?: boolean;
+  kind?: "send";
   /** Only on single-invoice reads: does the merchant's wallet signature still check out? */
   signature?: "valid" | "invalid" | "none";
   createdAt: string;
@@ -191,6 +200,9 @@ export const api = {
   linkMessage: (b: { merchant: string; description: string; amountDecimal: string; asset: string }) => post<{ message: string }>("/api/links/message", b),
   merchant: (account: string) => req<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}`),
   checkWebsite: (account: string, website: string) => post<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}/website`, { website }),
+  createSend: (b: { amountDecimal: string; implicitAccount: string; note?: string }) => post<Invoice>("/api/sends", b),
+  getSend: (id: string) => req<SendState>(`/api/sends/${encodeURIComponent(id)}`),
+  activateSend: (id: string) => post<SendState>(`/api/sends/${encodeURIComponent(id)}/activate`, {}),
   payTokens: () => req<{ tokens: PayToken[] }>("/api/checkout/tokens"),
   quote: (id: string, b: { originAsset: string; refundTo: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/quote`, b),
   createInvoice: (b: { description: string; amountDecimal: string; asset: string; merchant?: string; signedToken?: string }) => post<Invoice>("/api/invoices", b),

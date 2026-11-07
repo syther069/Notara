@@ -63,7 +63,7 @@ export function MerchantPage() {
             <div className="muted small">{profile.signedLinks} signed by their wallet</div>
           </div>
           <div className="card stat">
-            <div className="label">Paid through AgentSpend</div>
+            <div className="label">Paid through Notara</div>
             <div className="value">{profile.paid}</div>
           </div>
           <div className="card stat">
@@ -72,7 +72,7 @@ export function MerchantPage() {
           </div>
         </div>
       )}
-      <p className="muted small">Counts only include payments made through this AgentSpend server.</p>
+      <p className="muted small">Counts only include payments made through this Notara server.</p>
 
       <form className="card stack" onSubmit={verifySite}>
         <h2>Is this your account? Prove you own your website</h2>

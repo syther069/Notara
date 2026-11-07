@@ -128,7 +128,7 @@ export function EvidenceTable({ signals }: { signals: Signal[] }) {
     <div className="card" style={{ padding: 0 }}>
       <div style={{ padding: "20px 20px 8px" }}>
         <h2>Evidence and where it came from</h2>
-        <p className="muted small">Live = read from NEAR at the time of this check. Our contract = the AgentSpend vault or registry.</p>
+        <p className="muted small">Live = read from NEAR at the time of this check. Our contract = the Notara vault or registry.</p>
       </div>
       <div className="table-wrap stack-mobile" style={{ border: 0, borderRadius: 0 }}>
         <table>

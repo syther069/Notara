@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
-// AgentSpend Passport: backend for the website. One local process:
-//   - Passport check API          POST /v1/check
+// Notara: backend for the website. One local process:
+//   - Notara check API          POST /v1/check
 //   - Deployment + vault views    GET  /api/deployment, /api/vault, /api/vault/payments
 //   - Owner console (local only)  POST /api/owner/approve, /api/owner/reject
 //   - Attack demo runner          GET  /api/demo/run (Server-Sent Events), /api/demo/logs
@@ -25,6 +25,7 @@ import { accountFromKey, hasKey } from "../agent/src/keys.ts";
 import { llmConfigured } from "../agent/src/agent.ts";
 import { refuseReason, runOnce } from "./guard.ts";
 import { createCheckout, isDone, overallStatus, payTokens, readCheckout } from "./checkout.ts";
+import { MAX_SENDS_PER_DAY, ensureClaimGas, ensureUsdcStorage, isImplicit, usdcBalance } from "./sends.ts";
 import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, verifyLinkToken } from "./merchants.ts";
 import { createInvoice, getInvoice, type Invoice, listInvoices, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
 
@@ -449,6 +450,40 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const refreshed = await Promise.all(list.map((i) => (i.status === "pending_approval" || i.checkouts?.length ? refreshInvoice(i.id).catch(() => i) : i)));
     return send(res, 200, { invoices: refreshed.map(publicInvoice) });
   }
+  // ---- send by link
+  if (m === "POST" && path === "/api/sends") {
+    const b = await readJson(req);
+    const account = String(b.implicitAccount ?? "");
+    if (!isImplicit(account)) throw new HttpError(400, "Invalid link account");
+    const amount = toAssetUnits(b.amountDecimal, USDC_MAINNET);
+    if (BigInt(amount) > 25_000_000n) throw new HttpError(400, "Send by link is limited to 25 USDC per link in this prototype");
+    const today = new Date().toISOString().slice(0, 10);
+    if (listInvoices().filter((i) => i.kind === "send" && i.createdAt.startsWith(today)).length >= MAX_SENDS_PER_DAY) throw new HttpError(429, "Daily limit for new send links reached");
+    try {
+      await ensureUsdcStorage(account);
+    } catch (e: any) {
+      throw new HttpError(409, e.message);
+    }
+    const inv = createInvoice({ merchant: account, description: String(b.note ?? "").trim().slice(0, 120) || "Money sent by link", amount, asset: USDC_MAINNET });
+    return send(res, 201, publicInvoice(updateInvoice(inv.id, { kind: "send" })));
+  }
+  const sm = path.match(/^\/api\/sends\/(INV-\d{4,})(\/activate)?$/);
+  if (sm) {
+    const inv = await refreshInvoice(sm[1]);
+    if (inv.kind !== "send") throw new HttpError(404, "Not a send link");
+    if (m === "POST" && sm[2]) {
+      if (inv.status !== "paid") throw new HttpError(409, "This link hasn't been funded yet");
+      try {
+        await ensureClaimGas(inv.merchant);
+      } catch (e: any) {
+        throw new HttpError(409, e.message);
+      }
+    }
+    if (m === "GET" || sm[2]) {
+      const [balance, acct] = await Promise.all([usdcBalance(inv.merchant).catch(() => "0"), viewAccount("mainnet", inv.merchant).catch(() => undefined)]);
+      return send(res, 200, { invoice: publicInvoice(inv), balance, claimReady: !!acct });
+    }
+  }
   if (m === "POST" && path === "/api/links/message") {
     const b = await readJson(req);
     const asset = resolveAsset(String(b.asset ?? ""))?.id;
@@ -511,6 +546,6 @@ const server = createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`AgentSpend Passport backend on http://${HOST}:${PORT}`);
+  console.log(`Notara backend on http://${HOST}:${PORT}`);
   console.log(`Testnet deployment: ${loadDeployment(NET) ? "found" : "not set up (read-only checks still work)"}`);
 });

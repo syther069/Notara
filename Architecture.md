@@ -1,4 +1,4 @@
-# AgentSpend Passport: Architecture
+# Notara: Architecture
 
 Status: v1 · 2026-11-04. Companion to `PRD.md` (what and why) and `rules.md` (how we work).
 
@@ -30,7 +30,7 @@ Status: v1 · 2026-11-04. Companion to `PRD.md` (what and why) and `rules.md` (h
                                           └────────────────────────┘
 ```
 
-**The key idea:** the website and the Passport *advise*; the **Vault contract decides**. Even if the agent, the wrapper or the website is bypassed, the vault only pays with a valid signed verdict and within its own caps.
+**The key idea:** the website and Notara *advise*; the **Vault contract decides**. Even if the agent, the wrapper or the website is bypassed, the vault only pays with a valid signed verdict and within its own caps.
 
 ## 2. Components
 
@@ -43,7 +43,7 @@ Holds the agent's spending money and enforces every rule on-chain.
 | `approve(id)` / `reject(id)` | owner | Decides a parked WARN payment. Caps are re-checked. Expires after 24 h. |
 | `set_cap`, `set_signer_public_key`, `set_agent`, `set_ttls`, `set_paused`, `withdraw` | owner | Admin. |
 | `on_payout` | vault itself (callback) | Marks Executed / Failed; releases the cap reservation on failure. |
-| `get_config`, `get_payment(s)`, `get_payments_to`, `get_spent_today`, `is_nonce_used` | anyone (view) | Read state for the website and Passport. |
+| `get_config`, `get_payment(s)`, `get_payments_to`, `get_spent_today`, `is_nonce_used` | anyone (view) | Read state for the website and Notara. |
 
 Payment states: `PendingApproval → Executing → Executed | Failed`, or `PendingApproval → Rejected | Expired`.
 
@@ -53,7 +53,7 @@ Shared reports about accounts.
 - Statuses: `Unverified`, `Verified`, `Rejected`, `Disputed`.
 - `is_fixture: true` marks seeded demo data.
 
-### 2.3 Passport (`passport/src`, TypeScript)
+### 2.3 Notara (`passport/src`, TypeScript)
 The checker. Pure read access to chain data plus one signing key.
 
 ```
@@ -85,11 +85,11 @@ request ─► collectSignals ─► evaluate (policy) ─► buildReport ─►
 ### 2.6 Backend (`server/`, built)
 | File | Job |
 |---|---|
-| `server/index.ts` | One local Node `http` server: Passport API, vault views, owner console, demo runner (spawns `agent/src/demo.ts --leave-pending` and streams its output), invoices, and serves `web/dist` once the website is built. |
+| `server/index.ts` | One local Node `http` server: Notara API, vault views, owner console, demo runner (spawns `agent/src/demo.ts --leave-pending` and streams its output), invoices, and serves `web/dist` once the website is built. |
 | `server/invoices.ts` | Invoice store in `data/invoices.json` (gitignored, atomic writes), status mapping from the vault, CSV export. |
 
 ### 2.5 Website (`web/`, built)
-Single-page app served next to the Passport API.
+Single-page app served next to Notara API.
 
 | Page | Calls |
 |---|---|
@@ -99,7 +99,7 @@ Single-page app served next to the Passport API.
 | Vault `/vault` | `GET /api/vault`, `GET /api/vault/payments`, `POST /api/owner/approve`, `POST /api/owner/reject` |
 | About `/about` | static |
 
-Stack choice: **Vite + React + TypeScript**, plain CSS. Reason: fast to build, easy for judges to run, no backend framework needed (Node's `http` module is enough). In development Vite proxies `/api` and `/v1` to the Passport server; in the final build the Passport server serves the built files, so one command starts everything.
+Stack choice: **Vite + React + TypeScript**, plain CSS. Reason: fast to build, easy for judges to run, no backend framework needed (Node's `http` module is enough). In development Vite proxies `/api` and `/v1` to Notara server; in the final build Notara server serves the built files, so one command starts everything.
 
 ## 3. API (server)
 
@@ -120,13 +120,15 @@ Stack choice: **Vite + React + TypeScript**, plain CSS. Reason: fast to build, e
 | `GET /api/invoices` | – | invoices (pending ones re-synced from the vault) |
 | `POST /api/invoices` | `{ description, amountNear, merchant?, asset? }` | new invoice (merchant defaults to the demo merchant) |
 | `GET /api/invoices/:id` | – | one invoice |
-| `POST /api/invoices/:id/pay` | – | the customer's agent pays through wrapper → vault; returns invoice, Passport report, log |
+| `POST /api/invoices/:id/pay` | – | the customer's agent pays through wrapper → vault; returns invoice, Notara report, log |
 | `GET /api/invoices.csv` | – | CSV for the accountant (formula-injection safe), amounts in the asset's own unit plus `currency` and `asset_contract` columns |
 | `GET /api/checkout/tokens` | – | tokens a customer can pay with (from 1Click, cached 5 minutes) |
 | `POST /api/invoices/:id/quote` | `{ originAsset, refundTo }` | one-time 1Click deposit address for a mainnet USDC payment link. Refused on BLOCK |
 | `POST /api/links/message` | `{ merchant, description, amountDecimal, asset }` | the exact text the merchant's wallet signs (NEP-413) |
 | `GET /api/merchants/:account` | – | Merchant Passport: confirmed website, link and payment counts |
 | `POST /api/merchants/:account/website` | `{ website }` | checks `https://<site>/.well-known/near.txt` lists the account; only confirmed proofs are saved |
+| `POST /api/sends` | `{ amountDecimal, implicitAccount, note? }` | new send link (sponsor registers its USDC storage). The key never reaches the server |
+| `GET /api/sends/:id`, `POST /api/sends/:id/activate` | – | link state and balance; activate gives the funded link account a little NEAR for the claim's gas |
 | `GET /api/assets` | – | supported assets (`passport/assets.json`): NEAR and Circle testnet USDC |
 
 Errors are JSON `{ error }` with 400 (bad input), 404, 409 (testnet not set up, demo already running, invoice already paid) or 500.
@@ -138,13 +140,13 @@ The server binds to `127.0.0.1` only. Endpoints that sign or spend (demo, owner)
 ### 4.1 Check an account (website)
 1. User enters an account and amount on `/check`.
 2. Browser sends `POST /v1/check` (`sign: false`).
-3. Passport collects signals in parallel (RPC, FastNear, registry, policy).
+3. Notara collects signals in parallel (RPC, FastNear, registry, policy).
 4. Policy engine returns the decision and reasons.
 5. Website shows the badge, reasons, evidence table with source tags, and caveats.
 
 ### 4.2 Agent pays an invoice
 1. Agent reads an invoice and calls `pay(recipient, amount)`.
-2. Wrapper asks the Passport for a **signed** verdict.
+2. Wrapper asks Notara for a **signed** verdict.
 3. BLOCK → the wrapper returns "refused"; no transaction exists.
 4. ALLOW / WARN → wrapper calls `vault.request_payment` with the agent's function-call key (no deposit).
 5. Vault verifies everything again. ALLOW → transfer + callback. WARN → parked.
@@ -164,7 +166,7 @@ The agent key can only call `request_payment`. The vault rejects BLOCK, edited, 
 
 ## 5. Signed verdict format
 
-The Passport signs this exact text (UTF-8, `\n` separated) with ed25519:
+Notara signs this exact text (UTF-8, `\n` separated) with ed25519:
 
 ```
 agentspend-passport/v1
@@ -187,10 +189,10 @@ The vault rebuilds the same text and checks it with `env::ed25519_verify`. A sha
 | Agent function-call key (`keys/agent-fc.json`) | agent process | call `vault.request_payment`, pay gas from 0.5 NEAR allowance | transfer NEAR, attach deposits, call owner methods |
 | Owner key (`keys/owner.json`) | human / local owner console | approve/reject, caps, pause, withdraw | – (full control of vault rules) |
 | Vault full-access key (`keys/vault-admin.json`) | setup only | deploy/upgrade the vault | – (delete with `lock-vault` for production) |
-| Passport signer key (`keys/passport-signer.json`) | Passport server | sign verdicts | move money by itself |
+| Notara signer key (`keys/passport-signer.json`) | Notara server | sign verdicts | move money by itself |
 
 Trust assumptions:
-- The Passport signer key is not stolen. (Stretch: keep it in a TEE.)
+- Notara signer key is not stolen. (Stretch: keep it in a TEE.)
 - The vault owner key is held by a human, not by the agent.
 - Data sources (FastNear, RPC) return correct data; when they don't respond, we WARN.
 
@@ -227,11 +229,11 @@ PRD.md · Architecture.md · rules.md · README.md · HACKATHON.md
 | Thing | Where | Notes |
 |---|---|---|
 | Contracts | NEAR **testnet**, subaccounts of the owner | `npm run setup:testnet` |
-| Passport API + website | local machine (`npm run serve`) | Public hosting only with owner approval |
+| Notara API + website | local machine (`npm run serve`) | Public hosting only with owner approval |
 | Mainnet | **read-only** lookups only | No contract deployment, no funds |
 
 ## 10. Future work (not in v1)
-- Passport signer inside a TEE with attestation (OutLayer / NEAR AI Cloud).
+- Notara signer inside a TEE with attestation (OutLayer / NEAR AI Cloud).
 - NEAR Intents / 1Click as the payout path after ALLOW.
 - Sandbox integration tests (`near-workspaces`, runs under WSL/Linux).
 - Mainnet registry and multiple independent verifiers.

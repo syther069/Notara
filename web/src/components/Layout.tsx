@@ -32,6 +32,7 @@ const LINKS = [
   ["/demo", "Attack demo"],
   ["/vault", "Vault"],
   ["/invoices", "Invoices"],
+  ["/send", "Send"],
   ["/about", "About"],
 ] as const;
 
@@ -92,8 +93,8 @@ export function Layout() {
         </a>
         <header className="site-header">
           <div className="container">
-            <NavLink to="/" className="brand" aria-label="AgentSpend Passport home">
-              <ShieldCheck size={22} aria-hidden /> AgentSpend Passport
+            <NavLink to="/" className="brand" aria-label="Notara home">
+              <ShieldCheck size={22} aria-hidden /> Notara
             </NavLink>
             <nav className="nav" aria-label="Main">
               {LINKS.map(([to, label]) => (
@@ -127,7 +128,7 @@ export function Layout() {
         {notice && (
           <div className="notice">
             <div className="container">
-              <TriangleAlert size={14} aria-hidden /> {/^\/(pay|m)\//.test(loc.pathname) ? "This page uses real money on NEAR mainnet · prototype · not audited" : "Testnet prototype · not audited · no real funds"}
+              <TriangleAlert size={14} aria-hidden /> {/^\/(pay|m|send|claim)(\/|$)/.test(loc.pathname) ? "This page uses real money on NEAR mainnet · prototype · not audited" : "Testnet prototype · not audited · no real funds"}
               <button
                 aria-label="Dismiss notice"
                 onClick={() => {

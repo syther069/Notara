@@ -2,7 +2,7 @@
 name = "agentspend-registry"
 version = "0.1.0"
 edition = "2021"
-description = "AgentSpend Passport shared report registry: reports with evidence references, verification status and disputes"
+description = "Notara shared report registry: reports with evidence references, verification status and disputes"
 license = "MIT"
 
 [lib]

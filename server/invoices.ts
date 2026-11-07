@@ -1,5 +1,5 @@
 // Merchant invoices (Real-World Money track). Stored locally in data/invoices.json.
-// An invoice is paid by the customer's agent through the Passport + vault, and its status is
+// An invoice is paid by the customer's agent through Notara + vault, and its status is
 // reconciled from the vault's on-chain payment record (memo "invoice:<id>").
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -41,13 +41,15 @@ export interface Invoice {
   /** Full explorer link, when the payment isn't on testnet. */
   txUrl?: string;
   checkouts?: Checkout[];
+  /** "send": money sent by link to a one-time account; the receiver claims it. */
+  kind?: "send";
   /** NEP-413 token: the merchant's wallet signed this exact link. */
   signedToken?: string;
   reportHash?: string;
   paidAt?: string;
 }
 
-const DIR = process.env.AGENTSPEND_DATA_DIR ?? join(ROOT, "data");
+const DIR = process.env.NOTARA_DATA_DIR ?? join(ROOT, "data");
 const FILE = join(DIR, "invoices.json");
 const ACCOUNT_RE = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 

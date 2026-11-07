@@ -1,4 +1,4 @@
-//! AgentSpend Passport vault.
+//! Notara vault.
 //!
 //! The vault holds the agent's spending money. The agent never holds a full-access key:
 //! it holds a function-call access key on this account, restricted to `request_payment`
@@ -6,7 +6,7 @@
 //!
 //! A payment leaves the vault only when ALL of these hold, checked on-chain:
 //! - the caller is the configured agent;
-//! - a verdict signed by the configured Passport signer key is supplied;
+//! - a verdict signed by the configured Notara signer key is supplied;
 //! - the verdict is bound to this vault, this recipient, this amount and this asset;
 //! - the verdict has not expired and is not too long-lived;
 //! - the verdict's nonce has never been used;
@@ -58,7 +58,7 @@ impl Decision {
     }
 }
 
-/// The verdict as signed off-chain by the Passport service.
+/// The verdict as signed off-chain by Notara service.
 #[near(serializers = [json, borsh])]
 #[derive(Clone, Debug)]
 pub struct Verdict {
@@ -75,7 +75,7 @@ pub struct Verdict {
 }
 
 impl Verdict {
-    /// Canonical byte string that the Passport signs. Kept as plain text so any language can
+    /// Canonical byte string that Notara signs. Kept as plain text so any language can
     /// reproduce it exactly. Newline is not a legal character in any field.
     pub fn signing_message(&self) -> String {
         format!(
@@ -241,7 +241,7 @@ impl Vault {
             require!(m.len() <= 256, "Memo too long");
         }
 
-        // 1. Signature from the configured Passport signer.
+        // 1. Signature from the configured Notara signer.
         let sig: [u8; 64] = signature
             .0
             .as_slice()
@@ -284,7 +284,7 @@ impl Vault {
         // 4. Decision.
         require!(
             verdict.decision != Decision::Block,
-            "Passport verdict is BLOCK: payment refused"
+            "Notara verdict is BLOCK: payment refused"
         );
 
         // 5. Per-transaction cap is checked up front for both ALLOW and WARN.

@@ -4,7 +4,7 @@
 // You need one funded testnet account (the human owner). Provide it with:
 //   NEAR_OWNER_ACCOUNT=yourname.testnet NEAR_OWNER_PRIVATE_KEY=ed25519:... npm run setup:testnet
 // or let the script create one through the public testnet faucet helper:
-//   npm run setup:testnet -- --create-owner yourname-agentspend.testnet
+//   npm run setup:testnet -- --create-owner yourname-notara.testnet
 //
 // Needs about 7.5 testnet NEAR (contract storage is the bulk of it). Never run against mainnet.
 
@@ -116,14 +116,14 @@ async function isDeployed(id: string) {
 }
 
 async function main() {
-  log("AgentSpend Passport: testnet setup\n");
+  log("Notara: testnet setup\n");
   const owner = await ensureOwner();
   if (process.argv.includes("--topup")) await topUpFromFaucet(owner.accountId);
   const bal =BigInt((await viewAccount(network, owner.accountId))?.amount ?? "0");
   log(`Owner ${owner.accountId}: ${Number(bal / 10n ** 21n) / 1000} NEAR`);
 
   const signer = loadSigner(true);
-  log(`Passport signer public key: ${signer.getPublicKey().toString()}`);
+  log(`Notara signer public key: ${signer.getPublicKey().toString()}`);
 
   const vaultExists = !!(await viewAccount(network, `${VAULT_PREFIX}.${owner.accountId}`));
   if (!vaultExists && bal < N("7.5")) throw new Error("Owner needs at least 7.5 testnet NEAR for first-time setup.");

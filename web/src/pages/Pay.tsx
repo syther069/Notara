@@ -80,7 +80,9 @@ export function PayPage() {
 
   const expired = current && current.status === "PENDING_DEPOSIT" && Date.parse(current.deadline) < Date.now();
   const showForm = inv.status !== "paid" && inv.status !== "processing" && (!current || expired || current.status === "REFUNDED" || current.status === "FAILED");
-  const blocked = check?.report.decision === "BLOCK";
+  const blocked = check?.report.decision === "BLOCK" && inv.kind !== "send";
+  const isSend = inv.kind === "send";
+  const sendKey = isSend ? (() => { try { return sessionStorage.getItem(`send-key-${inv.id}`); } catch { return null; } })() : null;
   const paidCheckout = inv.checkouts?.find((c) => c.status === "SUCCESS");
 
   return (
@@ -95,14 +97,14 @@ export function PayPage() {
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
         </div>
         <p className="muted" style={{ marginTop: 8 }}>
-          Pay to <AccountLink id={inv.merchant} explorer="https://nearblocks.io" /> · <Link to={`/m/${inv.merchant}`}>Merchant Passport</Link>
+          {isSend ? "You're funding a send link. The money waits in a one-time account until someone opens the link." : <>Pay to <AccountLink id={inv.merchant} explorer="https://nearblocks.io" /> · <Link to={`/m/${inv.merchant}`}>Merchant Passport</Link></>}
         </p>
       </div>
 
       {inv.status === "paid" ? (
         <Banner kind="ok" title="Paid">
           <p>
-            {inv.merchant} received {formatAsset(inv.amount, inv.asset)}.{" "}
+            {isSend ? "The link now holds" : `${inv.merchant} received`} {formatAsset(inv.amount, inv.asset)}.{" "}
             {paidCheckout?.txUrl && (
               <a href={paidCheckout.txUrl} target="_blank" rel="noreferrer">
                 View transaction <ExternalLink size={12} aria-hidden />
@@ -110,7 +112,7 @@ export function PayPage() {
             )}
           </p>
         </Banner>
-      ) : (
+      ) : isSend ? null : (
         <>
           <h2 style={{ marginBottom: 0 }}>Before you pay</h2>
           <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} />
@@ -187,6 +189,13 @@ export function PayPage() {
         </Banner>
       )}
 
+      {isSend && sendKey && (
+        <p>
+          <Link className="btn btn-secondary" to={`/claim/${inv.id}#${sendKey}`}>
+            Back to your send link
+          </Link>
+        </p>
+      )}
       <p className="muted small">
         Routed by NEAR Intents. We never hold your money. This is a prototype and has not been audited, so use small amounts.
       </p>

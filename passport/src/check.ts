@@ -25,7 +25,7 @@ export function buildReport(req: PaymentRequest, signals: SignalResult[], policy
   const { decision, reasons } = evaluate(req, signals, policy);
   const counted = signals.filter((s) => s.status !== "skipped");
   return {
-    version: "agentspend-passport/report/v1",
+    version: "notara/report/v1",
     request: req,
     decision,
     reasons,

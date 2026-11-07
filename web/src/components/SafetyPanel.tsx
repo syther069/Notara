@@ -11,7 +11,7 @@ const HEADLINE: Record<Decision, { text: string; sub: string }> = {
   BLOCK: { text: "Blocked", sub: "A serious problem was found. Don't pay this account." },
 };
 
-/** Plain words for each Passport reason code. Unknown codes fall back to the Passport's own message. */
+/** Plain words for each Notara reason code. Unknown codes fall back to Notara's own message. */
 function plain(code: string, message: string, signals: string[]): string {
   switch (code) {
     case "VERIFIED_REPORT":
@@ -79,7 +79,7 @@ export function SafetyPanel({ check, merchant, signature, signedBy }: { check: C
             Active on NEAR since {new Date(history.firstObservedAt).toLocaleDateString()} ({history.txCount} transactions).
           </Fact>
         )}
-        {!!merchant?.paid && <Fact kind="good">{merchant.paid} earlier payment(s) to this account through AgentSpend.</Fact>}
+        {!!merchant?.paid && <Fact kind="good">{merchant.paid} earlier payment(s) to this account through Notara.</Fact>}
         {concerns.map((c, i) => (
           <Fact key={i} kind={c.severity === "block" ? "bad" : "warn"}>
             {plain(c.code, c.message, c.signals)}

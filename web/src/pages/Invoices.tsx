@@ -89,7 +89,7 @@ export function InvoicesPage() {
       <div className="page-head">
         <h1>Invoices</h1>
         <p>
-          For merchants: create an invoice and share its link. The customer's AI agent pays it through the Passport and the vault, and the status here
+          For merchants: create an invoice and share its link. The customer's AI agent pays it through Notara and the vault, and the status here
           comes from the vault's on-chain record.
         </p>
         {dep?.accounts && (

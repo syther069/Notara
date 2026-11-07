@@ -67,7 +67,7 @@ export function CheckPage() {
     <>
       <div className="page-head">
         <h1>Check a NEAR account</h1>
-        <p>See what the Passport would decide before an agent pays this account, and exactly which evidence the decision is based on.</p>
+        <p>See what Notara would decide before an agent pays this account, and exactly which evidence the decision is based on.</p>
       </div>
 
       <form className="card" onSubmit={submit} noValidate>
@@ -158,7 +158,7 @@ export function CheckPage() {
               <div style={{ marginBottom: 16 }}>
                 <Banner kind="info">
                   <p>
-                    Mainnet is read-only here. There is no AgentSpend registry on mainnet, so shared reports show as unavailable and the result is at least
+                    Mainnet is read-only here. There is no Notara registry on mainnet, so shared reports show as unavailable and the result is at least
                     WARN. That's the fail-closed rule working, not a finding about the account.
                   </p>
                 </Banner>

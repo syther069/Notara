@@ -1,5 +1,5 @@
 {
-  "name": "agentspend-passport",
+  "name": "notara",
   "version": "0.1.0",
   "private": true,
   "description": "Counterparty verification and payment enforcement for autonomous AI agents on NEAR",
@@ -16,7 +16,7 @@
     "owner": "tsx scripts/owner.ts",
     "agent": "tsx agent/src/run.ts",
     "demo": "tsx agent/src/demo.ts",
-    "test": "tsx --test passport/test/*.test.ts agent/test/*.test.ts server/test/*.test.ts",
+    "test": "tsx --test passport/test/*.test.ts agent/test/*.test.ts server/test/*.test.ts web/src/lib/*.test.ts",
     "typecheck": "tsc --noEmit",
     "test:contracts": "cargo test",
     "web:install": "npm --prefix web install",

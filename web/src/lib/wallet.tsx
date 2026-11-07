@@ -111,7 +111,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setAccountId(account);
     const token = await sign(await message(account), {
       signer: { signMessage: (p: any) => wallet.signMessage({ ...p, network: "mainnet", signerId: account }) },
-      recipient: "agentspend-passport",
+      recipient: "notara",
     });
     return { token, accountId: account };
   }, []);

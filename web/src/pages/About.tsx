@@ -3,7 +3,7 @@ export function AboutPage() {
     <div className="reading">
       <div className="page-head">
         <h1>How it works, and its limits</h1>
-        <p>What the Passport checks, where the data comes from, what NEAR function-call keys do and don't protect, and what is still missing.</p>
+        <p>What Notara checks, where the data comes from, what NEAR function-call keys do and don't protect, and what is still missing.</p>
       </div>
 
       <section>
@@ -40,7 +40,7 @@ export function AboutPage() {
               </tr>
               <tr>
                 <td data-label="Check">Shared reports</td>
-                <td data-label="Source">AgentSpend registry contract (testnet)</td>
+                <td data-label="Source">Notara registry contract (testnet)</td>
                 <td data-label="Limits">Young, with few reporters. No report doesn't mean safe. Only verified reports can block.</td>
               </tr>
               <tr>
@@ -52,7 +52,7 @@ export function AboutPage() {
           </table>
         </div>
         <p className="muted" style={{ marginTop: 12 }}>
-          <strong>Fail closed:</strong> if any source can't be reached, the result is at least WARN. The Passport never answers ALLOW on missing evidence.
+          <strong>Fail closed:</strong> if any source can't be reached, the result is at least WARN. Notara never answers ALLOW on missing evidence.
         </p>
       </section>
 
@@ -73,7 +73,7 @@ export function AboutPage() {
           <li>✅ Gas comes from a fixed allowance. When it runs out, the key stops working until the owner adds a new one.</li>
           <li>❌ The key doesn't judge the recipient. The safety comes from the vault's rules, not from the key alone.</li>
           <li>❌ Whoever holds the vault's full-access key can change or drain it. Delete that key (<code>npm run owner -- lock-vault</code>) for real use.</li>
-          <li>❌ The Passport signing key is a local file in this prototype. Whoever holds it can sign any verdict. Moving it into a TEE is planned.</li>
+          <li>❌ Notara signing key is a local file in this prototype. Whoever holds it can sign any verdict. Moving it into a TEE is planned.</li>
         </ul>
       </section>
 
@@ -81,7 +81,7 @@ export function AboutPage() {
         <h2>What the vault checks on every payment</h2>
         <ol>
           <li>The caller is the agent.</li>
-          <li>The verdict is signed by the Passport key.</li>
+          <li>The verdict is signed by Notara key.</li>
           <li>The verdict is for this vault, this recipient, this amount and this asset.</li>
           <li>It hasn't expired (5 minutes, 10 at most) and its one-time number hasn't been used.</li>
           <li>It isn't BLOCK. WARN is held until the owner approves.</li>
@@ -96,7 +96,7 @@ export function AboutPage() {
             <h3>Built and tested</h3>
             <ul className="small" style={{ paddingLeft: 18, marginBottom: 0 }}>
               <li>Vault and registry contracts on testnet</li>
-              <li>Passport with six live checks and signed verdicts</li>
+              <li>Notara with six live checks and signed verdicts</li>
               <li>Agent wrapper and attack demo (9/9 checks passed on testnet)</li>
               <li>Owner approvals signed in your own NEAR wallet</li>
               <li>USDC (Circle testnet) and NEAR invoices with CSV export</li>
@@ -105,7 +105,7 @@ export function AboutPage() {
           <div className="card">
             <h3>Planned</h3>
             <ul className="small" style={{ paddingLeft: 18, marginBottom: 0 }}>
-              <li>Passport signing key in a TEE</li>
+              <li>Notara signing key in a TEE</li>
               <li>NEAR Intents for paying from other chains</li>
               <li>Demo with a real LLM (NEAR AI Cloud)</li>
             </ul>

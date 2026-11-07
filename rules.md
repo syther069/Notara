@@ -1,4 +1,4 @@
-# AgentSpend Passport: Project Rules
+# Notara: Project Rules
 
 These rules apply to everyone working on this repo, people and AI assistants alike. If a rule blocks you, ask the owner; don't work around it.
 
@@ -9,7 +9,7 @@ These rules apply to everyone working on this repo, people and AI assistants ali
 1. **Never** deploy to mainnet, spend real funds, push to GitHub, publish the website, post on social media, or submit to the hackathon **without explicit approval from the project owner**. Approval for one action does not cover the next one.
 2. **Testnet only** for contracts and payments. Mainnet is **read-only** (lookups).
 3. **Never commit keys.** `keys/`, `.env` and `deployment.*.json` secrets stay local. Never print a secret key in logs, the website, screenshots or chat.
-4. The **agent process loads only** `keys/agent-fc.json`. It must never load the owner, vault-admin or Passport signer keys.
+4. The **agent process loads only** `keys/agent-fc.json`. It must never load the owner, vault-admin or Notara signer keys.
 5. Server endpoints that sign or spend (demo runner, owner console) bind to `127.0.0.1` only. Never expose them publicly without authentication.
 
 ## 2. Honesty rules (what we claim)
@@ -38,7 +38,7 @@ These rules apply to everyone working on this repo, people and AI assistants ali
 ## 4. Code rules
 
 1. **Keep it simple.** Build the smallest thing that works for the demo journey before adding extras. No new frameworks or services without a clear reason.
-2. **Languages:** Rust (near-sdk 5.30) for contracts, TypeScript for Passport, agent and website.
+2. **Languages:** Rust (near-sdk 5.30) for contracts, TypeScript for Notara, agent and website.
 3. The policy engine (`passport/src/policy.ts`) stays a **pure function**: no network, no files.
 4. Each signal returns `{ status, source, endpoint, fetchedAt, data, caveats }`. New signals follow the same shape.
 5. Errors are shown, not swallowed: return a clear message and keep the decision fail-closed.

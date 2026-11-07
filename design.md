@@ -1,4 +1,4 @@
-# AgentSpend Passport: Website Design
+# Notara: Website Design
 
 Status: v1 · 2026-11-04. Companion to `PRD.md` (what), `Architecture.md` (how) and `rules.md` (rules).
 Scope: the website in `web/`. Pages: Home, Check, Attack demo, Vault, Invoices (merchant), About.
@@ -133,7 +133,7 @@ Pill with icon + word, tinted background, colored text. Sizes: `sm` in tables, `
 ```
 ┌───────────────────────────────────────────────────────────────┐
 │ 🛡✕  BLOCK                                   testnet · 0.5 NEAR│
-│ attacker.agentspend.testnet                                   │
+│ attacker.notara.testnet                                   │
 │ "A serious policy rule applies. The payment is refused."      │
 │ ─────────────────────────────────────────────────────────────│
 │ Evidence coverage  ■■■■■□  5 of 6 signals checked             │
@@ -149,7 +149,7 @@ Pill with icon + word, tinted background, colored text. Sizes: `sm` in tables, `
 ### 4.3 Reason row
 ```
 ⛔ VERIFIED REPORT   [DEMO FIXTURE]
-   Report #0 (Scam) was verified by verifier.agentspend.testnet: "Sends fake…"
+   Report #0 (Scam) was verified by verifier.notara.testnet: "Sends fake…"
    Evidence: registry#0 · fixture://scripts/setup-testnet.ts
 ```
 Severity icon, short title (code turned into words), the plain message, evidence links. Ordered block, then warn, then info. Info rows are collapsed under "Other facts we found (n)".
@@ -191,7 +191,7 @@ On phone this becomes stacked cards. Each row expands to show caveats ("Earliest
 States: idle (grey), running (spinner + accent border), pass (green check), fail (red cross + reason).
 
 ### 4.8 Payment row (vault)
-`#4 · newshop.agentspend.testnet · 0.3 NEAR · [WARN] · Waiting for approval · 2 min ago · [Approve] [Reject]`
+`#4 · newshop.notara.testnet · 0.3 NEAR · [WARN] · Waiting for approval · 2 min ago · [Approve] [Reject]`
 Approve is a primary button and Reject is secondary. Both need a confirm step that shows the reasons again.
 
 ### 4.9 Invoice card (merchant)
@@ -211,7 +211,7 @@ Invoice number, description, amount + asset, status pill (Unpaid · Waiting for 
 ### 5.1 Global frame
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ ◆ AgentSpend Passport   Home  Check  Attack demo  Vault        │
+│ ◆ Notara   Home  Check  Attack demo  Vault        │
 │                         Invoices  About          [testnet ●]   │
 ├────────────────────────────────────────────────────────────────┤
 │ ⚠ Testnet prototype · not audited · no real funds         [×]  │
@@ -238,7 +238,7 @@ INVOICE VISUAL
   Side-by-side: what the human sees  |  what the AI reads (hidden text highlighted red)
 
 HOW IT WORKS (horizontal flow, vertical on phone)
-  Agent → Passport check → Signed verdict → Vault contract → Recipient
+  Agent → Notara check → Signed verdict → Vault contract → Recipient
   Caption under each step
 
 FOUR STORIES (2×2 grid of scenario cards with outcome badges)
@@ -336,7 +336,7 @@ Long-form reading page (720px wide):
 
 | Term | Meaning shown to users |
 |---|---|
-| Passport check | Looking up a recipient before paying |
+| Notara check | Looking up a recipient before paying |
 | Verdict | The signed ALLOW / WARN / BLOCK answer |
 | Vault | The smart contract that holds the agent's money |
 | Agent key | The limited key the AI uses; it can only ask the vault to pay |

@@ -19,7 +19,7 @@ The product has two actions:
 
 ## P0: must ship
 ### Safety fixes (from the audit)
-- [x] The agent stops loading the Passport signer key. It calls the Passport over HTTP as a separate process.
+- [x] The agent stops loading Notara signer key. It calls Notara over HTTP as a separate process.
 - [x] Backend blocks requests from other websites (Host, Origin, Sec-Fetch-Site and JSON content-type checks), including demo runs.
 - [x] A dispute no longer downgrades a Verified report. Registry redeployed on testnet.
 - [x] Stop double payment of one invoice.
@@ -54,11 +54,11 @@ The product has two actions:
 ## P1: in this order, if time allows
 1. **Send by link**
    - [ ] Check Keypom and ask in the NEAR developer chat whether a current USDC claim-link product exists. If one does, focus the pitch on what differs.
-   - [ ] Test the design: 1Click delivers USDC to a one-time account whose key is in the link's `#` part, which browsers do not send to the server.
-   - [ ] Receiver opens the link, picks a NEAR name, and gets the USDC with no gas needed.
-   - [ ] Sender can take back unclaimed money. Links show an expiry.
-   - [ ] Small amount limit, and a clear warning that a link works like cash.
-   - [ ] Say plainly how the receiver can use the USDC: hold it or send it to an exchange. No bank cash-out yet.
+   - [x] Built: the sender's browser makes a one-time key; the link's `#` part holds it (never sent to the server); 1Click funds its implicit account. Live funding and claim not tested yet (needs a sponsor account and real funds).
+   - [x] Receiver opens the link and sends the USDC to their NEAR account, with gas and USDC setup paid by a sponsor account. Picking a brand-new NEAR name is not done.
+   - [x] Sender can take back unclaimed money by opening their own link. No expiry yet.
+   - [x] 25 USDC per link, 20 new links per day, and a clear "works like cash" warning.
+   - [x] Receivers without a NEAR account can import the link's key into a wallet. No bank cash-out.
 2. **Sponsored setup**: we pay the 0.00125 NEAR token registration for new merchants and receivers, and gas for claims, with limits to prevent abuse.
 3. QR code and link expiry for payment links.
 4. Embeddable checkout button, closest to the wishlist idea.

@@ -1,4 +1,4 @@
-// The wrapper must never reach the signing path on BLOCK or when the Passport is unreachable.
+// The wrapper must never reach the signing path on BLOCK or when Notara is unreachable.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GuardedPayments } from "../src/wrapper.ts";
@@ -19,7 +19,7 @@ function fakeAccount() {
 
 const response = (decision: Decision): CheckResponse => ({
   report: {
-    version: "agentspend-passport/report/v1",
+    version: "notara/report/v1",
     request: { network: "testnet", recipient: "x.testnet", amount: "1", asset: "NEAR" },
     decision,
     reasons: [{ code: "TEST", severity: decision === "BLOCK" ? "block" : decision === "WARN" ? "warn" : "info", message: "test", signals: [] }],
@@ -45,7 +45,7 @@ test("BLOCK: refuses and never calls the signing path", async () => {
   assert.equal(notes.length, 1, "human is notified");
 });
 
-test("Passport unreachable: payment not attempted", async () => {
+test("Notara unreachable: payment not attempted", async () => {
   const f = fakeAccount();
   const out = await wallet(f.account, async () => {
     throw new Error("ECONNREFUSED");

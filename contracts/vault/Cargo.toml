@@ -2,7 +2,7 @@
 name = "agentspend-vault"
 version = "0.1.0"
 edition = "2021"
-description = "AgentSpend Passport vault: holds agent funds, pays only with a fresh signed counterparty verdict, within on-chain caps"
+description = "Notara vault: holds agent funds, pays only with a fresh signed counterparty verdict, within on-chain caps"
 license = "MIT"
 
 [lib]
