@@ -23,10 +23,12 @@ import { loadSigner } from "../passport/src/verdict.ts";
 import type { Network } from "../passport/src/types.ts";
 import { accountFromKey, hasKey } from "../agent/src/keys.ts";
 import { llmConfigured } from "../agent/src/agent.ts";
+import { refuseReason, runOnce } from "./guard.ts";
 import { createInvoice, getInvoice, listInvoices, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? "127.0.0.1";
+process.env.PASSPORT_URL ??= `http://127.0.0.1:${PORT}`; // the agent code and demo runs ask this server
 const MAX_BODY = 16 * 1024;
 const NET: Network = "testnet";
 const WEB_DIST = join(ROOT, "web", "dist");
@@ -236,6 +238,12 @@ async function refreshInvoice(id: string) {
 }
 
 async function payInvoice(id: string) {
+  const out = await runOnce(`invoice:${id}`, () => payInvoiceNow(id));
+  if (!out) throw new HttpError(409, "This invoice is already being paid");
+  return out;
+}
+
+async function payInvoiceNow(id: string) {
   const inv = await refreshInvoice(id);
   if (inv.status === "paid" || inv.status === "pending_approval") throw new HttpError(409, `Invoice is already ${inv.status.replace("_", " ")}`);
   requireDeployment();
@@ -296,6 +304,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
   const path = url.pathname;
   const m = req.method ?? "GET";
+  const refused = refuseReason(m, path, req.headers);
+  if (refused) throw new HttpError(403, refused);
 
   if (m === "GET" && path === "/v1/health") {
     let signer: string | null = null;

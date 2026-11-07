@@ -2,6 +2,8 @@
 
 Status: draft v1 · 2026-11-04 · Hackathon deadline: **14 Nov 2026, 23:59 UTC** (see `HACKATHON.md`)
 
+> **Direction changed on 2026-11-07:** the product is now trusted payment links. See `PLAN.md`, which overrides this file where they differ. Agent protection remains as the security-track feature.
+
 ---
 
 ## 1. One-line summary

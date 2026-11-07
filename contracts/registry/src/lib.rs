@@ -189,7 +189,11 @@ impl Registry {
             evidence_uri,
             at_ms: now,
         });
-        r.status = Status::Disputed;
+        // A verified report stays verified until a verifier rules again, or anyone could lift
+        // their own BLOCK for the price of the bond.
+        if r.status != Status::Verified {
+            r.status = Status::Disputed;
+        }
         r.updated_at_ms = now;
         self.reports[report_id.0 as u32] = r;
         event("report_disputed", self.json(report_id.0));
@@ -347,18 +351,31 @@ mod tests {
     }
 
     #[test]
-    fn verifier_verifies_then_dispute_reopens() {
+    fn dispute_cannot_lift_a_verified_report() {
         let mut r = setup();
         let id = file(&mut r);
         ctx("verifier.testnet", NearToken::from_yoctonear(0));
         r.set_status(id, Status::Verified, Some("matched on-chain evidence".into()));
-        assert_eq!(r.get_report(id).unwrap().status, Status::Verified);
 
         ctx("attacker.testnet", NearToken::from_millinear(10));
         r.dispute(id, "This was a refund, not a scam".into(), None);
         let rep = r.get_report(id).unwrap();
-        assert_eq!(rep.status, Status::Disputed);
+        assert_eq!(rep.status, Status::Verified);
         assert_eq!(rep.disputes.len(), 1);
+
+        // Only a verifier can change the outcome.
+        ctx("verifier.testnet", NearToken::from_yoctonear(0));
+        r.set_status(id, Status::Rejected, Some("refund confirmed".into()));
+        assert_eq!(r.get_report(id).unwrap().status, Status::Rejected);
+    }
+
+    #[test]
+    fn dispute_marks_an_unverified_report_disputed() {
+        let mut r = setup();
+        let id = file(&mut r);
+        ctx("attacker.testnet", NearToken::from_millinear(10));
+        r.dispute(id, "Not a scam".into(), None);
+        assert_eq!(r.get_report(id).unwrap().status, Status::Disputed);
     }
 
     #[test]

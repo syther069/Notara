@@ -9,9 +9,22 @@
 // still requires a fresh, matching, signed, non-BLOCK verdict and enforces its own caps.
 
 import type { Account } from "near-api-js";
-import { check } from "../../passport/src/check.ts";
 import { viewFunction } from "../../passport/src/near.ts";
-import type { CheckResponse, Network } from "../../passport/src/types.ts";
+import type { CheckResponse, Network, PaymentRequest } from "../../passport/src/types.ts";
+
+/** Asks the Passport service over HTTP, so the agent's process never loads the signing key. */
+export async function passportCheck(req: PaymentRequest, opts: { sign?: boolean } = {}): Promise<CheckResponse> {
+  const url = `${process.env.PASSPORT_URL ?? "http://127.0.0.1:8787"}/v1/check`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ ...req, sign: opts.sign }),
+    signal: AbortSignal.timeout(60_000),
+  });
+  const body: any = await res.json();
+  if (!res.ok) throw new Error(body.error ?? `Passport returned HTTP ${res.status}`);
+  return body;
+}
 
 export type PayOutcome =
   | { status: "refused"; decision: "BLOCK"; check: CheckResponse; signed: false }
@@ -27,8 +40,8 @@ export interface WrapperOptions {
   /** Called on BLOCK and WARN so a human hears about it. */
   notifyHuman?: (msg: string, check: CheckResponse) => void | Promise<void>;
   log?: (line: string) => void;
-  /** Injected in tests. Defaults to the in-process Passport check. */
-  checker?: typeof check;
+  /** Injected in tests. Defaults to the Passport service. */
+  checker?: typeof passportCheck;
 }
 
 export class GuardedPayments {
@@ -42,7 +55,7 @@ export class GuardedPayments {
   async pay(recipient: string, amount: string, memo?: string, asset = "NEAR"): Promise<PayOutcome> {
     let res: CheckResponse;
     try {
-      res = await (this.o.checker ?? check)({ network: this.o.network, payer: this.o.vaultId, recipient, amount, asset }, { sign: true });
+      res = await (this.o.checker ?? passportCheck)({ network: this.o.network, payer: this.o.vaultId, recipient, amount, asset }, { sign: true });
     } catch (e: any) {
       // Passport unreachable or input invalid: nothing is signed. (Fail closed.)
       return { status: "error", error: `Passport check failed, payment not attempted: ${e?.message ?? e}` };

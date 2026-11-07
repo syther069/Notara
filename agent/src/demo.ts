@@ -19,13 +19,12 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { KeyPair, actions, parseNearAmount } from "near-api-js";
-import { check } from "../../passport/src/check.ts";
 import { NETWORKS, ROOT, loadDeployment, type Deployment } from "../../passport/src/config.ts";
 import { bold, decisionColor, dim, formatReport, green, red, yellow } from "../../passport/src/format.ts";
 import { signVerdict } from "../../passport/src/verdict.ts";
 import { llmConfigured, runAgent } from "./agent.ts";
 import { accountFromKey } from "./keys.ts";
-import { GuardedPayments } from "./wrapper.ts";
+import { GuardedPayments, passportCheck } from "./wrapper.ts";
 
 const network = "testnet" as const;
 const explorerTx = (h: string) => `${NETWORKS[network].explorer}/txns/${h}`;
@@ -73,6 +72,8 @@ async function main() {
     console.log(s);
     lines.push(strip(s));
   };
+  const passport = process.env.PASSPORT_URL ?? "http://127.0.0.1:8787";
+  if (!(await fetch(`${passport}/v1/health`).catch(() => null))?.ok) throw new Error(`The Passport service isn't running at ${passport}. Start it first with: npm run serve`);
   const rows: Row[] = [];
   const { wallet, agentAccount, d } = buildWallet(log);
   const inbox = (f: string) => renderDoc(readFileSync(join(ROOT, "demo", "inbox", f), "utf8"));
@@ -146,7 +147,7 @@ async function main() {
       name: "a. submit the Passport's signed BLOCK verdict anyway",
       expect: /BLOCK: payment refused/,
       run: async () => {
-        const r = await check({ network, payer: d.vault, recipient: d.accounts.attacker, amount: half, asset: "NEAR" }, { sign: true });
+        const r = await passportCheck({ network, payer: d.vault, recipient: d.accounts.attacker, amount: half, asset: "NEAR" }, { sign: true });
         log(dim(`   passport says ${r.report.decision}`));
         return submit(r.verdict, r.signature!);
       },
@@ -156,7 +157,7 @@ async function main() {
       name: "b. rewrite the signed BLOCK verdict to ALLOW",
       expect: /Invalid verdict signature/,
       run: async () => {
-        const r = await check({ network, payer: d.vault, recipient: d.accounts.attacker, amount: half, asset: "NEAR" }, { sign: true });
+        const r = await passportCheck({ network, payer: d.vault, recipient: d.accounts.attacker, amount: half, asset: "NEAR" }, { sign: true });
         return submit({ ...r.verdict, decision: "ALLOW" }, r.signature!);
       },
     });
@@ -176,7 +177,7 @@ async function main() {
       expect: /different recipient/,
       run: async () => {
         const amt = parseNearAmount("0.1")!;
-        const r = await check({ network, payer: d.vault, recipient: d.accounts.merchant, amount: amt, asset: "NEAR" }, { sign: true });
+        const r = await passportCheck({ network, payer: d.vault, recipient: d.accounts.merchant, amount: amt, asset: "NEAR" }, { sign: true });
         log(dim(`   passport says ${r.report.decision} for ${d.accounts.merchant}`));
         return submit(r.verdict, r.signature!, d.accounts.attacker, amt);
       },

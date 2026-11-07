@@ -207,7 +207,7 @@ export function evaluate(
       add({
         code: "VERIFIED_REPORT",
         severity: "block",
-        message: `${label} was verified by ${r.status_by}: "${r.description}".`,
+        message: `${label} was verified by ${r.status_by}: "${r.description}".${r.disputes.length ? ` ${r.disputes.length} dispute(s) await a verifier's ruling.` : ""}`,
         signals: ["shared_reports"],
         evidence,
       });
