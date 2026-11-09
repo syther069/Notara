@@ -166,8 +166,8 @@ export function PayPage() {
         <Banner kind="ok" title="Paid">
           <p>
             {isSend ? "The link now holds" : `${inv.merchant} received`} {formatAsset(inv.amount, inv.asset)}.{" "}
-            {(paidCheckout?.txUrl ?? inv.txUrl ?? inv.txHash) && (
-              <a href={paidCheckout?.txUrl ?? inv.txUrl ?? `${EXPLORER[net]}/txns/${inv.txHash}`} target="_blank" rel="noreferrer">
+            {(paidCheckout?.txUrl || inv.txUrl || inv.txHash) && (
+              <a href={paidCheckout?.txUrl || inv.txUrl || `${EXPLORER[net]}/txns/${inv.txHash}`} target="_blank" rel="noreferrer">
                 View transaction <ExternalLink size={12} aria-hidden />
               </a>
             )}

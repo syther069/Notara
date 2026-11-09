@@ -192,9 +192,9 @@
     "semantic_hash": ""
   },
   "server/checkout.ts": {
-    "mtime": 1794052104.3736765,
-    "seen": 1794052201.4504087,
-    "ast_hash": "7801e1aae22a9bc4b5f9d90538ae8f98",
+    "mtime": 1794251801.624341,
+    "seen": 1794252073.13336,
+    "ast_hash": "7df8da9072a66e50af23d21e389cd49a",
     "semantic_hash": ""
   },
   "server/guard.ts": {
@@ -372,9 +372,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Pay.tsx": {
-    "mtime": 1794248424.6135178,
-    "seen": 1794248588.2988393,
-    "ast_hash": "cf508063aeb50779ddb58c62767297df",
+    "mtime": 1794252019.3474255,
+    "seen": 1794252073.1343603,
+    "ast_hash": "796374704ee2192587ba955616cfae09",
     "semantic_hash": ""
   },
   "web/src/pages/Send.tsx": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794248580.7901733,
-    "seen": 1794248588.2988393,
-    "ast_hash": "68f516f5e50e9762c0948b8cd88970ec",
+    "mtime": 1794252040.4698367,
+    "seen": 1794252073.1343603,
+    "ast_hash": "5d6ca269da7dcacbb634f3b7f1cd1a34",
     "semantic_hash": ""
   },
   "demo/inbox/invoice-injected.md": {

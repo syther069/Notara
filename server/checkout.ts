@@ -85,12 +85,15 @@ export async function createCheckout(i: { merchant: string; amount: string; orig
 /** Latest state of one deposit address. */
 export async function readCheckout(c: Checkout): Promise<Checkout> {
   const s = await oneClick(`/status?depositAddress=${encodeURIComponent(c.depositAddress)}`);
-  const dest = s.swapDetails?.destinationChainTxHashes?.[0];
+  // The list can also hold a refund on the origin chain (0x…): the NEAR delivery is the base58 hash.
+  // 1Click sends explorerUrl as "", so build the NEAR explorer link ourselves.
+  const list: any[] = s.swapDetails?.destinationChainTxHashes ?? [];
+  const dest = list.find((t) => t?.hash && !t.hash.startsWith("0x")) ?? list[0];
   return {
     ...c,
     status: s.status,
     txHash: dest?.hash,
-    txUrl: dest?.explorerUrl,
+    txUrl: dest?.explorerUrl || (dest?.hash && !dest.hash.startsWith("0x") ? `https://nearblocks.io/txns/${dest.hash}` : undefined),
     refundReason: s.swapDetails?.refundReason,
   };
 }
