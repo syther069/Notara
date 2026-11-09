@@ -44,6 +44,16 @@ export function sponsor(net: Net): Account {
   return new Account(id, NETWORKS[net].rpc, key as KeyPairString);
 }
 
+/** Whether Send by link can run on `net` (a sponsor account is configured). */
+export function hasSponsor(net: Net): boolean {
+  try {
+    sponsor(net);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** NEP-145: an account must register with a token before it can receive it. Idempotent. */
 export async function ensureUsdcStorage(net: Net, account: string): Promise<void> {
   const usdc = usdcFor(net);

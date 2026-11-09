@@ -5,6 +5,7 @@ import { api, type Invoice } from "../lib/api";
 import { newLinkKey, SEND_LINK_DAYS, toFragment } from "../lib/linkKey";
 import { Banner, CopyButton, MainnetBadge, StepBar } from "../components/ui";
 import { QrCode } from "../components/QrCode";
+import { useDeployment } from "../components/Layout";
 
 export function SendPage() {
   const [amount, setAmount] = useState("5");
@@ -13,7 +14,10 @@ export function SendPage() {
   const [error, setError] = useState<string | null>(null);
   const [made, setMade] = useState<{ inv: Invoice; url: string; path: string } | null>(null);
   const [network, setNetwork] = useState<"mainnet" | "testnet">("testnet");
-  const amountErr = amount && !/^\d+(\.\d{1,6})?$/.test(amount) ? "Enter a number like 5 or 2.5" : null;
+  const { dep } = useDeployment();
+  // Off only when the server says so; an unknown answer (still loading) leaves the button alone.
+  const mainnetOff = network === "mainnet" && dep?.mainnetSend === false;
+  const amountErr = amount &&!/^\d+(\.\d{1,6})?$/.test(amount) ? "Enter a number like 5 or 2.5" : null;
 
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -63,12 +67,20 @@ export function SendPage() {
             </div>
             <span className="hint">{network === "testnet" ? "Fund it from a NEAR testnet wallet with free USDC from faucet.circle.com." : "Fund it from any chain through NEAR Intents."}</span>
           </div>
+          {mainnetOff && (
+            <Banner kind="warn" title="Real-money send links aren't switched on yet">
+              <p>
+                They need a sponsor account that pays the gas for the person who claims the money, and this site doesn't have one yet. Use Testnet USDC to try the full flow
+                for free.
+              </p>
+            </Banner>
+          )}
           <div className="field">
             <label htmlFor="snote">Note (optional)</label>
             <input id="snote" className="input" maxLength={120} placeholder="Happy birthday!" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
           <div>
-            <button className="btn btn-primary" disabled={busy || !!amountErr || !amount}>
+            <button className="btn btn-primary" disabled={busy || !!amountErr || !amount || mainnetOff}>
               {busy ? <LoaderCircle size={16} className="spin" aria-hidden /> : <SendIcon size={16} aria-hidden />} Create send link
             </button>
           </div>

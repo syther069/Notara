@@ -36,6 +36,7 @@ import {
   ensureUsdcStorage,
   fundLinkAccount,
   fundRefusal,
+  hasSponsor,
   isImplicit,
   relayClaim,
   tla,
@@ -497,8 +498,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (m === "GET" && path === "/api/deployment") {
     const d = loadDeployment(NET);
     const mainnetRegistry = loadDeployment("mainnet")?.registry;
-    if (!d) return send(res, 200, { deployed: false, network: NET, mainnetRegistry });
-    return send(res, 200, { deployed: true, ...d, mainnetRegistry, public: PUBLIC, explorer: NETWORKS[NET].explorer, agentMode: llmConfigured() ? "llm" : "scripted" });
+    const mainnetSend = hasSponsor("mainnet");
+    if (!d) return send(res, 200, { deployed: false, network: NET, mainnetRegistry, mainnetSend });
+    return send(res, 200, { deployed: true, ...d, mainnetRegistry, mainnetSend, public: PUBLIC, explorer: NETWORKS[NET].explorer, agentMode: llmConfigured() ? "llm" : "scripted" });
   }
 
   if (m === "GET" && path === "/api/vault") return send(res, 200, await vaultSummary(pickVault(url.searchParams.get("vault"))));

@@ -326,7 +326,7 @@ export function PayPage() {
           )}
           <Banner kind="warn">
             <p>
-              Send only {current.label}. Another token or network can lose your money. Pay before {new Date(current.deadline).toLocaleTimeString()}.
+              Send only {current.label}. Another token or network can lose your money. Pay before {new Date(current.deadline).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}.
             </p>
           </Banner>
           <p className="row" style={{ margin: 0 }}>

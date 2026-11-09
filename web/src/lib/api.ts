@@ -51,6 +51,8 @@ export interface Deployment {
   agentMode?: "llm" | "scripted";
   /** Mainnet report registry, once deployed (deployment.mainnet.json). */
   mainnetRegistry?: string;
+  /** Mainnet Send by link is set up (a mainnet sponsor account pays the gas). */
+  mainnetSend?: boolean;
   /** Public deploy: owner and agent-pay routes run locally only. */
   public?: boolean;
 }

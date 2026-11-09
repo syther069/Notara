@@ -1,17 +1,17 @@
 # Graph Report - near  (2026-11-09)
 
 ## Corpus Check
-- 113 files · ~145,776 words
+- 114 files · ~146,671 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 2, .wasm 2, .zip 1)
 
 ## Summary
-- 1444 nodes · 3418 edges · 104 communities (95 shown, 9 thin omitted)
+- 1451 nodes · 3434 edges · 98 communities (89 shown, 9 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 32 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `63003349`
+- Built from commit: `d164ce02`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -25,18 +25,18 @@
 - web/package.json
 - setup-testnet.ts
 - 17. Source and evidence register
-- ui.tsx
+- linkKey.ts
 - main.tsx
 - Notara: Architecture
 - icons.tsx
 - Phase B: build for real use
 - demo.ts
 - check.ts
-- handle
+- server/index.ts
 - 6. Understanding, confidence and trust
 - Notara: Product Requirements (PRD)
 - api.ts
-- Invoices.tsx
+- Vault.tsx
 - merchants.ts
 - signals/index.ts
 - scripts
@@ -45,13 +45,13 @@
 - compilerOptions
 - sends.ts
 - dependencies
-- runVisitorScenario
+- vaults.ts
 - dependencies
 - Notara
-- Registry
+- near-sign-verify
 - Notara: Project Rules
 - types.ts
-- vaults.ts
+- config.ts
 - NEAR Hackathon: rules we build against
 - CLAUDE.md
 - .claude/CLAUDE.md
@@ -68,7 +68,7 @@
 - Layout.tsx
 - UI Guide: Universal Principles for Visual Composition, Components and Motion
 - 7. Interaction feedback, errors, forms and reversibility
-- vault/src/lib.rs
+- invoices.ts
 - 17. Iconography, motion and interaction polish
 - 1. Foundations: UX versus UI, task-first thinking, contextual principles, complete-state thinking
 - 16. Component states and visible feedback
@@ -104,21 +104,15 @@
 - 22. Visual review checklist
 - 15. UX review checklist
 - 8. Engagement and return loops without compulsion
-- policy.test.ts
 - guard.ts
 - near.ts
 - scripts
 - Pay.tsx
 - checkout.ts
-- PaymentStatus
-- Category
-- nearpay.ts
-- Status
-- Decision
 - 9. Dark patterns, honest persuasion and regulatory context
 
 ## God Nodes (most connected - your core abstractions)
-1. `handle()` - 51 edges
+1. `handle()` - 52 edges
 2. `Vault` - 37 edges
 3. `setup()` - 35 edges
 4. `ctx()` - 31 edges
@@ -126,77 +120,77 @@
 6. `verdict()` - 31 edges
 7. `UI Guide: Universal Principles for Visual Composition, Components and Motion` - 30 edges
 8. `17. Source and evidence register` - 30 edges
-9. `PayPage()` - 26 edges
-10. `Banner()` - 26 edges
+9. `near-api-js` - 27 edges
+10. `PayPage()` - 26 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `1. First real payment through a link [S] 💰` --references--> `ensureUsdcStorage()`  [INFERRED]
   IMPLEMENTATION.md → server/sends.ts
-- `7. Public mode: no admin keys on a public server [M]` --references--> `ownerAction()`  [INFERRED]
-  IMPLEMENTATION.md → server/index.ts
-- `7. Public mode: no admin keys on a public server [M]` --references--> `proposeOwner()`  [INFERRED]
-  IMPLEMENTATION.md → server/index.ts
 - `Nice-to-have build sequence (items 12–20)` --references--> `ensureUsdcStorage()`  [INFERRED]
   IMPLEMENTATION.md → server/sends.ts
 - `6. Database instead of JSON files [M] 🗄️` --references--> `load()`  [INFERRED]
   IMPLEMENTATION.md → passport/src/signals/codeHashCache.ts
+- `6. Database instead of JSON files [M] 🗄️` --references--> `createInvoice()`  [INFERRED]
+  IMPLEMENTATION.md → server/invoices.ts
+- `6. Database instead of JSON files [M] 🗄️` --references--> `updateInvoice()`  [INFERRED]
+  IMPLEMENTATION.md → server/invoices.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (104 total, 9 thin omitted)
+## Communities (98 total, 9 thin omitted)
 
 ### Community 0 - "Vault"
-Cohesion: 0.14
-Nodes (8): AssetCap, Config, event(), FungibleToken, Payment, validate_asset(), Vault, Verdict
+Cohesion: 0.06
+Nodes (27): AssetCap, CALLBACK_GAS, Config, Decision, Allow, Block, Warn, DOMAIN (+19 more)
 
 ### Community 1 - "registry/src/lib.rs"
-Cohesion: 0.17
-Nodes (16): acc(), bond_required(), cannot_self_report(), ctx(), dispute_cannot_lift_a_verified_report(), dispute_marks_an_unverified_report_disputed(), file(), MAX_DISPUTES_PER_REPORT (+8 more)
+Cohesion: 0.09
+Nodes (32): acc(), bond_required(), cannot_self_report(), Category, Impersonation, MaliciousContract, Other, Phishing (+24 more)
 
 ### Community 2 - "tests.rs"
 Cohesion: 0.20
 Nodes (44): acc(), agent_cannot_approve_its_own_warn(), agent_cannot_be_proposed_as_owner(), agent_cannot_propose_owner(), agent_cannot_raise_caps(), agent_cannot_swap_signer_key(), allow_executes_and_reserves_daily(), attacker() (+36 more)
 
 ### Community 3 - "wallet.tsx"
-Cohesion: 0.15
-Nodes (15): Ctx, EVM_WALLET_ID, EXCLUDED, failureReason(), FEATURES, ftBalance(), Net, NETWORK (+7 more)
+Cohesion: 0.16
+Nodes (14): Ctx, EXCLUDED, failureReason(), FEATURES, ftBalance(), Net, NETWORK, RPC (+6 more)
 
 ### Community 4 - "4. Core components"
 Cohesion: 0.06
 Nodes (33): 10. Implementation notes, 1. Design goals, 2. Personality and tone, 3.0 Theme: "Notary Seal" (redesign, 2026-11-09), 3.2 Typography, 3.3 Spacing, shape, elevation, 3.4 Icons, 3.5 Motion (+25 more)
 
 ### Community 5 - "package.json"
-Cohesion: 0.15
-Nodes (15): description, devDependencies, esbuild@0.28.2, tsx@4.23.15, @types/node@^22.15.0, engines, node, license (+7 more)
+Cohesion: 0.14
+Nodes (17): description, devDependencies, esbuild@0.28.2, tsx@4.23.15, @types/node@^22.15.0, typescript@5.9.3, engines, node (+9 more)
 
 ### Community 6 - "web/package.json"
-Cohesion: 0.17
-Nodes (12): typescript@5.9.3, @types/react, @types/react-dom, typescript, vite, @vitejs/plugin-react, devDependencies, @types/react@19.3.0 (+4 more)
+Cohesion: 0.20
+Nodes (10): @types/react, @types/react-dom, vite, @vitejs/plugin-react, devDependencies, @types/react@19.3.0, @types/react-dom@19.3.0, typescript@5.9.3 (+2 more)
 
 ### Community 7 - "setup-testnet.ts"
-Cohesion: 0.12
-Nodes (30): accountFromKey(), hasKey(), keyPath(), readKey(), writeKey(), toUnits(), nearAmount(), viewAccount() (+22 more)
+Cohesion: 0.27
+Nodes (19): accountFromKey(), hasKey(), keyPath(), readKey(), writeKey(), nearAmount(), viewAccount(), topUpFromFaucet() (+11 more)
 
 ### Community 8 - "17. Source and evidence register"
 Cohesion: 0.07
 Nodes (30): 10. The Role of Animation and Motion in UX: Nielsen Norman Group, 11. Response Times: The Three Important Limits: Nielsen Norman Group, 12. Product Page UX: Provide at Least One In-Scale Image: Baymard, 13. Use Delivery Date, Not Shipping Speed: Baymard, 14. The Effect of Electronic Word of Mouth on Sales: A Meta-Analytic Review, 15. Final Rule Banning Fake Reviews and Testimonials: FTC Announcement, 16. WCAG 2.2 SC 2.5.8: Target Size (Minimum): W3C, 17. Source and evidence register (+22 more)
 
-### Community 9 - "ui.tsx"
-Cohesion: 0.14
-Nodes (27): CheckResult(), DecisionCard(), Evidence(), EvidenceTable(), ReasonList(), ReasonRow(), SevIcon(), signalSummary() (+19 more)
+### Community 9 - "linkKey.ts"
+Cohesion: 0.22
+Nodes (13): usdc(), fromFragment(), fromSecret(), isValidNewName(), LinkKey, newLinkKey(), toFragment(), toHex() (+5 more)
 
 ### Community 10 - "main.tsx"
 Cohesion: 0.11
-Nodes (26): react, react-router-dom, QrCode(), StepBar(), SendState, EXPLORER, fromFragment(), fromSecret() (+18 more)
+Nodes (26): react, react-router-dom, LoaderCircle(), Plus, useDeployment(), QrCode(), MainnetBadge(), StepBar() (+18 more)
 
 ### Community 11 - "Notara: Architecture"
-Cohesion: 0.09
-Nodes (22): 10. Future work (not in v1), 1. The big picture, 2.1 Vault contract (`contracts/vault`, Rust, near-sdk 5.30), 2.2 Registry contract (`contracts/registry`, Rust), 2.3 Notara (`passport/src`, TypeScript), 2.5 Website (`web/`, built), 2.6 Backend (`server/`, built), 2. Components (+14 more)
+Cohesion: 0.08
+Nodes (23): 10. Future work (not in v1), 1. The big picture, 2.1 Vault contract (`contracts/vault`, Rust, near-sdk 5.30), 2.2 Registry contract (`contracts/registry`, Rust), 2.3 Notara (`passport/src`, TypeScript), 2.4 Agent (`agent/src`, TypeScript), 2.5 Website (`web/`, built), 2.6 Backend (`server/`, built) (+15 more)
 
 ### Community 12 - "icons.tsx"
-Cohesion: 0.16
-Nodes (25): ArrowRight, BadgeCheck, Bot, ChevronDown, Globe, Link2, Lock, Search (+17 more)
+Cohesion: 0.13
+Nodes (29): ArrowLeft, ArrowRight, BadgeCheck, Bot, Globe, Link2, Lock, RefreshCw (+21 more)
 
 ### Community 13 - "Phase B: build for real use"
 Cohesion: 0.11
@@ -208,11 +202,11 @@ Nodes (29): AgentRun, callPay(), chat(), env(), ENV_FILE, llmConfigured(), pickM
 
 ### Community 15 - "check.ts"
 Cohesion: 0.15
-Nodes (21): buildReport(), check(), validateRequest(), withDeploymentLists(), arg(), main(), DISCLAIMER, loadDeployment() (+13 more)
+Nodes (21): buildReport(), check(), validateRequest(), withDeploymentLists(), arg(), main(), DISCLAIMER, loadPolicy() (+13 more)
 
-### Community 16 - "handle"
-Cohesion: 0.16
-Nodes (24): 6. Database instead of JSON files [M] 🗄️, 7. Public mode: no admin keys on a public server [M], listAssets(), resolveAsset(), handle(), HttpError, latestRun(), listRuns() (+16 more)
+### Community 16 - "server/index.ts"
+Cohesion: 0.12
+Nodes (38): 7. Public mode: no admin keys on a public server [M], toUnits(), viewFunction(), app(), explorerTx(), handle(), HttpError, latestRun() (+30 more)
 
 ### Community 17 - "6. Understanding, confidence and trust"
 Cohesion: 0.33
@@ -223,20 +217,20 @@ Cohesion: 0.11
 Nodes (17): 10. Timeline, 1. One-line summary, 2. The problem, 3. Who it is for, 4. The solution, 5. Goals and non-goals, 6.1 Home (`/`), 6.2 Check an account (`/check`) (+9 more)
 
 ### Community 19 - "api.ts"
-Cohesion: 0.15
-Nodes (20): CircleCheck, Download, ExternalLink, Pause, Play, MyVault(), near(), RunResult() (+12 more)
+Cohesion: 0.13
+Nodes (25): CircleCheck, Download, ExternalLink, Pause, Play, Wallet, MyVault(), near() (+17 more)
 
-### Community 20 - "Invoices.tsx"
-Cohesion: 0.10
-Nodes (38): ArrowLeft, Plus, RefreshCw, NotDeployed(), useDeployment(), useToast(), AccountLink(), TxLink() (+30 more)
+### Community 20 - "Vault.tsx"
+Cohesion: 0.14
+Nodes (20): DecisionCard(), Badge(), Payment, VaultSummary, ASSETS, assetSymbol(), DECISION_TEXT, formatAsset() (+12 more)
 
 ### Community 21 - "merchants.ts"
-Cohesion: 0.25
-Nodes (10): checkWebsite(), freshNonce(), isPrivateAddress(), linkMessage(), Merchant, normalizeWebsite(), SIGN_RECIPIENT, store (+2 more)
+Cohesion: 0.23
+Nodes (11): docs(), checkWebsite(), freshNonce(), isPrivateAddress(), linkMessage(), Merchant, normalizeWebsite(), SIGN_RECIPIENT (+3 more)
 
 ### Community 22 - "signals/index.ts"
 Cohesion: 0.13
-Nodes (36): Policy, accountTxs(), daysSince(), nsToIso(), postJson(), transactions(), rank, sevToDecision (+28 more)
+Nodes (37): loadDeployment(), Policy, accountTxs(), daysSince(), nsToIso(), postJson(), transactions(), evaluate() (+29 more)
 
 ### Community 23 - "scripts"
 Cohesion: 0.14
@@ -255,16 +249,16 @@ Cohesion: 0.15
 Nodes (12): compilerOptions, allowImportingTsExtensions, esModuleInterop, module, moduleResolution, noEmit, resolveJsonModule, skipLibCheck (+4 more)
 
 ### Community 27 - "sends.ts"
-Cohesion: 0.11
-Nodes (35): usdcFor(), activateSend(), app(), claimSend(), MIME, Net, PORT, publicInvoice() (+27 more)
+Cohesion: 0.13
+Nodes (23): 6. Database instead of JSON files [M] 🗄️, activateSend(), claimSend(), clearInvoiceFlag(), getInvoice(), setInvoiceFlag(), createName(), ensureUsdcStorage() (+15 more)
 
 ### Community 28 - "dependencies"
-Cohesion: 0.22
-Nodes (9): dependencies, borsh@2.0.0, near-api-js@7.4.0, near-sign-verify@0.4.5, @neondatabase/serverless@1.2.0, borsh, near-sign-verify, @neondatabase/serverless (+1 more)
+Cohesion: 0.29
+Nodes (7): dependencies, borsh@2.0.0, near-api-js@7.4.0, near-sign-verify@0.4.5, @neondatabase/serverless@1.2.0, borsh, @neondatabase/serverless
 
-### Community 29 - "runVisitorScenario"
-Cohesion: 0.27
-Nodes (11): verifySigned(), agent(), createVisitorVault(), factory(), getVisitorVault(), isAccountId(), isVisitorVault(), runVisitorScenario() (+3 more)
+### Community 29 - "vaults.ts"
+Cohesion: 0.19
+Nodes (19): agent(), createVisitorVault(), factory(), getVisitorVault(), isAccountId(), isVisitorVault(), keyed(), MAX_VAULTS_PER_DAY (+11 more)
 
 ### Community 30 - "dependencies"
 Cohesion: 0.12
@@ -274,9 +268,9 @@ Nodes (20): @hot-labs/near-connect, iconoir-react, motion, qrcode, react-dom, @t
 Cohesion: 0.17
 Nodes (11): Function-call keys: what they do and don't protect, Honest limits, Implemented vs planned, Layout, Live site (Vercel), Notara, Run it, Try it free on testnet (for judges) (+3 more)
 
-### Community 32 - "Registry"
-Cohesion: 0.22
-Nodes (5): check_text(), Dispute, event(), Registry, Report
+### Community 32 - "near-sign-verify"
+Cohesion: 0.13
+Nodes (10): near-sign-verify, LOCAL, results, checkSignature(), implicit, kp, opts, token() (+2 more)
 
 ### Community 33 - "Notara: Project Rules"
 Cohesion: 0.22
@@ -284,27 +278,27 @@ Nodes (8): 1. Safety and approvals (hard rules), 2. Honesty rules (what we claim
 
 ### Community 34 - "types.ts"
 Cohesion: 0.23
-Nodes (6): GuardedPayments, WrapperOptions, wallet(), 2.4 Agent (`agent/src`, TypeScript), CheckResponse, Network
+Nodes (6): GuardedPayments, WrapperOptions, wallet(), Deployment, CheckResponse, Network
 
-### Community 35 - "vaults.ts"
-Cohesion: 0.14
-Nodes (18): KEY_DIR, KeyFile, Deployment, NETWORKS, ROOT, near-api-js, fn, owner (+10 more)
+### Community 35 - "config.ts"
+Cohesion: 0.11
+Nodes (14): KEY_DIR, KeyFile, NETWORKS, ROOT, FILE, load(), Store, acct() (+6 more)
 
 ### Community 36 - "NEAR Hackathon: rules we build against"
 Cohesion: 0.50
 Nodes (3): NEAR Hackathon: rules we build against, Submission requirements, Team rules for this repo
 
 ### Community 39 - "icons.tsx"
-Cohesion: 0.14
-Nodes (21): Check, CloudOff, Coins, Copy, FileCode, FlaskConical, Grid, IconProps (+13 more)
+Cohesion: 0.11
+Nodes (33): CheckResult(), Evidence(), EvidenceTable(), ReasonList(), ReasonRow(), SevIcon(), signalSummary(), Check (+25 more)
 
 ### Community 45 - "assets.ts"
-Cohesion: 0.16
-Nodes (17): AssetInfo, formatAmount(), formatUnits(), getAsset(), linkNetwork(), USDC_MAINNET, USDC_TESTNET, merchantProfile() (+9 more)
+Cohesion: 0.12
+Nodes (18): AssetInfo, formatUnits(), linkNetwork(), USDC_MAINNET, USDC_TESTNET, usdcFor(), cases, healthy() (+10 more)
 
 ### Community 46 - "evm.ts"
-Cohesion: 0.57
-Nodes (5): erc20TransferData(), eth(), evmAccount(), evmPay(), pad()
+Cohesion: 0.50
+Nodes (6): erc20TransferData(), eth(), evmAccount(), evmPay(), hasEvmWallet(), pad()
 
 ### Community 47 - "vercel.json"
 Cohesion: 0.40
@@ -324,7 +318,7 @@ Nodes (15): 2. Laws and principles, precisely, Autonomy, competence and intrinsi
 
 ### Community 53 - "Layout.tsx"
 Cohesion: 0.13
-Nodes (22): LoaderCircle(), LogOut, Menu, Moon, Sun, TriangleAlert, X, AGENTS (+14 more)
+Nodes (22): ChevronDown, FileCode, LogOut, Menu, Moon, Sun, TriangleAlert, X (+14 more)
 
 ### Community 54 - "UI Guide: Universal Principles for Visual Composition, Components and Motion"
 Cohesion: 0.15
@@ -334,9 +328,9 @@ Nodes (12): 1. The role of UI and its relationship with UX.md, 21. Standards and
 Cohesion: 0.15
 Nodes (13): 7. Interaction feedback, errors, forms and reversibility, Button and control states, Central hypothesis, Complete state coverage, Disabled controls and the validation contradiction, Feedback placement by scope and consequence, Forms: clear before, patient during, helpful after, Interaction-state reference (+5 more)
 
-### Community 56 - "vault/src/lib.rs"
-Cohesion: 0.12
-Nodes (8): CALLBACK_GAS, DOMAIN, ed25519_bytes(), FT_TRANSFER_GAS, MS_PER_DAY, NEAR_ASSET, PENDING_OWNER_KEY, Spent
+### Community 56 - "invoices.ts"
+Cohesion: 0.18
+Nodes (16): formatAmount(), getAsset(), listAssets(), resolveAsset(), merchantProfile(), createInvoice(), csvCell(), Invoice (+8 more)
 
 ### Community 57 - "17. Iconography, motion and interaction polish"
 Cohesion: 0.17
@@ -463,8 +457,8 @@ Cohesion: 0.33
 Nodes (6): 5. First impressions, visual identity and perceived quality, A coherent and original identity, Control states as a quality signal, Evaluate appearance and usability separately, Motion should explain change, Perceived responsiveness
 
 ### Community 88 - "db.ts"
-Cohesion: 0.18
-Nodes (8): docs(), Engine, getEngine(), migrate(), postgres(), Row, sqlite(), Table
+Cohesion: 0.19
+Nodes (7): Engine, getEngine(), migrate(), postgres(), Row, sqlite(), Table
 
 ### Community 89 - "22. Visual review checklist"
 Cohesion: 0.40
@@ -478,49 +472,25 @@ Nodes (5): 15. UX review checklist, Act and understand, Find and decide, Use com
 Cohesion: 0.40
 Nodes (5): 8. Engagement and return loops without compulsion, Habit support without coercion, Notifications and re-engagement, Saved state and continuity, Separate useful engagement from compulsion
 
-### Community 92 - "policy.test.ts"
-Cohesion: 0.18
-Nodes (10): evaluate(), fmt(), get(), cases, healthy(), NEAR(), policy, report() (+2 more)
-
 ### Community 93 - "guard.ts"
 Cohesion: 0.27
 Nodes (7): busy, Headers, LOCAL_HOSTS, LOCAL_ONLY, refuseReason(), runOnce(), local
 
 ### Community 94 - "near.ts"
-Cohesion: 0.13
-Nodes (15): AccountTx, AccountTxPage, AccountView, RpcError, rpcQuery(), TIMEOUT_MS, checkSignature(), PAYLOAD (+7 more)
+Cohesion: 0.21
+Nodes (10): AccountTx, AccountTxPage, AccountView, RpcError, rpcQuery(), TIMEOUT_MS, PAYLOAD, SPKI_ED25519 (+2 more)
 
 ### Community 95 - "scripts"
 Cohesion: 0.50
 Nodes (4): scripts, build, dev, preview
 
 ### Community 96 - "Pay.tsx"
-Cohesion: 0.20
-Nodes (13): api, ApiError, Checkout, CheckResponse, Invoice, MerchantProfile, MyVault, PayToken (+5 more)
+Cohesion: 0.12
+Nodes (25): Flag, useToast(), HEADLINE, plain(), ReportForm(), SafetyPanel(), AccountLink(), NetworkTag() (+17 more)
 
 ### Community 97 - "checkout.ts"
 Cohesion: 0.17
-Nodes (13): createCheckout(), DONE, EVM_CHAIN_IDS, isDone(), oneClick(), overallStatus(), PayToken, payTokens() (+5 more)
-
-### Community 98 - "PaymentStatus"
-Cohesion: 0.29
-Nodes (7): PaymentStatus, Executed, Executing, Expired, Failed, PendingApproval, Rejected
-
-### Community 99 - "Category"
-Cohesion: 0.33
-Nodes (6): Category, Impersonation, MaliciousContract, Other, Phishing, Scam
-
-### Community 100 - "nearpay.ts"
-Cohesion: 0.47
-Nodes (4): fetchTx(), receivedInTx(), rpc(), tx
-
-### Community 101 - "Status"
-Cohesion: 0.40
-Nodes (5): Status, Disputed, Rejected, Unverified, Verified
-
-### Community 102 - "Decision"
-Cohesion: 0.40
-Nodes (4): Decision, Allow, Block, Warn
+Nodes (12): createCheckout(), DONE, EVM_CHAIN_IDS, isDone(), oneClick(), overallStatus(), PayToken, payTokens() (+4 more)
 
 ### Community 103 - "9. Dark patterns, honest persuasion and regulatory context"
 Cohesion: 0.50
@@ -528,23 +498,23 @@ Nodes (4): 9. Dark patterns, honest persuasion and regulatory context, A practic
 
 ## Knowledge Gaps
 - **20 isolated node(s):** `Allow`, `Block`, `Warn`, `Executed`, `Executing` (+15 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 682 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 687 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `near-api-js` connect `vaults.ts` to `types.ts`, `package.json`, `setup-testnet.ts`, `main.tsx`, `demo.ts`, `check.ts`, `merchants.ts`, `dependencies`, `sends.ts`, `dependencies`, `runVisitorScenario`, `near.ts`?**
-  _High betweenness centrality (0.097) - this node is a cross-community bridge._
+- **Why does `near-api-js` connect `check.ts` to `near-sign-verify`, `types.ts`, `config.ts`, `package.json`, `setup-testnet.ts`, `linkKey.ts`, `main.tsx`, `assets.ts`, `demo.ts`, `merchants.ts`, `dependencies`, `sends.ts`, `dependencies`, `vaults.ts`, `near.ts`?**
+  _High betweenness centrality (0.108) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `Vault` (e.g. with `pay()` and `setup()`) actually correct?**
   _`Vault` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Allow`, `Block`, `Warn` to the rest of the system?**
   _20 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Vault` be split into smaller, more focused modules?**
-  _Cohesion score 0.14035087719298245 - nodes in this community are weakly interconnected._
-- **Why does `2. Components` connect `Notara: Architecture` to `types.ts`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
-- **Should `4. Core components` be split into smaller, more focused modules?**
-  _Cohesion score 0.058823529411764705 - nodes in this community are weakly interconnected._
-- **Why does `near-sign-verify` connect `dependencies` to `wallet.tsx`, `package.json`, `setup-testnet.ts`, `merchants.ts`, `near.ts`, `dependencies`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+  _Cohesion score 0.0625694187338023 - nodes in this community are weakly interconnected._
+- **Why does `near-sign-verify` connect `near-sign-verify` to `config.ts`, `wallet.tsx`, `package.json`, `merchants.ts`, `dependencies`, `dependencies`, `near.ts`?**
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+- **Should `registry/src/lib.rs` be split into smaller, more focused modules?**
+  _Cohesion score 0.09398496240601503 - nodes in this community are weakly interconnected._
+- **Why does `Signals, data sources and their limits` connect `signals/index.ts` to `Notara`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._

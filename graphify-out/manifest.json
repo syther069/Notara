@@ -204,9 +204,9 @@
     "semantic_hash": ""
   },
   "server/index.ts": {
-    "mtime": 1794225681.043578,
-    "seen": 1794225757.289071,
-    "ast_hash": "e3acbbf0d938dc930983d35b8925d77b",
+    "mtime": 1794248453.086312,
+    "seen": 1794248588.2988393,
+    "ast_hash": "028767025094baf841eb5804f17256b4",
     "semantic_hash": ""
   },
   "server/invoices.ts": {
@@ -222,9 +222,9 @@
     "semantic_hash": ""
   },
   "server/sends.ts": {
-    "mtime": 1794207559.5573573,
-    "seen": 1794208307.842678,
-    "ast_hash": "ef6f1259713306fa64f6469a46d0e020",
+    "mtime": 1794248452.2234445,
+    "seen": 1794248588.2988393,
+    "ast_hash": "122a075ef6580e81c3b1cc54bad80c0d",
     "semantic_hash": ""
   },
   "server/test/checkout.test.ts": {
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/api.ts": {
-    "mtime": 1794225681.0447319,
-    "seen": 1794225757.289071,
-    "ast_hash": "3e35ad5c8d2a312dfb1297ee9dfb7eca",
+    "mtime": 1794248453.672275,
+    "seen": 1794248588.2988393,
+    "ast_hash": "8c85b8dec019e7fca70500e99e50af2e",
     "semantic_hash": ""
   },
   "web/src/lib/format.ts": {
@@ -372,15 +372,15 @@
     "semantic_hash": ""
   },
   "web/src/pages/Pay.tsx": {
-    "mtime": 1794246914.6276336,
-    "seen": 1794246982.3110156,
-    "ast_hash": "f13be064bc789185bda7eccb07db463c",
+    "mtime": 1794248424.6135178,
+    "seen": 1794248588.2988393,
+    "ast_hash": "cf508063aeb50779ddb58c62767297df",
     "semantic_hash": ""
   },
   "web/src/pages/Send.tsx": {
-    "mtime": 1794233813.6112635,
-    "seen": 1794233999.513252,
-    "ast_hash": "4af577d9e6524122e91348adf84aa003",
+    "mtime": 1794248465.2835565,
+    "seen": 1794248588.2988393,
+    "ast_hash": "dd109d3c956272b3029b17c681633ce4",
     "semantic_hash": ""
   },
   "web/src/pages/Vault.tsx": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794246201.4225385,
-    "seen": 1794246304.301387,
-    "ast_hash": "b375a90772a67fb4dbe84e0479fe0f3e",
+    "mtime": 1794248580.7901733,
+    "seen": 1794248588.2988393,
+    "ast_hash": "68f516f5e50e9762c0948b8cd88970ec",
     "semantic_hash": ""
   },
   "demo/inbox/invoice-injected.md": {
@@ -717,6 +717,12 @@
     "mtime": 1794234485.4882133,
     "seen": 1794242945.3678346,
     "ast_hash": "8d2b2179eef598a2aa41378f758b9568",
+    "semantic_hash": ""
+  },
+  "scripts/audit-mainnet.ts": {
+    "mtime": 1794248033.4324508,
+    "seen": 1794248090.7999868,
+    "ast_hash": "4746fb64726aaf0981365d8777bcc8d0",
     "semantic_hash": ""
   },
   "package-lock.json": {
