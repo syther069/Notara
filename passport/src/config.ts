@@ -1,9 +1,10 @@
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { Network } from "./types.ts";
 
-export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+/** Repo root. NOTARA_ROOT overrides it where the code runs bundled (the Vercel function carries its config files). */
+export const ROOT = process.env.NOTARA_ROOT ? resolve(process.env.NOTARA_ROOT) : join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 export const NETWORKS: Record<Network, { rpc: string; txApi: string; explorer: string }> = {
   testnet: {

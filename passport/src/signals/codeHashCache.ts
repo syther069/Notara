@@ -7,7 +7,8 @@ import { join } from "node:path";
 import { ROOT } from "../config.ts";
 import type { Network } from "../types.ts";
 
-const DIR = join(ROOT, "passport", "data");
+// Best-effort cache. On Vercel only /tmp is writable, so NOTARA_DATA_DIR points there (per instance).
+const DIR = process.env.NOTARA_DATA_DIR ?? join(ROOT, "passport", "data");
 const FILE = join(DIR, "code-hashes.json");
 
 type Store = Record<string, { codeHash: string; seenAt: string }>;

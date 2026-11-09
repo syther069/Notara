@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { Check, LoaderCircle, RefreshCw, Wallet, X } from "lucide-react";
 import { EVM_WALLET_ID, useWallet } from "../lib/wallet";
@@ -122,6 +123,8 @@ function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => v
 export function VaultPage() {
   const { dep } = useDeployment();
   const [summary, setSummary] = useState<VaultSummary | null>(null);
+  // ?vault= shows a visitor's own vault (made on the Security page) instead of the main demo vault.
+  const vaultParam = new URLSearchParams(useLocation().search).get("vault") ?? undefined;
   const [payments, setPayments] = useState<Payment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
@@ -130,7 +133,7 @@ export function VaultPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, p] = await Promise.all([api.vault(), api.payments()]);
+      const [s, p] = await Promise.all([api.vault(vaultParam), api.payments(vaultParam)]);
       setSummary(s);
       setPayments(p.payments);
       setError(null);
@@ -139,7 +142,7 @@ export function VaultPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [vaultParam]);
 
   useEffect(() => {
     if (dep?.deployed) load();
@@ -230,7 +233,7 @@ export function VaultPage() {
           </div>
         ) : (
           <p className="muted small" style={{ marginTop: 12 }}>
-            USDC isn't enabled on this vault yet. Run <code>npm run owner -- enable-usdc</code>.
+            {vaultParam ? "This vault pays in test NEAR." : <>USDC isn't enabled on this vault yet. Run <code>npm run owner -- enable-usdc</code>.</>}
           </p>
         ))}
       {summary?.usdc.enabled && summary.usdc.balance === "0" && (

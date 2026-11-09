@@ -42,7 +42,8 @@ import {
   usdcBalance,
 } from "./sends.ts";
 import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, verifyLinkToken } from "./merchants.ts";
-import { createInvoice, getInvoice, type Invoice, listInvoices, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
+import { clearInvoiceFlag, createInvoice, getInvoice, type Invoice, listInvoices, setInvoiceFlag, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
+import { SCENARIOS, createVisitorVault, getVisitorVault, isVisitorVault, runVisitorScenario } from "./vaults.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? "127.0.0.1";
@@ -101,8 +102,16 @@ function toAssetUnits(amount: unknown, assetId = "NEAR"): string {
 
 // ---------------------------------------------------------------- vault + owner
 
-async function vaultSummary() {
+/** The main demo vault, or a visitor's own vault (?vault=). Nothing else, so this can't be used to read arbitrary contracts. */
+function pickVault(requested: string | null) {
   const d = requireDeployment();
+  if (!requested || requested === d.vault) return d.vault;
+  if (isVisitorVault(requested)) return requested;
+  throw new HttpError(400, "Unknown vault");
+}
+
+async function vaultSummary(vault: string) {
+  const d = { vault };
   const [config, acct, spent, pendingOwner] = await Promise.all([
     viewFunction<any>(NET, d.vault, "get_config"),
     viewAccount(NET, d.vault),
@@ -134,13 +143,14 @@ async function vaultSummary() {
       dailyUnits: usdcCap?.daily ?? null,
     },
     /** True when keys/owner.json on this machine is still the vault owner (local owner console works). */
-    localOwnerKey: !PUBLIC && hasKey("owner") && accountFromKey(NET, "owner").accountId === config.owner,
+    // Only the main demo vault: visitor vaults are always approved from the owner's own wallet.
+    localOwnerKey: !PUBLIC && vault === requireDeployment().vault && hasKey("owner") && accountFromKey(NET, "owner").accountId === config.owner,
     config,
   };
 }
 
-async function vaultPayments() {
-  const d = requireDeployment();
+async function vaultPayments(vault: string) {
+  const d = { vault };
   const all: any[] = [];
   for (let from = 0; ; from += 100) {
     const page = await viewFunction<any[]>(NET, d.vault, "get_payments", { from_index: String(from), limit: "100" });
@@ -247,7 +257,7 @@ function readRun(name: string) {
 // ---------------------------------------------------------------- invoices
 
 async function refreshInvoice(id: string) {
-  const inv = getInvoice(id);
+  const inv = await getInvoice(id);
   if (!inv) throw new HttpError(404, `Unknown invoice ${id}`);
   if (inv.asset === USDC_MAINNET) return syncCheckouts(inv);
   if (inv.status !== "pending_approval" || inv.vaultPaymentId === undefined) return inv;
@@ -255,7 +265,7 @@ async function refreshInvoice(id: string) {
   const p: any = await viewFunction(NET, d.vault, "get_payment", { payment_id: inv.vaultPaymentId });
   const status = statusFromVault(p?.status ?? "");
   if (status === inv.status) return inv;
-  return updateInvoice(id, { status, paidAt: status === "paid" ? new Date(Number(p.updated_at_ms)).toISOString() : undefined });
+  return await updateInvoice(id, { status, paidAt: status === "paid" ? new Date(Number(p.updated_at_ms)).toISOString() : undefined });
 }
 
 // ---------------------------------------------------------------- any-chain payment links
@@ -265,7 +275,7 @@ async function syncCheckouts(inv: Invoice) {
   const checkouts = await Promise.all(inv.checkouts.map((c) => (isDone(c) ? c : readCheckout(c).catch(() => c))));
   const status = overallStatus(checkouts);
   const paid = checkouts.find((c) => c.status === "SUCCESS");
-  return updateInvoice(inv.id, { checkouts, status, txHash: paid?.txHash, txUrl: paid?.txUrl, paidAt: paid ? new Date().toISOString() : undefined });
+  return await updateInvoice(inv.id, { checkouts, status, txHash: paid?.txHash, txUrl: paid?.txUrl, paidAt: paid ? new Date().toISOString() : undefined });
 }
 
 async function quoteInvoice(id: string, b: any) {
@@ -288,7 +298,7 @@ async function quoteInvoice(id: string, b: any) {
 
   try {
     const c = await createCheckout({ merchant: inv.merchant, amount: inv.amount, originAsset: token.assetId, refundTo, label: token.label });
-    return updateInvoice(id, { checkouts: [...list, c], status: "unpaid" });
+    return await updateInvoice(id, { checkouts: [...list, c], status: "unpaid" });
   } catch (e: any) {
     throw new HttpError(400, e.message);
   }
@@ -314,9 +324,9 @@ async function withSignature(i: Invoice) {
 }
 
 async function merchantProfile(account: string) {
-  let m = getMerchant(account);
+  let m = await getMerchant(account);
   if (m.website && Date.now() - Date.parse(m.websiteCheckedAt ?? "0") > 3_600_000) m = await checkWebsite(account, m.website).catch(() => m);
-  const links = listInvoices().filter((i) => i.merchant === account && linkNetwork(i.asset) && i.kind !== "send");
+  const links = (await listInvoices()).filter((i) => i.merchant === account && linkNetwork(i.asset) && i.kind !== "send");
   const paid = links.filter((i) => i.status === "paid");
   return {
     ...m,
@@ -336,23 +346,31 @@ async function activateSend(inv: Invoice, net: Net) {
   const why = fundRefusal(inv);
   if (why === "already") return inv;
   if (why) throw new HttpError(409, why);
-  const out = await runOnce(`activate:${inv.id}`, async () => {
-    const cur = getInvoice(inv.id)!;
-    if (cur.linkFundedAt) return cur;
-    await fundLinkAccount(net, cur.merchant).catch((e) => {
-      throw new HttpError(409, e.message);
-    });
-    return updateInvoice(cur.id, { linkFundedAt: new Date().toISOString() });
-  });
-  return out ?? inv;
+  // The flag is set first, in one database statement, so of several servers only one ever funds this link.
+  if (!(await setInvoiceFlag(inv.id, "linkFundedAt"))) return (await getInvoice(inv.id))!;
+  try {
+    await fundLinkAccount(net, inv.merchant);
+  } catch (e: any) {
+    await clearInvoiceFlag(inv.id, "linkFundedAt"); // nothing was sent, so it may be retried
+    throw new HttpError(409, e.message);
+  }
+  return (await getInvoice(inv.id))!;
 }
+
+const CLAIM_STALE_MS = 5 * 60_000;
 
 /** The sponsor relays the link's signed USDC transfer (NEP-366), after creating a new name if asked. Once per link. */
 async function claimSend(inv: Invoice, net: Net, b: any) {
-  const out = await runOnce(`claim:${inv.id}`, async () => {
-    const cur = getInvoice(inv.id)!;
+  const first = (await getInvoice(inv.id))!;
+  if (first.claimedAt) throw new HttpError(409, "This link was already claimed");
+  if (!first.linkFundedAt) throw new HttpError(409, "This link isn't ready yet");
+  // A server that died mid-claim leaves the flag behind; after 5 minutes a retry may take over. That's safe:
+  // NEAR's access-key nonce stops a signed delegate from running twice, and a drained link has nothing to send.
+  if (first.claimingAt && Date.now() - Date.parse(first.claimingAt) > CLAIM_STALE_MS) await clearInvoiceFlag(inv.id, "claimingAt");
+  if (!(await setInvoiceFlag(inv.id, "claimingAt"))) throw new HttpError(409, "This link is already being claimed");
+  try {
+    const cur = (await getInvoice(inv.id))!;
     if (cur.claimedAt) throw new HttpError(409, "This link was already claimed");
-    if (!cur.linkFundedAt) throw new HttpError(409, "This link isn't ready yet");
     let sd: any;
     let to: string;
     try {
@@ -370,10 +388,11 @@ async function claimSend(inv: Invoice, net: Net, b: any) {
     await ensureUsdcStorage(net, to);
     const r: any = await relayClaim(net, cur.merchant, sd);
     if (receivedInTx(r, cur.asset, to) === 0n) throw new HttpError(502, "The transfer didn't go through. The money is still in the link.");
-    return updateInvoice(cur.id, { claimedAt: new Date().toISOString(), claimedTo: to, claimTx: r.transaction.hash });
-  });
-  if (!out) throw new HttpError(409, "This link is already being claimed");
-  return { invoice: publicInvoice(out), claimTx: out.claimTx, claimedTo: out.claimedTo };
+    const out = await updateInvoice(cur.id, { claimedAt: new Date().toISOString(), claimedTo: to, claimTx: r.transaction.hash });
+    return { invoice: publicInvoice(out), claimTx: out.claimTx, claimedTo: out.claimedTo };
+  } finally {
+    await clearInvoiceFlag(inv.id, "claimingAt");
+  }
 }
 
 async function payInvoice(id: string) {
@@ -409,7 +428,7 @@ async function payInvoiceNow(id: string) {
     default:
       patch = { status: "failed", reasons: [out.error] };
   }
-  const updated = updateInvoice(id, patch);
+  const updated = await updateInvoice(id, patch);
   return { invoice: updated, check: "check" in out ? out.check : undefined, log: logs };
 }
 
@@ -482,8 +501,20 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     return send(res, 200, { deployed: true, ...d, mainnetRegistry, public: PUBLIC, explorer: NETWORKS[NET].explorer, agentMode: llmConfigured() ? "llm" : "scripted" });
   }
 
-  if (m === "GET" && path === "/api/vault") return send(res, 200, await vaultSummary());
-  if (m === "GET" && path === "/api/vault/payments") return send(res, 200, { payments: await vaultPayments() });
+  if (m === "GET" && path === "/api/vault") return send(res, 200, await vaultSummary(pickVault(url.searchParams.get("vault"))));
+  if (m === "GET" && path === "/api/vault/payments") return send(res, 200, { payments: await vaultPayments(pickVault(url.searchParams.get("vault"))) });
+  // ---- visitor vaults: anyone with a testnet wallet gets their own vault and runs the agent on it
+  const vm = path.match(/^\/api\/vaults\/([a-z0-9._-]{2,64})(\/run)?$/);
+  if (vm && m === "GET" && !vm[2]) return send(res, 200, await getVisitorVault(vm[1]).catch((e) => { throw new HttpError(400, e.message); }));
+  if (m === "POST" && path === "/api/vaults") {
+    const b = await readJson(req);
+    return send(res, 201, await createVisitorVault(String(b.owner ?? "").trim()).catch((e) => { throw new HttpError(400, e.message); }));
+  }
+  if (vm && m === "POST" && vm[2]) {
+    const b = await readJson(req);
+    if (!SCENARIOS.includes(b.scenario)) throw new HttpError(400, `scenario must be one of ${SCENARIOS.join(", ")}`);
+    return send(res, 200, await runVisitorScenario(vm[1], b.scenario).catch((e) => { throw new HttpError(400, e.message); }));
+  }
 
   if (m === "POST" && (path === "/api/owner/approve" || path === "/api/owner/reject")) {
     const b = await readJson(req);
@@ -517,7 +548,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (m === "GET" && path === "/api/invoices") {
     const merchant = url.searchParams.get("merchant");
     if (PUBLIC && !merchant) throw new HttpError(400, "Connect your wallet to see your links"); // no dump of every merchant's sales
-    const list = listInvoices().filter((i) => !merchant || i.merchant === merchant);
+    const list = (await listInvoices()).filter((i) => !merchant || i.merchant === merchant);
     // Only vault approvals are refreshed here (one cheap view each, local demo only). Any-chain checkouts
     // update when their pay page polls, so a long list doesn't make one NEAR Intents call per open address.
     const refreshed = await Promise.all(list.map((i) => (i.status === "pending_approval" ? refreshInvoice(i.id).catch(() => i) : i)));
@@ -533,14 +564,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (BigInt(amount) > MAX_SEND_UNITS) throw new HttpError(400, "Send by link is limited to 25 USDC per link in this prototype");
     if (BigInt(amount) < MIN_SEND_UNITS) throw new HttpError(400, "A send link must hold at least 1 USDC");
     const today = new Date().toISOString().slice(0, 10);
-    if (listInvoices().filter((i) => i.kind === "send" && i.createdAt.startsWith(today)).length >= MAX_SENDS_PER_DAY) throw new HttpError(429, "Daily limit for new send links reached");
+    if ((await listInvoices()).filter((i) => i.kind === "send" && i.createdAt.startsWith(today)).length >= MAX_SENDS_PER_DAY) throw new HttpError(429, "Daily limit for new send links reached");
     try {
       await ensureUsdcStorage(net, account);
     } catch (e: any) {
       throw new HttpError(409, e.message);
     }
-    const inv = createInvoice({ merchant: account, description: String(b.note ?? "").trim().slice(0, 120) || "Money sent by link", amount, asset: usdcFor(net) });
-    return send(res, 201, publicInvoice(updateInvoice(inv.id, { kind: "send" })));
+    const inv = await createInvoice({ merchant: account, description: String(b.note ?? "").trim().slice(0, 120) || "Money sent by link", amount, asset: usdcFor(net) });
+    return send(res, 201, publicInvoice(await updateInvoice(inv.id, { kind: "send" })));
   }
   const nm = path.match(/^\/api\/invoices\/(INV-\d{4,})\/near-tx$/);
   if (nm && m === "POST") {
@@ -552,7 +583,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const net = linkNetwork(inv.asset);
     if (!net) throw new HttpError(409, "Only USDC payment links can be paid from a NEAR wallet");
     if (inv.status === "paid") return send(res, 200, publicInvoice(inv));
-    if (listInvoices().some((i) => i.nearTx === txHash)) throw new HttpError(409, "This transaction already paid another invoice");
+    if ((await listInvoices()).some((i) => i.nearTx === txHash)) throw new HttpError(409, "This transaction already paid another invoice");
     const tx = await fetchTx(net, txHash, signerId).catch((e) => {
       throw new HttpError(400, `Couldn't read the transaction: ${e.message}`);
     });
@@ -560,7 +591,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const got = receivedInTx(tx, inv.asset, inv.merchant, inv.id);
     if (got < BigInt(inv.amount))
       throw new HttpError(400, `The transaction sent ${formatUnits(got.toString(), getAsset(inv.asset)!)} USDC to ${inv.merchant} with memo ${inv.id}, not the ${formatUnits(inv.amount, getAsset(inv.asset)!)} USDC needed`);
-    const paid = updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `${NETWORKS[net].explorer}/txns/${txHash}`, paidAt: new Date().toISOString() });
+    const paid = await updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `${NETWORKS[net].explorer}/txns/${txHash}`, paidAt: new Date().toISOString() });
     return send(res, 200, publicInvoice(paid));
   }
   const sm = path.match(/^\/api\/sends\/(INV-\d{4,})(\/activate|\/claim)?$/);
@@ -599,7 +630,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const merchant = url.searchParams.get("merchant");
     if (PUBLIC && !merchant) throw new HttpError(400, "Connect your wallet to export your links");
     res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
-    return res.end(toCsv(listInvoices().filter((i) => !merchant || i.merchant === merchant), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
+    return res.end(toCsv((await listInvoices()).filter((i) => !merchant || i.merchant === merchant), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
   }
   if (m === "POST" && path === "/api/invoices") {
     const b = await readJson(req);
@@ -616,8 +647,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       // sponsor pay USDC storage for arbitrary accounts. Unsigned links still work: the "Pay with NEAR
       // wallet" transaction registers the merchant itself, paid by the customer.
       if (net && b.signedToken) await ensureUsdcStorage(net, merchant).catch((e) => console.warn(`USDC storage for ${merchant} not sponsored: ${e.message}`));
-      const inv = createInvoice(fields);
-      return send(res, 201, publicInvoice(b.signedToken ? updateInvoice(inv.id, { signedToken: String(b.signedToken) }) : inv));
+      const inv = await createInvoice(fields);
+      return send(res, 201, publicInvoice(b.signedToken ? await updateInvoice(inv.id, { signedToken: String(b.signedToken) }) : inv));
     } catch (e: any) {
       if (e instanceof HttpError) throw e;
       throw new HttpError(400, e.message);
@@ -635,16 +666,19 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   send(res, 404, { error: "Website not built yet. Run the web dev server, or build it into web/dist." });
 }
 
-const server = createServer((req, res) => {
+/** The whole backend as one Node request handler: the local server and the Vercel function both use it. */
+export function app(req: IncomingMessage, res: ServerResponse) {
   handle(req, res).catch((e: any) => {
     const status = e instanceof HttpError ? e.status : 500;
     if (status === 500) console.error(e);
     if (!res.headersSent) send(res, status, { error: e?.message ?? "Internal error" });
     else res.end();
   });
-});
+}
 
-server.listen(PORT, HOST, () => {
-  console.log(`Notara backend on http://${HOST}:${PORT}`);
-  console.log(`Testnet deployment: ${loadDeployment(NET) ? "found" : "not set up (read-only checks still work)"}`);
-});
+// On Vercel the platform calls app() per request (server/vercel.ts); locally we listen on a port.
+if (!process.env.VERCEL)
+  createServer(app).listen(PORT, HOST, () => {
+    console.log(`Notara backend on http://${HOST}:${PORT}`);
+    console.log(`Testnet deployment: ${loadDeployment(NET) ? "found" : "not set up (read-only checks still work)"}`);
+  });

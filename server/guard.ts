@@ -4,7 +4,9 @@
 type Headers = Record<string, string | string[] | undefined>;
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 /** Hostnames that may change data: localhost, plus NOTARA_PUBLIC_HOST (comma-separated) on a public deploy. */
-export const allowedHosts = () => new Set([...LOCAL_HOSTS, ...(process.env.NOTARA_PUBLIC_HOST ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean)]);
+// On Vercel the deployment and production hostnames come from Vercel's own system env vars.
+export const allowedHosts = () =>
+  new Set([...LOCAL_HOSTS, ...[process.env.NOTARA_PUBLIC_HOST, process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL].join(",").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean)]);
 
 /** Routes that sign with the owner key or run the agent demo. Never served in public mode. */
 export const LOCAL_ONLY = /^\/api\/(owner\/|demo\/run$)|^\/api\/invoices\/[^/]+\/pay$/;

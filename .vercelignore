@@ -1,0 +1,13 @@
+# Never upload secrets or local state to Vercel.
+keys/
+.env
+.env.*
+data/
+passport/data/
+demo/runs/
+target/
+node_modules/
+web/node_modules/
+web/dist/
+graphify-out/
+*.local.json

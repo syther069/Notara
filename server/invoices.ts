@@ -55,15 +55,21 @@ export interface Invoice {
   signedToken?: string;
   reportHash?: string;
   paidAt?: string;
+  paidNotifiedAt?: string;
+  /** Set while a claim is in flight, so two servers can't relay the same link at once. */
+  claimingAt?: string;
 }
 
 const store = docs<Invoice>("invoices");
 const ACCOUNT_RE = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 
-export const listInvoices = (): Invoice[] => store.all();
-export const getInvoice = (id: string): Invoice | undefined => store.get(id);
+export const listInvoices = (): Promise<Invoice[]> => store.all();
+export const getInvoice = (id: string): Promise<Invoice | undefined> => store.get(id);
+/** Atomic set-once flag on an invoice (see db.ts). True if this call set it. */
+export const setInvoiceFlag = (id: string, field: keyof Invoice, value = new Date().toISOString()) => store.setOnce(id, field, value);
+export const clearInvoiceFlag = (id: string, field: keyof Invoice) => store.unset(id, field);
 
-export function createInvoice(input: { merchant: string; description: string; amount: string; asset?: string }): Invoice {
+export async function createInvoice(input: { merchant: string; description: string; amount: string; asset?: string }): Promise<Invoice> {
   const asset = input.asset ?? "NEAR";
   if (!getAsset(asset)) throw new Error(`Unsupported asset ${asset}. Supported: ${listAssets().map((a) => a.symbol).join(", ")}`);
   if (!ACCOUNT_RE.test(input.merchant) || input.merchant.length > 64) throw new Error("Invalid merchant account id");
@@ -72,26 +78,28 @@ export function createInvoice(input: { merchant: string; description: string; am
   if (!/^\d+$/.test(input.amount) || BigInt(input.amount) <= 0n) throw new Error("Amount must be a positive integer in the smallest unit");
 
   const now = new Date().toISOString();
-  const inv: Invoice = {
-    id: `INV-${String(store.count() + 1).padStart(4, "0")}`,
+  // Sequential ids; two servers creating at once both try the same id, so the loser retries the next one.
+  for (let n = (await store.count()) + 1, tries = 0; tries < 20; n++, tries++) {
+    const inv: Invoice = {
+      id: `INV-${String(n).padStart(4, "0")}`,
     merchant: input.merchant,
     description,
     amount: input.amount,
     asset,
-    status: "unpaid",
-    createdAt: now,
-    updatedAt: now,
-  };
-  store.put(inv.id, inv.createdAt, inv);
-  return inv;
+      status: "unpaid",
+      createdAt: now,
+      updatedAt: now,
+    };
+    if (await store.insert(inv.id, inv.createdAt, inv)) return inv;
+  }
+  throw new Error("Couldn't pick an invoice id, try again");
 }
 
-export function updateInvoice(id: string, patch: Partial<Invoice>): Invoice {
-  const cur = store.get(id);
-  if (!cur) throw new Error(`Unknown invoice ${id}`);
-  const next = { ...cur, ...patch, id, updatedAt: new Date().toISOString() };
-  store.put(id, cur.createdAt, next);
-  if (next.status === "paid" && cur.status !== "paid") notifyPaid(next);
+export async function updateInvoice(id: string, patch: Partial<Invoice>): Promise<Invoice> {
+  const next = await store.merge(id, { ...patch, updatedAt: new Date().toISOString() });
+  if (!next) throw new Error(`Unknown invoice ${id}`);
+  // Alert once, even if several servers see the payment at the same moment.
+  if (next.status === "paid" && (await store.setOnce(id, "paidNotifiedAt", new Date().toISOString()))) notifyPaid(next);
   return next;
 }
 

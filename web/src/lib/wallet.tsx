@@ -28,6 +28,8 @@ type WalletState = {
   /** Sign and send one function call with the connected wallet. Returns the tx hash. */
   call: (contractId: string, methodName: string, args: object, gasTgas?: number, opts?: { network?: "mainnet" | "testnet"; deposit?: string }) => Promise<string>;
   /** Pay USDC on NEAR (mainnet by default) straight from the user's wallet. Returns the tx hash and payer. */
+  /** Send NEAR (yocto) from the connected wallet, e.g. to fund your own vault. Returns the tx hash. */
+  sendNear: (receiver: string, yocto: string, network?: "mainnet" | "testnet") => Promise<string>;
   /** `memo` must be the invoice id: the server only counts a transfer whose memo names the link it pays. */
   payUsdc: (token: string, receiver: string, amount: string, memo: string, network?: "mainnet" | "testnet") => Promise<{ txHash: string; signerId: string }>;
 };
@@ -47,6 +49,9 @@ const Ctx = createContext<WalletState>({
     throw new Error("Wallet not ready");
   },
   payUsdc: async () => {
+    throw new Error("Wallet not ready");
+  },
+  sendNear: async () => {
     throw new Error("Wallet not ready");
   },
 });
@@ -158,6 +163,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [switchTo],
   );
 
+  const sendNear = useCallback(
+    async (receiver: string, yocto: string, net: "mainnet" | "testnet" = NETWORK) => {
+      const c = connectorRef.current;
+      if (!c) throw new Error("Wallet not ready");
+      const switched = await switchTo(c, net);
+      const existing = switched || !accountId ? null : await c.getConnectedWallet().catch(() => null);
+      const wallet = existing?.wallet ?? (await c.connect());
+      const signerId = existing?.accounts?.[0]?.accountId ?? (await wallet.getAccounts({ network: net }))[0]?.accountId;
+      if (!signerId) throw new Error("Connect a wallet first");
+      setAccountId(signerId);
+      const out: any = await wallet.signAndSendTransaction({ network: net, signerId, receiverId: receiver, actions: [{ type: "Transfer", params: { deposit: yocto } }] });
+      if (out?.status?.Failure) throw new Error("The transfer failed on-chain");
+      return out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "";
+    },
+    [accountId, switchTo],
+  );
+
   const call = useCallback(
     async (contractId: string, methodName: string, args: object, gasTgas = 100, opts: { network?: "mainnet" | "testnet"; deposit?: string } = {}) => {
       const c = connectorRef.current;
@@ -186,8 +208,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc }),
-    [accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc],
+    () => ({ accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc, sendNear }),
+    [accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc, sendNear],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

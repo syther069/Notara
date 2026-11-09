@@ -97,11 +97,23 @@ Everything except paying from other chains runs on NEAR testnet, with free test 
 2. **Pay it:** open the link. You see the safety check, the Merchant Passport and whether the link is signed. Pay with **Pay with NEAR wallet**, or **Pay with the demo AI agent** (local runs only), which asks Notara first and pays from the spending vault.
 3. **Report an account:** on any testnet pay or Merchant page, **Report this account** files a report in the testnet registry contract (0.01 testnet NEAR bond). It shows up in the next safety check.
 4. **Send by link:** on **Send**, keep **Testnet USDC**, create the link, fund it from your testnet wallet, then open the link in another browser and claim it to an existing `.testnet` account or a brand-new `name.testnet`. The claim is a NEP-366 meta transaction: the link's key signs the transfer in your browser and the testnet sponsor (`npm run owner -- make-sponsor` creates it) relays it and pays the gas.
-5. **AI agent attack demo:** **Security** runs the prompt-injection attacks against the vault on testnet.
+5. **Your own AI-agent vault:** on **Security**, connect your wallet and click **Create my vault**. You own it, and it has no access key at all, so nobody (us included) can sign for it: it moves money only by its contract rules. Add 1 test NEAR from your wallet, then run the four scenarios: a legit invoice (ALLOW, paid), a prompt-injected invoice (BLOCK, nothing signed), an unknown shop (WARN, waits for you: approve or reject it from your wallet on the Vault page), and a hacked agent that tampers with verdicts (refused on-chain).
+
+   How it's built: the vault code is published once as a NEAR **global contract** by code hash (`near contract deploy-as-global ... as-global-hash`, about 21 testnet NEAR burned once), so each visitor vault only pays for its account and state (0.03 NEAR, from our factory `vaults.agentspend-1104-p6zw.testnet`). The factory creates `v<hash>.vaults...` in one transaction (create account, transfer, `UseGlobalContract`, `new` with your wallet as owner). A public agent account (gas only) requests payments, and Notara signs verdicts in-process; the public `/v1/check` endpoint still never signs. Limits: 0.5 NEAR per payment, 1 NEAR a day, 50 new vaults a day. Tested live on 2026-11-09 by a new visitor account: all four scenarios, then an owner approval.
 
 Tested end to end on testnet (2026-11-09): a testnet link paid by the agent through the vault (INV-0006), and send links claimed into new `name.testnet` accounts through the relayer (INV-0012 → `notara-relay-mw8x1hp5.testnet`). The same run checked that a wrong-memo transfer doesn't mark a link paid, a second claim is refused, and a closed link account isn't re-funded.
 
 **Not possible on testnet:** paying from another chain (NEAR Intents 1Click has no testnet, so the any-chain checkout and one-click MetaMask pay are mainnet only), real-value money, and reputation for real merchants. That stays on mainnet: account age, history and reports for real `.near` accounts are always read live from mainnet and carry a **Mainnet · real account data** tag on the pay page, the Merchant Passport and the Check page. Testnet results carry a **Testnet · test data** tag.
+
+## Live site (Vercel)
+
+**https://notara-sable.vercel.app** runs in public mode: payment links, checks, Merchant Passports, scam reports, wallet payments and testnet send links. Owner, demo and agent-pay routes run locally only.
+
+- **Build:** `vercel.json` runs `scripts/build-vercel.mjs`, which writes Vercel's Build Output API folder: the website as static files, and the whole backend bundled (esbuild) into one Node function behind `/api/*` and `/v1/*`.
+- **Storage:** Neon Postgres from the Vercel Marketplace (`DATABASE_URL`). Locally, without `DATABASE_URL`, the same code uses a SQLite file. Every write is one atomic statement (merge, insert-if-new, set-once flags), because several copies of the function run at once.
+- **Secrets:** `TESTNET_SPONSOR_ACCOUNT` / `TESTNET_SPONSOR_PRIVATE_KEY` are sensitive Vercel env vars. `.vercelignore` keeps `keys/`, `.env*` and local data out of every upload.
+- **Deploy:** `vercel deploy` (preview), then `vercel deploy --prod`.
+- **Tested live (2026-11-09):** a testnet send link created, funded (wrong memo refused), claimed into a new `name.testnet` through the relayer, a second claim refused, and no re-funding after the link account was closed.
 
 ## Run it
 

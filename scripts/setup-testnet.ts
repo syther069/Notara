@@ -15,6 +15,7 @@ import { NETWORKS, ROOT, type Deployment } from "../passport/src/config.ts";
 import { viewAccount, viewFunction } from "../passport/src/near.ts";
 import { loadSigner } from "../passport/src/verdict.ts";
 import { accountFromKey, hasKey, readKey, writeKey } from "../agent/src/keys.ts";
+import { topUpFromFaucet } from "./faucet.ts";
 
 const network = "testnet" as const;
 const RPC = NETWORKS.testnet.rpc;
@@ -24,29 +25,6 @@ const TGAS = 1_000_000_000_000n;
 const log = (s: string) => console.log(s);
 /** Vault subaccount prefix. Change it if an earlier run left an unusable `vault.` account. */
 const VAULT_PREFIX = process.env.VAULT_PREFIX ?? "vault";
-
-/**
- * Testnet only: get more faucet NEAR for the owner. Creates a throwaway faucet account and
- * deletes it with the owner as beneficiary, which moves its whole balance to the owner.
- */
-async function topUpFromFaucet(ownerId: string) {
-  const tmpId = `tmp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}.testnet`;
-  const kp = KeyPair.fromRandom("ed25519");
-  log(`Top-up: creating throwaway faucet account ${tmpId}...`);
-  const res = await fetch("https://helper.nearprotocol.com/account", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ newAccountId: tmpId, newAccountPublicKey: kp.getPublicKey().toString() }),
-  });
-  if (!res.ok) throw new Error(`Faucet helper refused (${res.status}): ${await res.text()}`);
-  for (let i = 0; i < 10 && !(await viewAccount(network, tmpId)); i++) await new Promise((r) => setTimeout(r, 2000));
-  const tmp = new Account(tmpId, RPC, kp.toString() as KeyPairString);
-  await tmp.deleteAccount(ownerId).catch(async (e) => {
-    await new Promise((r) => setTimeout(r, 4000));
-    if (await viewAccount(network, tmpId)) throw e;
-  });
-  log(`Top-up: ${tmpId} deleted, balance sent to ${ownerId}`);
-}
 
 function arg(name: string) {
   const i = process.argv.indexOf(`--${name}`);
@@ -118,7 +96,7 @@ async function isDeployed(id: string) {
 async function main() {
   log("Notara: testnet setup\n");
   const owner = await ensureOwner();
-  if (process.argv.includes("--topup")) await topUpFromFaucet(owner.accountId);
+  if (process.argv.includes("--topup")) await topUpFromFaucet(owner.accountId, log);
   const bal =BigInt((await viewAccount(network, owner.accountId))?.amount ?? "0");
   log(`Owner ${owner.accountId}: ${Number(bal / 10n ** 21n) / 1000} NEAR`);
 

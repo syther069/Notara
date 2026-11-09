@@ -4,6 +4,7 @@ import { CircleCheck, CircleX, Download, ExternalLink, LoaderCircle, Pause, Play
 import { api } from "../lib/api";
 import { Banner } from "../components/ui";
 import { NotDeployed, useDeployment } from "../components/Layout";
+import { MyVault } from "../components/MyVault";
 
 type Scenario = { key: string; group: string; title: string; expected: string };
 
@@ -176,8 +177,14 @@ export function DemoPage() {
         </div>
       </div>
 
+      {dep?.deployed && <MyVault />}
+
       {!dep?.deployed ? (
         <NotDeployed />
+      ) : dep.public ? (
+        <p className="muted small" style={{ marginBottom: 20 }}>
+          Below is the full scenario list we run locally on our own demo vault, including attacks on the agent's function-call key. On this site, run it live with your own vault above.
+        </p>
       ) : (
         <div className="row" style={{ marginBottom: 20 }}>
           <button className="btn btn-primary" onClick={() => start()} disabled={running}>

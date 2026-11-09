@@ -13,13 +13,13 @@ writeFileSync(join(dir, "merchants.json"), JSON.stringify({ "m.near": { account:
 test("old JSON data is imported once, then the files are set aside", async () => {
   const { listInvoices, createInvoice, updateInvoice } = await import("../invoices.ts");
   const { getMerchant } = await import("../merchants.ts");
-  assert.equal(listInvoices()[0].description, "old");
-  assert.equal(getMerchant("m.near").websiteVerified, true);
+  assert.equal((await listInvoices())[0].description, "old");
+  assert.equal((await getMerchant("m.near")).websiteVerified, true);
   assert.ok(existsSync(join(dir, "invoices.json.imported")) && !existsSync(join(dir, "invoices.json")));
 
   // New ids continue after imported ones, and updates change one row.
-  const n = createInvoice({ merchant: "m.testnet", description: "new", amount: "2", asset: "NEAR" });
+  const n = await createInvoice({ merchant: "m.testnet", description: "new", amount: "2", asset: "NEAR" });
   assert.equal(n.id, "INV-0002");
-  assert.equal(updateInvoice("INV-0001", { status: "refunded" }).status, "refunded");
-  assert.deepEqual(listInvoices().map((i) => i.id).sort(), ["INV-0001", "INV-0002"]);
+  assert.equal((await updateInvoice("INV-0001", { status: "refunded" })).status, "refunded");
+  assert.deepEqual((await listInvoices()).map((i) => i.id).sort(), ["INV-0001", "INV-0002"]);
 });

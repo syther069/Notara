@@ -189,8 +189,12 @@ export const api = {
   health: () => req<{ ok: boolean; deployed: boolean; agentMode: string; signerPublicKey: string | null }>("/v1/health"),
   check: (b: { network: string; recipient: string; amountDecimal: string; asset?: string }) => post<CheckResponse>("/v1/check", b),
   deployment: () => req<Deployment>("/api/deployment"),
-  vault: () => req<VaultSummary>("/api/vault"),
-  payments: () => req<{ payments: Payment[] }>("/api/vault/payments"),
+  vault: (vault?: string) => req<VaultSummary>(`/api/vault${vault ? `?vault=${encodeURIComponent(vault)}` : ""}`),
+  payments: (vault?: string) => req<{ payments: Payment[] }>(`/api/vault/payments${vault ? `?vault=${encodeURIComponent(vault)}` : ""}`),
+  /** Your own vault (visitor vaults): look up, create, and run the agent on it. */
+  myVault: (owner: string) => req<MyVault>(`/api/vaults/${encodeURIComponent(owner)}`),
+  createMyVault: (owner: string) => post<MyVault>("/api/vaults", { owner }),
+  runMyVault: (owner: string, scenario: string) => post<AgentRun>(`/api/vaults/${encodeURIComponent(owner)}/run`, { scenario }),
   approve: (id: string) => post<{ txHash: string; explorer: string; payment: Payment }>("/api/owner/approve", { id }),
   reject: (id: string) => post<{ txHash: string; explorer: string; payment: Payment }>("/api/owner/reject", { id }),
   proposeOwner: (newOwner: string) => post<{ txHash: string; explorer: string; pendingOwner: string }>("/api/owner/propose", { newOwner }),
@@ -219,3 +223,19 @@ export const api = {
   createInvoice: (b: { description: string; amountDecimal: string; asset: string; merchant?: string; signedToken?: string }) => post<Invoice>("/api/invoices", b),
   payInvoice: (id: string) => post<{ invoice: Invoice; check?: CheckResponse; log: string[] }>(`/api/invoices/${encodeURIComponent(id)}/pay`, {}),
 };
+
+export interface MyVault {
+  owner: string;
+  vault: string;
+  exists: boolean;
+  /** yoctoNEAR */
+  balance: string;
+  tx?: string;
+}
+
+export interface AgentRun {
+  vault: string;
+  scenario: string;
+  calls: { recipient?: string; decision?: string; status?: string; txHash?: string; paymentId?: string; attempt?: string; refused?: boolean; reason?: string }[];
+  log: string[];
+}

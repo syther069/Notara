@@ -10,12 +10,15 @@
 //   npm run owner -- enable-usdc          USDC cap on the vault + token registration for vault/merchant/newshop
 //   npm run owner -- fund-usdc <amount>   move testnet USDC from the owner to the vault (get it at faucet.circle.com)
 //   npm run owner -- balances             NEAR and USDC balances of owner, vault and demo accounts
+//   npm run owner -- topup                testnet faucet NEAR for the owner (about 10 per run)
+//   npm run owner -- make-public-vaults   create vaults.<owner> (makes visitor vaults) and vault-agent.<owner> (public agent, gas only)
 //   npm run owner -- make-sponsor         create sponsor.<owner> (1 testnet NEAR) that pays setup costs for testnet send links
 
 import { NETWORKS, loadDeployment } from "../passport/src/config.ts";
 import { viewFunction } from "../passport/src/near.ts";
 import { accountFromKey, hasKey, readKey, writeKey } from "../agent/src/keys.ts";
 import { KeyPair, type KeyPairString } from "near-api-js";
+import { topUpFromFaucet } from "./faucet.ts";
 import { nearAmount } from "../passport/src/format.ts";
 import { USDC_TESTNET, formatUnits, getAsset, toUnits } from "../passport/src/assets.ts";
 import { viewAccount } from "../passport/src/near.ts";
@@ -48,6 +51,27 @@ async function main() {
       await new Promise((r) => setTimeout(r, 2500));
       const p: any = await viewFunction(network, dep.vault, "get_payment", { payment_id: id });
       console.log(`[owner] payment #${id} status: ${p.status}`);
+      break;
+    }
+    case "topup":
+      await topUpFromFaucet(owner.accountId);
+      break;
+    case "make-public-vaults": {
+      // Keys are saved BEFORE each account is created, so a flaky RPC reply can never lose one.
+      for (const [name, sub, near, note] of [
+        ["vault-factory", "vaults", 4n, "Creates visitor vaults (subaccounts) from the global vault code."],
+        ["public-agent", "vault-agent", 2n, "Public demo agent: requests payments from visitor vaults. Holds gas only."],
+      ] as const) {
+        const aid = `${sub}.${owner.accountId}`;
+        if (await viewAccount(network, aid)) {
+          console.log(`[owner] ${aid} already exists`);
+          continue;
+        }
+        const kp = hasKey(name) && readKey(name).account_id === aid ? KeyPair.fromString(readKey(name).secret_key as KeyPairString) : KeyPair.fromRandom("ed25519");
+        writeKey(name, { account_id: aid, public_key: kp.getPublicKey().toString(), secret_key: kp.toString(), note });
+        const r: any = await owner.createSubAccount({ accountOrPrefix: aid, publicKey: kp.getPublicKey().toString(), nearToTransfer: near * 10n ** 24n });
+        console.log(`[owner] created ${aid} with ${near} NEAR: ${link(r.transaction?.hash ?? "")}`);
+      }
       break;
     }
     case "make-sponsor": {

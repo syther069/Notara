@@ -24,12 +24,14 @@
     "web:build": "npm --prefix web run build"
   },
   "dependencies": {
+    "@neondatabase/serverless": "1.2.0",
     "borsh": "2.0.0",
     "near-api-js": "7.4.0",
     "near-sign-verify": "0.4.5"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
+    "esbuild": "0.28.2",
     "tsx": "4.23.15",
     "typescript": "5.9.3"
   }

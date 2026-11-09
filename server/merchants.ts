@@ -34,7 +34,7 @@ export async function verifyLinkToken(token: string, l: Parameters<typeof linkMe
 }
 
 const store = docs<Merchant>("merchants");
-export const getMerchant = (account: string): Merchant => store.get(account) ?? { account };
+export const getMerchant = async (account: string): Promise<Merchant> => (await store.get(account)) ?? { account };
 
 /** "https://Shop.example.com/x" -> "shop.example.com". Throws on anything that isn't a public hostname. */
 export function normalizeWebsite(input: string): string {
@@ -67,9 +67,9 @@ export async function checkWebsite(account: string, website: string): Promise<Me
     const text = res.ok ? (await res.text()).slice(0, 2000) : "";
     ok = text.split(/\s+/).includes(account);
   } catch {}
-  const saved = store.get(account);
+  const saved = await store.get(account);
   const result = { account, website: host, websiteVerified: ok, websiteCheckedAt: new Date().toISOString() };
   // Save only proofs and re-checks of a saved site, so nobody can pin an unconfirmed claim on someone else's profile.
-  if (ok || saved?.website === host) store.put(account, result.websiteCheckedAt, result);
+  if (ok || saved?.website === host) await store.put(account, result.websiteCheckedAt, result);
   return result;
 }
