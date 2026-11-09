@@ -3,11 +3,11 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
 import { Account, actions, type KeyPairString } from "near-api-js";
 import { api, type SendState } from "../lib/api";
-import { formatAsset, USDC_MAINNET } from "../lib/format";
+import { EXPLORER, formatAsset, linkNetwork, usdcFor } from "../lib/format";
 import { fromFragment, isValidNewName, SEND_LINK_DAYS, type LinkKey } from "../lib/linkKey";
 import { Banner, CopyButton, Skeleton } from "../components/ui";
 
-const RPC = "https://rpc.mainnet.fastnear.com";
+const RPC = { mainnet: "https://rpc.mainnet.fastnear.com", testnet: "https://rpc.testnet.fastnear.com" } as const;
 const ACCOUNT_RE = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 
 export function ClaimPage() {
@@ -43,20 +43,28 @@ export function ClaimPage() {
     if (funded && state && !state.claimReady && !broken) api.activateSend(id).then(setState).catch((e) => setError(e.message));
   }, [funded, state?.claimReady, broken, id]);
 
+  const net = linkNetwork(state?.invoice.asset) ?? "mainnet";
+  const usdc = usdcFor(net);
+  /** Top-level names: .near on mainnet, .testnet on testnet (each has its own account-creation contract). */
+  const tla = net === "mainnet" ? "near" : "testnet";
   const accountExists = async (id: string) =>
-    !!(await api.check({ network: "mainnet", recipient: id, amountDecimal: "0.01", asset: USDC_MAINNET })).report.signals.find((s) => s.name === "account_state")?.data?.exists;
+    !!(await api.check({ network: net, recipient: id, amountDecimal: "0.01", asset: usdc })).report.signals.find((s) => s.name === "account_state")?.data?.exists;
 
   /** Signed here with the link's key: registers the receiver with USDC if needed, then moves everything. */
   async function moveUsdc(to: string) {
-    const acct = new Account(key!.account, RPC, key!.secret as KeyPairString);
+    const acct = new Account(key!.account, RPC[net], key!.secret as KeyPairString);
     const r: any = await acct.signAndSendTransaction({
-      receiverId: USDC_MAINNET,
+      receiverId: usdc,
       actions: [
-        actions.functionCall("storage_deposit", { account_id: to, registration_only: true }, 30_000_000_000_000n, 1_250_000_000_000_000_000_000n),
-        actions.functionCall("ft_transfer", { receiver_id: to, amount: state!.balance, memo: "Notara send link" }, 30_000_000_000_000n, 1n),
+        actions.functionCall("storage_deposit", { account_id: to, registration_only: true }, 10_000_000_000_000n, 1_250_000_000_000_000_000_000n),
+        actions.functionCall("ft_transfer", { receiver_id: to, amount: state!.balance, memo: "Notara send link" }, 10_000_000_000_000n, 1n),
       ],
     });
+    if (r?.status?.Failure) throw new Error("The transfer failed on-chain. The money is still in this link.");
     setDone(r.transaction.hash);
+    // Close the empty link account: its leftover NEAR goes to the receiver as gas money. Best effort.
+    await new Promise((ok) => setTimeout(ok, 3000)); // let gas refunds land first
+    await acct.deleteAccount(to).catch(() => {});
     load();
   }
 
@@ -77,8 +85,8 @@ export function ClaimPage() {
     if (!key || !state) return;
     run(async () => {
       const to = target.trim().toLowerCase();
-      if (!ACCOUNT_RE.test(to)) throw new Error("Enter a NEAR account like yourname.near");
-      if (!(await accountExists(to))) throw new Error(`${to} doesn't exist on NEAR mainnet`);
+      if (!ACCOUNT_RE.test(to)) throw new Error(`Enter a NEAR account like yourname.${tla}`);
+      if (!(await accountExists(to))) throw new Error(`${to} doesn't exist on NEAR ${net}`);
       await moveUsdc(to);
     });
   }
@@ -90,12 +98,12 @@ export function ClaimPage() {
     run(async () => {
       const name = newName.trim().toLowerCase();
       if (!isValidNewName(name)) throw new Error("Use 2+ lowercase letters or digits, with - or _ only between them");
-      const id = `${name}.near`;
+      const id = `${name}.${tla}`;
       if (await accountExists(id)) throw new Error(`${id} is taken. Try another name.`);
-      const acct = new Account(key.account, RPC, key.secret as KeyPairString);
+      const acct = new Account(key.account, RPC[net], key.secret as KeyPairString);
       await acct.signAndSendTransaction({
-        receiverId: "near",
-        actions: [actions.functionCall("create_account", { new_account_id: id, new_public_key: key.publicKey }, 100_000_000_000_000n, 2_000_000_000_000_000_000_000n)],
+        receiverId: tla,
+        actions: [actions.functionCall("create_account", { new_account_id: id, new_public_key: key.publicKey }, 30_000_000_000_000n, 2_000_000_000_000_000_000_000n)],
       });
       setCreated(id);
       await moveUsdc(id);
@@ -165,7 +173,7 @@ export function ClaimPage() {
           <p>
             {created ? `${created} is yours, and the money is in it. To use it in a wallet, import the key below.` : "The money has left this link."}{" "}
             {done && (
-              <a href={`https://nearblocks.io/txns/${done}`} target="_blank" rel="noreferrer">
+              <a href={`${EXPLORER[net]}/txns/${done}`} target="_blank" rel="noreferrer">
                 View transaction <ExternalLink size={12} aria-hidden />
               </a>
             )}
@@ -175,11 +183,11 @@ export function ClaimPage() {
         <>
           <form className="card stack" onSubmit={claim}>
             <h2>
-              <CircleCheck size={20} style={{ color: "var(--allow)", verticalAlign: "-3px" }} aria-hidden /> {formatAsset(state.balance, USDC_MAINNET)} is waiting for you
+              <CircleCheck size={20} style={{ color: "var(--allow)", verticalAlign: "-3px" }} aria-hidden /> {formatAsset(state.balance, usdc)} is waiting for you
             </h2>
             <div className="field">
               <label htmlFor="to">Send it to your NEAR account</label>
-              <input id="to" className="input mono" placeholder="yourname.near" value={target} onChange={(e) => setTarget(e.target.value)} autoComplete="off" spellCheck={false} />
+              <input id="to" className="input mono" placeholder={`yourname.${tla}`} value={target} onChange={(e) => setTarget(e.target.value)} autoComplete="off" spellCheck={false} />
               <span className="hint">No NEAR needed: gas and the USDC setup are covered.</span>
             </div>
             <div>
@@ -194,13 +202,13 @@ export function ClaimPage() {
               <label htmlFor="newname">Choose a name</label>
               <div className="row" style={{ flexWrap: "nowrap", gap: 6 }}>
                 <input id="newname" className="input mono" placeholder="yourname" value={newName} onChange={(e) => setNewName(e.target.value)} autoComplete="off" spellCheck={false} />
-                <span className="mono">.near</span>
+                <span className="mono">.{tla}</span>
               </div>
               <span className="hint">Free for you: we create the account and move the money there. Then import its key into a wallet like Meteor to use it.</span>
             </div>
             <div>
               <button className="btn btn-primary" disabled={busy || !newName.trim() || !state.claimReady}>
-                {busy && <LoaderCircle size={16} className="spin" aria-hidden />} Create {newName.trim() || "yourname"}.near and claim
+                {busy && <LoaderCircle size={16} className="spin" aria-hidden />} Create {newName.trim() || "yourname"}.{tla} and claim
               </button>
             </div>
           </form>

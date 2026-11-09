@@ -10,10 +10,12 @@
 //   npm run owner -- enable-usdc          USDC cap on the vault + token registration for vault/merchant/newshop
 //   npm run owner -- fund-usdc <amount>   move testnet USDC from the owner to the vault (get it at faucet.circle.com)
 //   npm run owner -- balances             NEAR and USDC balances of owner, vault and demo accounts
+//   npm run owner -- make-sponsor         create sponsor.<owner> (1 testnet NEAR) that pays setup costs for testnet send links
 
 import { NETWORKS, loadDeployment } from "../passport/src/config.ts";
 import { viewFunction } from "../passport/src/near.ts";
-import { accountFromKey, readKey } from "../agent/src/keys.ts";
+import { accountFromKey, hasKey, readKey, writeKey } from "../agent/src/keys.ts";
+import { KeyPair, type KeyPairString } from "near-api-js";
 import { nearAmount } from "../passport/src/format.ts";
 import { USDC_TESTNET, formatUnits, getAsset, toUnits } from "../passport/src/assets.ts";
 import { viewAccount } from "../passport/src/near.ts";
@@ -46,6 +48,19 @@ async function main() {
       await new Promise((r) => setTimeout(r, 2500));
       const p: any = await viewFunction(network, dep.vault, "get_payment", { payment_id: id });
       console.log(`[owner] payment #${id} status: ${p.status}`);
+      break;
+    }
+    case "make-sponsor": {
+      const sid = `sponsor.${owner.accountId}`;
+      if (await viewAccount(network, sid)) {
+        console.log(`[owner] ${sid} already exists`);
+        break;
+      }
+      // Save the key BEFORE sending, so a flaky RPC reply can never leave an account whose key we lost.
+      const kp = hasKey("sponsor") && readKey("sponsor").account_id === sid ? KeyPair.fromString(readKey("sponsor").secret_key as KeyPairString) : KeyPair.fromRandom("ed25519");
+      writeKey("sponsor", { account_id: sid, public_key: kp.getPublicKey().toString(), secret_key: kp.toString(), note: "Testnet send-link sponsor: pays USDC storage and claim gas." });
+      const r: any = await owner.createSubAccount({ accountOrPrefix: sid, publicKey: kp.getPublicKey().toString(), nearToTransfer: 1_000_000_000_000_000_000_000_000n });
+      console.log(`[owner] created ${sid} with 1 NEAR: ${link(r.transaction?.hash ?? r.transaction_outcome?.id ?? "")}`);
       break;
     }
     case "pause":

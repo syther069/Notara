@@ -2,36 +2,44 @@
 // which browsers never send to a server. Its implicit account (hex of the public key) receives
 // the USDC through the same any-chain checkout. Whoever opens the link holds the key and claims.
 //
-// A small mainnet "sponsor" account pays the setup costs so the receiver needs no NEAR:
+// A small "sponsor" account (one per network) pays the setup costs so the receiver needs no NEAR:
 // USDC storage for the link account, and a little NEAR for gas once the link is funded.
 
 import { Account, type KeyPairString } from "near-api-js";
 import { NETWORKS } from "../passport/src/config.ts";
 import { viewAccount, viewFunction } from "../passport/src/near.ts";
-import { USDC_MAINNET } from "../passport/src/assets.ts";
+import { usdcFor } from "../passport/src/assets.ts";
+import { hasKey, readKey } from "../agent/src/keys.ts";
 
-/** Covers storage for the receiver's own account (0.00125 NEAR) plus gas for the claim transaction. */
-// The link account keeps ~0.0018 NEAR locked for its own storage, so this must also cover:
-// USDC storage for the receiver (0.00125), a new .near name (0.002) and claim gas.
-export const CLAIM_GAS_NEAR = 6_500_000_000_000_000_000_000n; // 0.0065 NEAR
+type Net = "mainnet" | "testnet";
+
+// NEAR reserves attached gas at a pessimistic price (~0.001 NEAR per Tgas, refunded after), so the link
+// account needs: ~0.0018 locked for its own storage, a new name (0.002 + 30 Tgas), USDC storage for the
+// receiver (0.00125) and two 10 Tgas calls. Measured on testnet: create_account burns ~12 Tgas, ft_transfer ~3.
+// The claim page then closes the link account, so what is left goes to the receiver as gas money.
+export const CLAIM_GAS_NEAR = 60_000_000_000_000_000_000_000n; // 0.06 NEAR
 export const MAX_SENDS_PER_DAY = 20; // shortcut: global cap, not per person; add accounts or captcha before real launch
 
 export const isImplicit = (id: string) => /^[0-9a-f]{64}$/.test(id);
 
-export function sponsor(): Account {
-  const id = process.env.SPONSOR_ACCOUNT;
-  const key = process.env.SPONSOR_PRIVATE_KEY;
-  if (!id || !key) throw new Error("Send by link needs a sponsor: set SPONSOR_ACCOUNT and SPONSOR_PRIVATE_KEY (a mainnet account with a little NEAR) in .env");
-  return new Account(id, NETWORKS.mainnet.rpc, key as KeyPairString);
+/** Mainnet: SPONSOR_ACCOUNT / SPONSOR_PRIVATE_KEY. Testnet: TESTNET_SPONSOR_*, or keys/sponsor.json from `npm run owner -- make-sponsor`. */
+export function sponsor(net: Net): Account {
+  const p = net === "mainnet" ? "" : "TESTNET_";
+  let id = process.env[`${p}SPONSOR_ACCOUNT`];
+  let key = process.env[`${p}SPONSOR_PRIVATE_KEY`];
+  if ((!id || !key) && net === "testnet" && hasKey("sponsor")) ({ account_id: id, secret_key: key } = readKey("sponsor"));
+  if (!id || !key) throw new Error(`Send by link needs a ${net} sponsor: set ${p}SPONSOR_ACCOUNT and ${p}SPONSOR_PRIVATE_KEY (an account with a little NEAR) in .env`);
+  return new Account(id, NETWORKS[net].rpc, key as KeyPairString);
 }
 
 /** NEP-145: an account must register with a token before it can receive it. Idempotent. */
-export async function ensureUsdcStorage(account: string): Promise<void> {
-  const reg = await viewFunction<unknown>("mainnet", USDC_MAINNET, "storage_balance_of", { account_id: account });
+export async function ensureUsdcStorage(net: Net, account: string): Promise<void> {
+  const usdc = usdcFor(net);
+  const reg = await viewFunction<unknown>(net, usdc, "storage_balance_of", { account_id: account });
   if (reg) return;
-  const bounds: any = await viewFunction("mainnet", USDC_MAINNET, "storage_balance_bounds");
-  await sponsor().callFunction({
-    contractId: USDC_MAINNET,
+  const bounds: any = await viewFunction(net, usdc, "storage_balance_bounds");
+  await sponsor(net).callFunction({
+    contractId: usdc,
     methodName: "storage_deposit",
     args: { account_id: account, registration_only: true },
     deposit: BigInt(bounds.min),
@@ -40,9 +48,9 @@ export async function ensureUsdcStorage(account: string): Promise<void> {
 }
 
 /** Creates the link's implicit account (sending NEAR to it does that) so the receiver can pay gas. Idempotent. */
-export async function ensureClaimGas(account: string): Promise<void> {
-  if (await viewAccount("mainnet", account)) return;
-  await sponsor().transfer({ receiverId: account, amount: CLAIM_GAS_NEAR });
+export async function ensureClaimGas(net: Net, account: string): Promise<void> {
+  if (await viewAccount(net, account)) return;
+  await sponsor(net).transfer({ receiverId: account, amount: CLAIM_GAS_NEAR });
 }
 
-export const usdcBalance = (account: string) => viewFunction<string>("mainnet", USDC_MAINNET, "ft_balance_of", { account_id: account });
+export const usdcBalance = (net: Net, account: string) => viewFunction<string>(net, usdcFor(net), "ft_balance_of", { account_id: account });

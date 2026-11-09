@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import { api, type CheckResponse, type MerchantProfile } from "../lib/api";
-import { USDC_MAINNET } from "../lib/format";
-import { AccountLink, Banner, Skeleton } from "../components/ui";
+import { EXPLORER, netOfAccount, usdcFor } from "../lib/format";
+import { AccountLink, Banner, NetworkTag, Skeleton } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
 import { useDeployment, useToast } from "../components/Layout";
 
@@ -21,7 +21,7 @@ export function MerchantPage() {
 
   const load = useCallback(() => {
     api.merchant(account).then(setProfile).catch((e) => setError(e.message));
-    api.check({ network: "mainnet", recipient: account, amountDecimal: "1", asset: USDC_MAINNET }).then(setCheck).catch((e) => setError(e.message));
+    api.check({ network: netOfAccount(account), recipient: account, amountDecimal: "1", asset: usdcFor(netOfAccount(account)) }).then(setCheck).catch((e) => setError(e.message));
   }, [account]);
   useEffect(load, [load]);
 
@@ -42,9 +42,11 @@ export function MerchantPage() {
   return (
     <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
       <div className="page-head">
-        <p className="eyebrow">Merchant Passport</p>
+        <p className="eyebrow row" style={{ gap: 8 }}>
+          Merchant Passport <NetworkTag network={netOfAccount(account)} />
+        </p>
         <h1 style={{ wordBreak: "break-all" }}>{account}</h1>
-        <AccountLink id={account} explorer="https://nearblocks.io" />
+        <AccountLink id={account} explorer={EXPLORER[netOfAccount(account)]} />
       </div>
       {error && (
         <Banner kind="error">
@@ -52,7 +54,7 @@ export function MerchantPage() {
         </Banner>
       )}
 
-      <SafetyPanel check={check} merchant={profile} registry={dep?.mainnetRegistry} />
+      <SafetyPanel check={check} merchant={profile} registry={netOfAccount(account) === "testnet" ? dep?.registry : dep?.mainnetRegistry} />
 
       {!profile ? (
         <Skeleton lines={3} />

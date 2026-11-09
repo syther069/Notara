@@ -1,7 +1,7 @@
 import { CircleAlert, CircleX, Info } from "lucide-react";
 import type { CheckResponse, Reason, Signal } from "../lib/api";
 import { codeToWords, DECISION_TEXT, formatAsset, SIGNAL_LABELS } from "../lib/format";
-import { Badge, CopyButton, FixtureTag, SourceTag } from "./ui";
+import { Badge, CopyButton, FixtureTag, NetworkTag, SourceTag } from "./ui";
 
 function SevIcon({ s }: { s: Reason["severity"] }) {
   if (s === "block") return <CircleX size={20} className="sev-block" aria-label="Block" />;
@@ -186,6 +186,9 @@ export function EvidenceTable({ signals }: { signals: Signal[] }) {
 export function CheckResult({ res }: { res: CheckResponse }) {
   return (
     <div className="stack">
+      <div>
+        <NetworkTag network={res.report.request.network} />
+      </div>
       <DecisionCard res={res} />
       <ReasonList reasons={res.report.reasons} network={res.report.request.network} />
       <EvidenceTable signals={res.report.signals} />

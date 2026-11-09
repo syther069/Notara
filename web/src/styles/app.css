@@ -1142,3 +1142,11 @@ main {
     display: none;
   }
 }
+.tag.mainnet {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+.tag.testnet {
+  border-style: dashed;
+}

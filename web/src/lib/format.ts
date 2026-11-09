@@ -67,3 +67,14 @@ export function unitsToDecimal(units: string | undefined, assetId: string): stri
 
 /** "0.3 NEAR", "2.5 USDC" */
 export const formatAsset = (units: string | undefined, assetId: string) => `${unitsToDecimal(units, assetId)} ${assetSymbol(assetId)}`;
+
+/** Payment links are USDC links; the USDC contract says which network the link lives on. */
+export function linkNetwork(assetId: string | undefined): "mainnet" | "testnet" | undefined {
+  if (assetId === USDC_MAINNET) return "mainnet";
+  if (assetId === USDC_TESTNET) return "testnet";
+  return undefined;
+}
+export const usdcFor = (net: "mainnet" | "testnet") => (net === "mainnet" ? USDC_MAINNET : USDC_TESTNET);
+export const EXPLORER = { mainnet: "https://nearblocks.io", testnet: "https://testnet.nearblocks.io" } as const;
+/** Named accounts: .near on mainnet, .testnet on testnet. */
+export const netOfAccount = (id: string): "mainnet" | "testnet" => (id.endsWith(".testnet") ? "testnet" : "mainnet");

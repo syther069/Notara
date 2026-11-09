@@ -157,3 +157,24 @@ Written 2026-11-07. Same rule: compiles, tests pass and site builds after every 
 | 17 | Sponsored USDC setup for new merchants | - | already built (`ensureUsdcStorage` on link creation) | - | |
 | 20 | X account proof | - | **skipped**: needs X API access | - | |
 | C | **Cleanup**: graphify hooks moved to the uncommitted `.claude/settings.local.json`, backup file removed, duplicate pay tokens labeled | S | `.claude/*`, `server/checkout.ts` | `git ls-files .claude` has no machine paths |  ✅ done |
+
+---
+
+## Phase C: everything that can run on testnet, runs on testnet
+
+Goal: a judge can try every flow with free testnet NEAR and Circle testnet USDC (faucet.circle.com), with no real money. Mainnet stays for the parts that only exist there.
+
+| # | Step | Size | Files | How to verify | Status |
+|---|---|---|---|---|---|
+| T1 | **Contracts via the official toolchain**: install near-cli-rs and cargo-near (official installers), `cargo near build` both contracts, redeploy to the existing testnet accounts with `near deploy` (state is kept), check with `near view`. Record wasm hashes in `deployment.testnet.json`; README deploy steps use the official commands | M | `scripts/build-contracts.sh`, `README.md`, `deployment.testnet.json` | `near view spend-vault... get_config` and `registry... get_verifiers` answer; 37 `cargo test` pass | ✅ done: cargo-near 0.23 + near-cli-rs 0.31, redeployed (txs 3i9eFyT5…, hYu97c9g…), on-chain hashes match the builds, state kept |
+| T2 | **Payment links on testnet**: a link's network comes from its asset (testnet USDC → testnet). Create form gets "USDC (testnet, free)" next to "USDC (mainnet, any chain)". Pay page, Merchant Passport, safety check, signed links (testnet wallet), "Pay from NEAR wallet", CSV, QR, embed and Telegram all follow the link's network | M | `server/index.ts`, `server/nearpay.ts`, `server/merchants.ts`, Invoices, Pay, Merchant, SafetyPanel | Make a testnet link, sign it with a testnet wallet, pay it with testnet USDC from the wallet, see Paid and the NearBlocks testnet link | ✅ built; testnet link INV-0006 paid by the agent via the vault. A wallet-signed, wallet-paid testnet link not yet clicked through by a person |
+| T3 | **Scam reports on testnet**: the "Report this link" form uses the testnet registry (already deployed), so shared reports show up in the safety check | S | SafetyPanel, `server/index.ts` | Report a test account, re-check it, see the report | ✅ built (report form uses the testnet registry); not yet filed from a wallet |
+| T4 | **Send by link on testnet**: testnet sponsor account (`sponsor.agentspend-1104-p6zw.testnet`, funded with testnet NEAR from the owner). Fund the link from a NEAR testnet wallet; claim to an existing `.testnet` account or a new `name.testnet` (via the `testnet` account contract, already probed) | M | `server/sends.ts`, `server/index.ts`, Send, Claim, Pay | Make, fund, and claim a testnet link into a brand-new name | ✅ tested end to end on testnet (INV-0010 → notara-e2e-mw8w313o.testnet). Found and fixed: claim gas too low for NEAR's up-front gas reservation (now 0.06 NEAR, leftover goes to the receiver) |
+| T5 | **Defaults and docs**: website defaults to testnet; mainnet-only parts are labelled; README "Try it on testnet" walk-through for judges; this page lists what can't be on testnet | S | Layout, Home, README, About | Fresh clone, follow README with testnet only | ✅ done |
+
+### Not possible on testnet
+- **Pay from another chain (NEAR Intents 1Click)**: 1Click has no testnet, so any-chain checkout and the one-click MetaMask pay stay mainnet-only. On a testnet link the page says so and offers "Pay from NEAR wallet" instead.
+- **Real money**: testnet USDC and NEAR are free and worthless. That's the point for judges, but it proves the flow, not real settlement.
+- **Mainnet reputation for real merchants**: account age and history of real `.near` accounts only exist on mainnet. The Check page keeps a read-only mainnet mode.
+- **Some wallets**: a few wallets in NEAR Connect only support mainnet; Meteor and MyNearWallet-style testnet wallets work.
+- **`.near` names**: on testnet the new name is `name.testnet`.

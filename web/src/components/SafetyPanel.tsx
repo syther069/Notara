@@ -6,6 +6,7 @@ import { CircleAlert, CircleCheck, CircleX, Flag, LoaderCircle } from "lucide-re
 import { useWallet } from "../lib/wallet";
 import type { CheckResponse, Decision, MerchantProfile } from "../lib/api";
 import { DecisionCard, ReasonList } from "./CheckResult";
+import { NetworkTag } from "./ui";
 
 const HEADLINE: Record<Decision, { text: string; sub: string }> = {
   ALLOW: { text: "Looks OK", sub: "We found no problems with this account." },
@@ -60,9 +61,12 @@ export function SafetyPanel({ check, merchant, signature, signedBy, registry }: 
 
   return (
     <div className={`card decision-card ${r.decision}`}>
-      <p className={`badge lg ${r.decision}`} style={{ margin: 0 }}>
-        {h.text}
-      </p>
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <p className={`badge lg ${r.decision}`} style={{ margin: 0 }}>
+          {h.text}
+        </p>
+        <NetworkTag network={r.request.network} />
+      </div>
       <p className="muted" style={{ margin: "8px 0 0" }}>
         {h.sub}
       </p>
@@ -91,7 +95,7 @@ export function SafetyPanel({ check, merchant, signature, signedBy, registry }: 
       <p className="muted small" style={{ margin: "8px 0 0" }}>
         We check facts, not intentions. A real, verified person can still be dishonest, so only pay people you expect to pay.
       </p>
-      {registry && r.request.network === "mainnet" && <ReportForm registry={registry} subject={r.request.recipient} />}
+      {registry && <ReportForm registry={registry} subject={r.request.recipient} network={r.request.network === "mainnet" ? "mainnet" : "testnet"} />}
       <details style={{ marginTop: 8 }}>
         <summary className="small">Technical details</summary>
         <div className="stack" style={{ marginTop: 8 }}>
@@ -104,7 +108,7 @@ export function SafetyPanel({ check, merchant, signature, signedBy, registry }: 
 }
 
 /** Files a report in the shared on-chain registry, signed by the reporter's own wallet (0.01 NEAR bond). */
-function ReportForm({ registry, subject }: { registry: string; subject: string }) {
+function ReportForm({ registry, subject, network }: { registry: string; subject: string; network: "mainnet" | "testnet" }) {
   const w = useWallet();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("Scam");
@@ -116,7 +120,7 @@ function ReportForm({ registry, subject }: { registry: string; subject: string }
     e.preventDefault();
     setState({ busy: true });
     try {
-      const hash = await w.call(registry, "submit_report", { subject, category, description: description.trim(), evidence_uri: evidence.trim(), evidence_hash: null }, 30, { network: "mainnet", deposit: "10000000000000000000000" });
+      const hash = await w.call(registry, "submit_report", { subject, category, description: description.trim(), evidence_uri: evidence.trim(), evidence_hash: null }, 30, { network, deposit: "10000000000000000000000" });
       setState({ done: hash });
     } catch (err: any) {
       setState({ error: err.message });
@@ -133,7 +137,7 @@ function ReportForm({ registry, subject }: { registry: string; subject: string }
     return (
       <p className="small" style={{ marginTop: 8 }}>
         Report filed. It shows as unverified until a verifier checks it.{" "}
-        <a href={`https://nearblocks.io/txns/${state.done}`} target="_blank" rel="noreferrer">View transaction</a>
+        <a href={`${network === "mainnet" ? "https://nearblocks.io" : "https://testnet.nearblocks.io"}/txns/${state.done}`} target="_blank" rel="noreferrer">View transaction</a>
       </p>
     );
   return (

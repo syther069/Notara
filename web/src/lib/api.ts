@@ -51,6 +51,8 @@ export interface Deployment {
   agentMode?: "llm" | "scripted";
   /** Mainnet report registry, once deployed (deployment.mainnet.json). */
   mainnetRegistry?: string;
+  /** Public deploy: owner and agent-pay routes run locally only. */
+  public?: boolean;
 }
 
 export interface Payment {
@@ -205,7 +207,7 @@ export const api = {
   linkMessage: (b: { merchant: string; description: string; amountDecimal: string; asset: string }) => post<{ message: string }>("/api/links/message", b),
   merchant: (account: string) => req<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}`),
   checkWebsite: (account: string, website: string) => post<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}/website`, { website }),
-  createSend: (b: { amountDecimal: string; implicitAccount: string; note?: string }) => post<Invoice>("/api/sends", b),
+  createSend: (b: { amountDecimal: string; implicitAccount: string; note?: string; network?: "mainnet" | "testnet" }) => post<Invoice>("/api/sends", b),
   getSend: (id: string) => req<SendState>(`/api/sends/${encodeURIComponent(id)}`),
   activateSend: (id: string) => post<SendState>(`/api/sends/${encodeURIComponent(id)}/activate`, {}),
   nearTx: (id: string, b: { txHash: string; signerId: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/near-tx`, b),

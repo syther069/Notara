@@ -17,7 +17,7 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 import { check } from "../passport/src/check.ts";
 import { NETWORKS, ROOT, loadDeployment } from "../passport/src/config.ts";
 import { nearAmount } from "../passport/src/format.ts";
-import { USDC_MAINNET, USDC_TESTNET, formatUnits, getAsset, listAssets, resolveAsset, toUnits } from "../passport/src/assets.ts";
+import { USDC_MAINNET, USDC_TESTNET, formatUnits, getAsset, linkNetwork, listAssets, resolveAsset, toUnits, usdcFor } from "../passport/src/assets.ts";
 import { viewAccount, viewFunction } from "../passport/src/near.ts";
 import { loadSigner } from "../passport/src/verdict.ts";
 import type { Network } from "../passport/src/types.ts";
@@ -302,7 +302,7 @@ async function withSignature(i: Invoice) {
 async function merchantProfile(account: string) {
   let m = getMerchant(account);
   if (m.website && Date.now() - Date.parse(m.websiteCheckedAt ?? "0") > 3_600_000) m = await checkWebsite(account, m.website).catch(() => m);
-  const links = listInvoices().filter((i) => i.merchant === account && i.asset === USDC_MAINNET);
+  const links = listInvoices().filter((i) => i.merchant === account && linkNetwork(i.asset) && i.kind !== "send");
   const paid = links.filter((i) => i.status === "paid");
   return {
     ...m,
@@ -416,7 +416,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const d = loadDeployment(NET);
     const mainnetRegistry = loadDeployment("mainnet")?.registry;
     if (!d) return send(res, 200, { deployed: false, network: NET, mainnetRegistry });
-    return send(res, 200, { deployed: true, ...d, mainnetRegistry, explorer: NETWORKS[NET].explorer, agentMode: llmConfigured() ? "llm" : "scripted" });
+    return send(res, 200, { deployed: true, ...d, mainnetRegistry, public: PUBLIC, explorer: NETWORKS[NET].explorer, agentMode: llmConfigured() ? "llm" : "scripted" });
   }
 
   if (m === "GET" && path === "/api/vault") return send(res, 200, await vaultSummary());
@@ -462,16 +462,17 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const b = await readJson(req);
     const account = String(b.implicitAccount ?? "");
     if (!isImplicit(account)) throw new HttpError(400, "Invalid link account");
-    const amount = toAssetUnits(b.amountDecimal, USDC_MAINNET);
+    const net = b.network === "testnet" ? "testnet" : "mainnet";
+    const amount = toAssetUnits(b.amountDecimal, usdcFor(net));
     if (BigInt(amount) > 25_000_000n) throw new HttpError(400, "Send by link is limited to 25 USDC per link in this prototype");
     const today = new Date().toISOString().slice(0, 10);
     if (listInvoices().filter((i) => i.kind === "send" && i.createdAt.startsWith(today)).length >= MAX_SENDS_PER_DAY) throw new HttpError(429, "Daily limit for new send links reached");
     try {
-      await ensureUsdcStorage(account);
+      await ensureUsdcStorage(net, account);
     } catch (e: any) {
       throw new HttpError(409, e.message);
     }
-    const inv = createInvoice({ merchant: account, description: String(b.note ?? "").trim().slice(0, 120) || "Money sent by link", amount, asset: USDC_MAINNET });
+    const inv = createInvoice({ merchant: account, description: String(b.note ?? "").trim().slice(0, 120) || "Money sent by link", amount, asset: usdcFor(net) });
     return send(res, 201, publicInvoice(updateInvoice(inv.id, { kind: "send" })));
   }
   const nm = path.match(/^\/api\/invoices\/(INV-\d{4,})\/near-tx$/);
@@ -481,32 +482,35 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const signerId = String(b.signerId ?? "");
     if (!/^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(txHash) || !signerId) throw new HttpError(400, "txHash and signerId are required");
     const inv = await refreshInvoice(nm[1]);
-    if (inv.asset !== USDC_MAINNET) throw new HttpError(409, "Only mainnet USDC links can be paid from a NEAR wallet");
+    const net = linkNetwork(inv.asset);
+    if (!net) throw new HttpError(409, "Only USDC payment links can be paid from a NEAR wallet");
     if (inv.status === "paid") return send(res, 200, publicInvoice(inv));
     if (listInvoices().some((i) => i.nearTx === txHash)) throw new HttpError(409, "This transaction already paid another invoice");
-    const tx = await fetchTx("mainnet", txHash, signerId).catch((e) => {
+    const tx = await fetchTx(net, txHash, signerId).catch((e) => {
       throw new HttpError(400, `Couldn't read the transaction: ${e.message}`);
     });
-    const got = receivedInTx(tx, USDC_MAINNET, inv.merchant);
-    if (got < BigInt(inv.amount)) throw new HttpError(400, `The transaction sent ${formatUnits(got.toString(), getAsset(USDC_MAINNET)!)} USDC to ${inv.merchant}, not the ${formatUnits(inv.amount, getAsset(USDC_MAINNET)!)} USDC needed`);
-    const paid = updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `https://nearblocks.io/txns/${txHash}`, paidAt: new Date().toISOString() });
+    const got = receivedInTx(tx, inv.asset, inv.merchant);
+    if (got < BigInt(inv.amount)) throw new HttpError(400, `The transaction sent ${formatUnits(got.toString(), getAsset(inv.asset)!)} USDC to ${inv.merchant}, not the ${formatUnits(inv.amount, getAsset(inv.asset)!)} USDC needed`);
+    const paid = updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `${NETWORKS[net].explorer}/txns/${txHash}`, paidAt: new Date().toISOString() });
     return send(res, 200, publicInvoice(paid));
   }
   const sm = path.match(/^\/api\/sends\/(INV-\d{4,})(\/activate)?$/);
   if (sm) {
     const inv = await refreshInvoice(sm[1]);
     if (inv.kind !== "send") throw new HttpError(404, "Not a send link");
+    const net = linkNetwork(inv.asset) ?? "mainnet";
     if (m === "POST" && sm[2]) {
       if (inv.status !== "paid") throw new HttpError(409, "This link hasn't been funded yet");
       try {
-        await ensureClaimGas(inv.merchant);
+        await ensureClaimGas(net, inv.merchant);
       } catch (e: any) {
         throw new HttpError(409, e.message);
       }
     }
     if (m === "GET" || sm[2]) {
-      const [balance, acct] = await Promise.all([usdcBalance(inv.merchant).catch(() => "0"), viewAccount("mainnet", inv.merchant).catch(() => undefined)]);
-      return send(res, 200, { invoice: publicInvoice(inv), balance, claimReady: !!acct });
+      const [balance, acct] = await Promise.all([usdcBalance(net, inv.merchant).catch(() => "0"), viewAccount(net, inv.merchant).catch(() => undefined)]);
+      // After activate the gas transfer has executed even if "final" state lags a block or two.
+      return send(res, 200, { invoice: publicInvoice(inv), balance, claimReady: !!acct || !!sm[2] });
     }
   }
   if (m === "POST" && path === "/api/links/message") {
@@ -540,11 +544,12 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     try {
       const assetId = resolveAsset(String(b.asset ?? "NEAR"))?.id;
       if (!assetId) throw new HttpError(400, `Unsupported asset ${b.asset}`);
-      if (assetId === USDC_MAINNET && !(await viewAccount("mainnet", merchant))) throw new HttpError(400, `${merchant} does not exist on NEAR mainnet`);
+      const net = linkNetwork(assetId);
+      if (net && !(await viewAccount(net, merchant))) throw new HttpError(400, `${merchant} does not exist on NEAR ${net}`);
       const fields = { merchant, description: String(b.description ?? "").trim(), amount: toAssetUnits(b.amountDecimal ?? b.amountNear, assetId), asset: assetId };
       if (b.signedToken) await verifyLinkToken(String(b.signedToken), fields, true).catch((e) => { throw new HttpError(400, `Signature check failed: ${e.message}`); });
       // Step 1 fallback: register a new merchant for USDC so payouts can't fail on storage. Best effort.
-      if (assetId === USDC_MAINNET) await ensureUsdcStorage(merchant).catch((e) => console.warn(`USDC storage for ${merchant} not sponsored: ${e.message}`));
+      if (net) await ensureUsdcStorage(net, merchant).catch((e) => console.warn(`USDC storage for ${merchant} not sponsored: ${e.message}`));
       const inv = createInvoice(fields);
       return send(res, 201, publicInvoice(b.signedToken ? updateInvoice(inv.id, { signedToken: String(b.signedToken) }) : inv));
     } catch (e: any) {

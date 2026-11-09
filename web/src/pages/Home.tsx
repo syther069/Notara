@@ -36,6 +36,10 @@ export function Home() {
             <Send size={16} aria-hidden /> Send money
           </Link>
         </div>
+        <p className="small muted" style={{ marginTop: 12 }}>
+          Try every flow free on NEAR testnet: links, wallet payments, send links, scam reports and the AI agent. Only paying from other chains needs
+          mainnet, because NEAR Intents has no testnet.
+        </p>
       </section>
 
       <section>

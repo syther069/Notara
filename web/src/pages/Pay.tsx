@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api, type Checkout, type CheckResponse, type Invoice, type MerchantProfile, type PayToken } from "../lib/api";
-import { formatAsset, unitsToDecimal } from "../lib/format";
+import { EXPLORER, formatAsset, linkNetwork, unitsToDecimal } from "../lib/format";
 import { AccountLink, Banner, CopyButton, Skeleton } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
 import { useWallet } from "../lib/wallet";
@@ -41,7 +41,7 @@ export function PayPage() {
     setNearBusy(true);
     setError(null);
     try {
-      const { txHash, signerId } = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount);
+      const { txHash, signerId } = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, linkNetwork(inv.asset) ?? "mainnet");
       setInv(await api.nearTx(inv.id, { txHash, signerId }));
     } catch (err: any) {
       setError(err.message);
@@ -65,11 +65,26 @@ export function PayPage() {
   const asset = inv?.asset;
   const amount = inv?.amount;
   const merchant = inv?.merchant;
+  const net = linkNetwork(asset) ?? "mainnet";
+  const [agentBusy, setAgentBusy] = useState(false);
+  /** Testnet only: the demo AI agent pays through Notara and the spending vault. */
+  async function payWithAgent() {
+    setAgentBusy(true);
+    setError(null);
+    try {
+      await api.payInvoice(id);
+      load();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setAgentBusy(false);
+    }
+  }
   useEffect(() => {
     if (merchant) api.merchant(merchant).then(setProfile).catch(() => {});
     if (merchant && amount && asset)
-      api.check({ network: "mainnet", recipient: merchant, amountDecimal: unitsToDecimal(amount, asset), asset }).then(setCheck).catch((e) => setError(e.message));
-  }, [merchant, amount, asset]);
+      api.check({ network: net, recipient: merchant, amountDecimal: unitsToDecimal(amount, asset), asset }).then(setCheck).catch((e) => setError(e.message));
+  }, [merchant, amount, asset, net]);
 
   const current: Checkout | undefined = inv?.checkouts?.at(-1);
   const waiting = !!current && (inv?.status === "unpaid" || inv?.status === "processing");
@@ -128,7 +143,7 @@ export function PayPage() {
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
         </div>
         <p className="muted" style={{ marginTop: 8 }}>
-          {isSend ? "You're funding a send link. The money waits in a one-time account until someone opens the link." : <>Pay to <AccountLink id={inv.merchant} explorer="https://nearblocks.io" /> · <Link to={`/m/${inv.merchant}`}>Merchant Passport</Link></>}
+          {isSend ? "You're funding a send link. The money waits in a one-time account until someone opens the link." : <>Pay to <AccountLink id={inv.merchant} explorer={EXPLORER[net]} /> · <Link to={`/m/${inv.merchant}`}>Merchant Passport</Link></>}
         </p>
         {!isSend && inv.status !== "paid" && (
           <details style={{ marginTop: 8 }}>
@@ -144,8 +159,8 @@ export function PayPage() {
         <Banner kind="ok" title="Paid">
           <p>
             {isSend ? "The link now holds" : `${inv.merchant} received`} {formatAsset(inv.amount, inv.asset)}.{" "}
-            {paidCheckout?.txUrl && (
-              <a href={paidCheckout.txUrl} target="_blank" rel="noreferrer">
+            {(paidCheckout?.txUrl ?? inv.txUrl ?? inv.txHash) && (
+              <a href={paidCheckout?.txUrl ?? inv.txUrl ?? `${EXPLORER[net]}/txns/${inv.txHash}`} target="_blank" rel="noreferrer">
                 View transaction <ExternalLink size={12} aria-hidden />
               </a>
             )}
@@ -154,7 +169,7 @@ export function PayPage() {
       ) : isSend ? null : (
         <>
           <h2 style={{ marginBottom: 0 }}>Before you pay</h2>
-          <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} registry={dep?.mainnetRegistry} />
+          <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} registry={net === "testnet" ? dep?.registry : dep?.mainnetRegistry} />
         </>
       )}
 
@@ -173,13 +188,42 @@ export function PayPage() {
           <>
           <div className="card stack">
             <h2>Have USDC on NEAR?</h2>
-            <p className="muted small" style={{ margin: 0 }}>Pay straight from your NEAR wallet (Meteor, HOT, Intear…). It needs a little NEAR for gas.</p>
+            <p className="muted small" style={{ margin: 0 }}>
+              {net === "testnet" ? (
+                <>
+                  Test money: pay with a NEAR testnet wallet (Meteor, Intear, MyNearWallet). Get free testnet USDC at{" "}
+                  <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">faucet.circle.com</a> (choose NEAR testnet) and free testnet NEAR for gas from the wallet.
+                </>
+              ) : (
+                "Pay straight from your NEAR wallet (Meteor, HOT, Intear…). It needs a little NEAR for gas."
+              )}
+            </p>
             <div>
               <button type="button" className="btn btn-primary" onClick={payFromNear} disabled={nearBusy}>
                 {nearBusy && <LoaderCircle size={16} className="spin" aria-hidden />} Pay {formatAsset(inv.amount, inv.asset)} with NEAR wallet
               </button>
             </div>
           </div>
+          {net === "testnet" ? (
+            <div className="card stack">
+              {!isSend && !dep?.public && (
+                <>
+                  <h2>Or let an AI agent pay it</h2>
+                  <p className="muted small" style={{ margin: 0 }}>
+                    The demo agent asks Notara first, then pays from its spending vault. Big or unusual payments wait for the vault owner to approve.
+                  </p>
+                  <div>
+                    <button type="button" className="btn btn-secondary" onClick={payWithAgent} disabled={agentBusy}>
+                      {agentBusy && <LoaderCircle size={16} className="spin" aria-hidden />} Pay with the demo AI agent
+                    </button>
+                  </div>
+                </>
+              )}
+              <p className="muted small" style={{ margin: 0 }}>
+                Paying from another chain (Ethereum, Base, Solana…) uses NEAR Intents, which only runs on mainnet. Create a mainnet link to try it with real money.
+              </p>
+            </div>
+          ) : (
           <form className="card stack" onSubmit={getAddress}>
             <h2>Pay from another chain</h2>
             <div className="field">
@@ -208,6 +252,7 @@ export function PayPage() {
               </button>
             </div>
           </form>
+          )}
           </>
         ))}
 
@@ -270,7 +315,9 @@ export function PayPage() {
         </p>
       )}
       <p className="muted small">
-        Routed by NEAR Intents. We never hold your money. This is a prototype and has not been audited, so use small amounts.
+        {net === "testnet"
+          ? "Testnet: free test money, nothing of value moves. We never hold your money."
+          : "Routed by NEAR Intents. We never hold your money. This is a prototype and has not been audited, so use small amounts."}
       </p>
     </div>
   );

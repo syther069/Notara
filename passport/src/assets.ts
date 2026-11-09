@@ -57,3 +57,11 @@ export function formatAmount(units: string, assetId: string): string {
   const a = getAsset(assetId);
   return a ? `${formatUnits(units, a)} ${a.symbol}` : `${units} units of ${assetId}`;
 }
+
+/** Payment links are USDC links; the USDC contract says which network the link lives on. */
+export function linkNetwork(assetId: string): "mainnet" | "testnet" | undefined {
+  if (assetId === USDC_MAINNET) return "mainnet";
+  if (assetId === USDC_TESTNET) return "testnet";
+  return undefined;
+}
+export const usdcFor = (net: "mainnet" | "testnet") => (net === "mainnet" ? USDC_MAINNET : USDC_TESTNET);

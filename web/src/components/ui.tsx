@@ -121,3 +121,16 @@ export function Skeleton({ lines = 3 }: { lines?: number }) {
     </div>
   );
 }
+
+/** Which network a reputation comes from. Real merchants' reputation is mainnet data, and always says so. */
+export function NetworkTag({ network }: { network: string }) {
+  return network === "mainnet" ? (
+    <span className="tag mainnet" title="Account age, history and reports read live from NEAR mainnet">
+      Mainnet · real account data
+    </span>
+  ) : (
+    <span className="tag testnet" title="Read from NEAR testnet. Not the reputation of any real merchant.">
+      Testnet · test data
+    </span>
+  );
+}

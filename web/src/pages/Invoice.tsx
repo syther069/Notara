@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, Bot, LoaderCircle, RefreshCw } from "lucide-react";
 import { api, type CheckResponse, type Invoice } from "../lib/api";
-import { formatAsset, USDC_MAINNET } from "../lib/format";
+import { formatAsset, linkNetwork } from "../lib/format";
 import { AccountLink, Banner, Skeleton, TxLink } from "../components/ui";
 import { CheckResult } from "../components/CheckResult";
 import { useToast } from "../components/Layout";
@@ -51,7 +51,7 @@ export function InvoicePage() {
     }
   }
 
-  if (inv?.asset === USDC_MAINNET) return <Navigate to={`/pay/${inv.id}`} replace />;
+  if (linkNetwork(inv?.asset)) return <Navigate to={`/pay/${inv!.id}`} replace />;
 
   return (
     <>

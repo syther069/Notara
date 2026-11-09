@@ -127,7 +127,7 @@ export function Layout() {
         {notice && (
           <div className="notice">
             <div className="container">
-              <TriangleAlert size={14} aria-hidden /> {/^\/(pay|m|send|claim)(\/|$)/.test(loc.pathname) ? "This page uses real money on NEAR mainnet · prototype · not audited" : "Testnet prototype · not audited · no real funds"}
+              <TriangleAlert size={14} aria-hidden /> {/^\/(pay|m|send|claim)(\/|$)/.test(loc.pathname) ? "Prototype · not audited · mainnet links move real money, testnet links use free test money" : "Testnet prototype · not audited · no real funds"}
               <button
                 aria-label="Dismiss notice"
                 onClick={() => {

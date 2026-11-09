@@ -24,11 +24,11 @@ type WalletState = {
    * Sign a payment link with a NEAR mainnet wallet (NEP-413). `message` gets the signer's account and
    * returns the exact text to sign. Returns the token for the backend and the signer.
    */
-  signLink: (message: (accountId: string) => Promise<string>) => Promise<{ token: string; accountId: string }>;
+  signLink: (message: (accountId: string) => Promise<string>, network?: "mainnet" | "testnet") => Promise<{ token: string; accountId: string }>;
   /** Sign and send one function call with the connected wallet. Returns the tx hash. */
   call: (contractId: string, methodName: string, args: object, gasTgas?: number, opts?: { network?: "mainnet" | "testnet"; deposit?: string }) => Promise<string>;
-  /** Pay USDC on NEAR mainnet straight from the user's wallet. Returns the tx hash and payer. */
-  payUsdc: (token: string, receiver: string, amount: string) => Promise<{ txHash: string; signerId: string }>;
+  /** Pay USDC on NEAR (mainnet by default) straight from the user's wallet. Returns the tx hash and payer. */
+  payUsdc: (token: string, receiver: string, amount: string, network?: "mainnet" | "testnet") => Promise<{ txHash: string; signerId: string }>;
 };
 
 const Ctx = createContext<WalletState>({
@@ -117,35 +117,35 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setAccountId(null);
   }, []);
 
-  const signLink = useCallback(async (message: (accountId: string) => Promise<string>) => {
+  const signLink = useCallback(async (message: (accountId: string) => Promise<string>, net: "mainnet" | "testnet" = "mainnet") => {
     const c = connectorRef.current;
     if (!c) throw new Error("Wallet not ready");
-    const switched = await switchTo(c, "mainnet");
+    const switched = await switchTo(c, net);
     const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
     const wallet = existing?.wallet ?? (await c.connect());
-    const account = (existing?.accounts ?? (await wallet.getAccounts({ network: "mainnet" })))[0]?.accountId;
-    if (!account) throw new Error("No mainnet account in this wallet");
+    const account = (existing?.accounts ?? (await wallet.getAccounts({ network: net })))[0]?.accountId;
+    if (!account) throw new Error(`No ${net} account in this wallet`);
     setAccountId(account);
     const token = await sign(await message(account), {
-      signer: { signMessage: (p: any) => wallet.signMessage({ ...p, network: "mainnet", signerId: account }) },
+      signer: { signMessage: (p: any) => wallet.signMessage({ ...p, network: net, signerId: account }) },
       recipient: "notara",
     });
     return { token, accountId: account };
   }, [switchTo]);
 
   const payUsdc = useCallback(
-    async (token: string, receiver: string, amount: string) => {
+    async (token: string, receiver: string, amount: string, net: "mainnet" | "testnet" = "mainnet") => {
       const c = connectorRef.current;
       if (!c) throw new Error("Wallet not ready");
-      const switched = await switchTo(c, "mainnet");
+      const switched = await switchTo(c, net);
       const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
       const wallet = existing?.wallet ?? (await c.connect());
-      const signerId = (existing?.accounts ?? (await wallet.getAccounts({ network: "mainnet" })))[0]?.accountId;
-      if (!signerId) throw new Error("No mainnet account in this wallet");
+      const signerId = (existing?.accounts ?? (await wallet.getAccounts({ network: net })))[0]?.accountId;
+      if (!signerId) throw new Error(`No ${net} account in this wallet`);
       setAccountId(signerId);
       const fc = (methodName: string, args: object, deposit: string) => ({ type: "FunctionCall" as const, params: { methodName, args, gas: "30000000000000", deposit } });
       const out: any = await wallet.signAndSendTransaction({
-        network: "mainnet",
+        network: net,
         signerId,
         receiverId: token,
         // Registers the merchant for USDC if needed (refunded if already registered), then pays.

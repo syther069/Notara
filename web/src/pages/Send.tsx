@@ -12,6 +12,7 @@ export function SendPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [made, setMade] = useState<{ inv: Invoice; url: string; path: string } | null>(null);
+  const [network, setNetwork] = useState<"mainnet" | "testnet">("testnet");
   const amountErr = amount && !/^\d+(\.\d{1,6})?$/.test(amount) ? "Enter a number like 5 or 2.5" : null;
 
   async function create(e: FormEvent) {
@@ -21,7 +22,7 @@ export function SendPage() {
     try {
       // The key is made here, in your browser. The server only learns which account it controls.
       const key = newLinkKey();
-      const inv = await api.createSend({ amountDecimal: amount, implicitAccount: key.account, note: note.trim() });
+      const inv = await api.createSend({ amountDecimal: amount, implicitAccount: key.account, note: note.trim(), network });
       const fragment = toFragment(key);
       try {
         sessionStorage.setItem(`send-key-${inv.id}`, fragment);
@@ -48,6 +49,18 @@ export function SendPage() {
             <label htmlFor="samt">Amount (USDC)</label>
             <input id="samt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
             {amountErr ? <span className="err">{amountErr}</span> : <span className="hint">Up to 25 USDC per link in this prototype.</span>}
+          </div>
+          <div className="field">
+            <label id="snet">Money</label>
+            <div className="segmented" role="group" aria-labelledby="snet">
+              <button type="button" aria-pressed={network === "testnet"} onClick={() => setNetwork("testnet")}>
+                Testnet USDC (free)
+              </button>
+              <button type="button" aria-pressed={network === "mainnet"} onClick={() => setNetwork("mainnet")}>
+                Real USDC (mainnet)
+              </button>
+            </div>
+            <span className="hint">{network === "testnet" ? "Fund it from a NEAR testnet wallet with free USDC from faucet.circle.com." : "Fund it from any chain through NEAR Intents."}</span>
           </div>
           <div className="field">
             <label htmlFor="snote">Note (optional)</label>
@@ -88,7 +101,7 @@ export function SendPage() {
           </Banner>
         </div>
       )}
-      <p className="muted small">Real money on NEAR mainnet. Prototype, not audited: keep amounts small.</p>
+      <p className="muted small">{network === "mainnet" ? "Real money on NEAR mainnet. Prototype, not audited: keep amounts small." : "Testnet: free test money, nothing of value moves."}</p>
     </div>
   );
 }

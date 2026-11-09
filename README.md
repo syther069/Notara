@@ -89,6 +89,20 @@ Every signal in a report states its source (`live-rpc`, `live-indexer`, `on-chai
 - ❌ Whoever holds the vault's **full-access key** can still change or drain the vault. Setup keeps it so you can redeploy during development. `npm run owner -- lock-vault` deletes it, after which the vault can only change through its own contract methods.
 - ❌ Notara signer key is a local file in this prototype. Whoever holds it can sign any verdict. A stretch goal is to keep it in a TEE.
 
+## Try it free on testnet (for judges)
+
+Everything except paying from other chains runs on NEAR testnet, with free test money and real testnet transactions. You need a NEAR testnet wallet (Meteor, Intear or MyNearWallet), free testnet NEAR from the wallet, and free testnet USDC from [faucet.circle.com](https://faucet.circle.com) (choose **NEAR testnet**).
+
+1. **Payment link:** on **Get paid**, keep **USDC testnet**, and either click **Sign with my NEAR wallet and create** (the link is signed by your own wallet) or leave the account empty to bill the demo merchant.
+2. **Pay it:** open the link. You see the safety check, the Merchant Passport and whether the link is signed. Pay with **Pay with NEAR wallet**, or **Pay with the demo AI agent** (local runs only), which asks Notara first and pays from the spending vault.
+3. **Report an account:** on any testnet pay or Merchant page, **Report this account** files a report in the testnet registry contract (0.01 testnet NEAR bond). It shows up in the next safety check.
+4. **Send by link:** on **Send**, keep **Testnet USDC**, create the link, fund it from your testnet wallet, then open the link in another browser and claim it to an existing `.testnet` account or a brand-new `name.testnet`. Gas and setup are paid by the testnet sponsor (`npm run owner -- make-sponsor` creates it), and the leftover NEAR goes to the receiver.
+5. **AI agent attack demo:** **Security** runs the prompt-injection attacks against the vault on testnet.
+
+Tested end to end on testnet (2026-11-09): a testnet link paid by the agent through the vault (INV-0006), and a send link funded with 0.5 USDC and claimed into a new `notara-e2e-….testnet` account, which also received the 0.05 NEAR left over.
+
+**Not possible on testnet:** paying from another chain (NEAR Intents 1Click has no testnet, so the any-chain checkout and one-click MetaMask pay are mainnet only), real-value money, and reputation for real merchants. That stays on mainnet: account age, history and reports for real `.near` accounts are always read live from mainnet and carry a **Mainnet · real account data** tag on the pay page, the Merchant Passport and the Check page. Testnet results carry a **Testnet · test data** tag.
+
 ## Run it
 
 Requirements: Node 20+, and Rust with the `wasm32-unknown-unknown` target (only to rebuild the contracts).
@@ -123,7 +137,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 65 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode and the database import. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
+`npm test` runs 69 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode, the database import, alerts, EVM call encoding and link networks. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
 
 **2. Read-only check of a real mainnet account (no keys)**
 
@@ -135,9 +149,13 @@ Mainnet has no registry deployment, so `shared_reports` shows as unavailable and
 
 **3. Testnet deployment (one time, about 7.5 testnet NEAR)**
 
+Contracts are built with **cargo-near** and deployed with **near-cli-rs**, as in the NEAR docs. Install both from their official releases ([cargo-near](https://github.com/near/cargo-near/releases), [near-cli-rs](https://github.com/near/near-cli-rs/releases)), then build:
+
 ```bash
-bash scripts/build-contracts.sh
+bash scripts/deploy-contracts.sh --build
 ```
+
+No cargo-near? `bash scripts/build-contracts.sh` builds the same contracts with plain cargo.
 
 ```bash
 NEAR_OWNER_ACCOUNT=you.testnet NEAR_OWNER_PRIVATE_KEY=ed25519:... npm run setup:testnet
@@ -164,7 +182,7 @@ AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
 
 `AGENT_LLM_BASE_URL` defaults to `https://cloud-api.near.ai/v1`. Each log says which mode ran.
 
-**Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Meteor, Intear, MyNearWallet or HOT. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `npx tsx scripts/upgrade-contract.ts vault` or `registry` (testnet, before `lock-vault`).
+**Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Meteor, Intear, MyNearWallet or HOT. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `bash scripts/deploy-contracts.sh` (cargo-near build + `near contract deploy`, testnet, before `lock-vault`). Deployed now: vault code hash `AjewPGjjqqFwDYD6GnYrKkkH7UyNmhBHgJ5M2r4sehCm`, registry `8Upc4cEhHbLSiTYJ5UDiRSZ9Kkd3xfvS7JstwKNGy5T8`, which match `cargo near build` of this repo.
 
 **Any-chain payment links (real money, NEAR mainnet):** on the Invoices page, choose **USDC, any chain** and enter your mainnet account. The customer opens `/pay/<id>`, sees the safety check, picks a token, and gets a one-time NEAR Intents deposit address. The merchant receives exact USDC on NEAR, and we never hold the money. NEAR Intents has no testnet, so this uses real funds: keep amounts small. Optionally put `ONECLICK_JWT=...` in `.env` to avoid the unauthenticated fee. **Status: tested up to creating a real deposit address. No real payment has been made yet.**
 
@@ -182,7 +200,7 @@ Once `deployment.mainnet.json` exists, mainnet checks read real reports, and the
 
 **Storage:** Node's built-in SQLite in `data/notara.db` (Node 22.13+). On first start, old `data/*.json` files are imported once and kept as `*.imported`.
 
-**Send by link (real money):** open `/send`, enter an amount (up to 25 USDC), and you get a link. Fund it from any chain, then send the link to anyone. They open it and move the USDC to their NEAR account; gas and USDC setup are paid by a sponsor account, so they need no NEAR. The key lives only in the link's `#` part, which browsers don't send to servers. It needs `SPONSOR_ACCOUNT` and `SPONSOR_PRIVATE_KEY` (a mainnet account with a little NEAR) in `.env`. **Status: built, not yet tested with real funds.**
+**Send by link (testnet or real money):** open `/send`, enter an amount (up to 25 USDC), and you get a link. Fund it from any chain, then send the link to anyone. They open it and move the USDC to their NEAR account; gas and USDC setup are paid by a sponsor account, so they need no NEAR. The key lives only in the link's `#` part, which browsers don't send to servers. Mainnet needs `SPONSOR_ACCOUNT` and `SPONSOR_PRIVATE_KEY` (a mainnet account with a little NEAR) in `.env`; testnet uses `keys/sponsor.json` from `npm run owner -- make-sponsor`, or `TESTNET_SPONSOR_ACCOUNT` / `TESTNET_SPONSOR_PRIVATE_KEY`. Each claim is sponsored with 0.06 NEAR, because NEAR reserves attached gas up front; what is left goes to the receiver. **Status: tested end to end on testnet; not yet tested with real funds.**
 
 **Extras:** a receiver with no NEAR account can pick a new `name.near` while claiming (created with the link key). Customers with MetaMask or Rabby can pay EVM tokens in one click. Payment pages, deposit addresses and send links have QR codes. Merchants can copy a `<script src=".../embed.js" data-link="INV-…">` "Pay with Notara" button for their site. Send links show a soft 7-day expiry. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env` to get a Telegram message when a link is paid. Agent docs are at `/agents` and `/llms.txt`. **Status: built. New-name claims, one-click EVM pay and Telegram alerts are not yet tested with real funds or a real bot.**
 
@@ -230,7 +248,7 @@ It listens on `http://127.0.0.1:8787` (local only). Main endpoints:
 See `Architecture.md` for the full list.
 
 ### Windows notes
-If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a short path. If `cargo test` fails building `aws-lc-sys` (NASM missing), set `AWS_LC_SYS_PREBUILT_NASM=1`. `cargo-near` may not compile on Windows (OpenSSL), so `scripts/build-contracts.sh` uses plain cargo with the same flags cargo-near uses (`-C link-arg=-s --cfg near`). near-sdk 5.30 targets protocol version 88, which testnet runs.
+If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a short path. If `cargo test` fails building `aws-lc-sys` (NASM missing), set `AWS_LC_SYS_PREBUILT_NASM=1`. On Windows, install cargo-near as a prebuilt binary (building it from source needs OpenSSL), and build with `--no-abi`: its ABI step links a native library, which fails on Windows. The wasm is the same. near-sdk 5.30 targets protocol version 88, which testnet runs.
 
 ## Implemented vs planned
 
