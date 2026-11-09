@@ -372,9 +372,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Pay.tsx": {
-    "mtime": 1794233835.1943245,
-    "seen": 1794233999.513252,
-    "ast_hash": "8da96c8dcdd8a323a50447d54118a4dd",
+    "mtime": 1794245605.258561,
+    "seen": 1794245649.0057137,
+    "ast_hash": "7e9ed012a4b2bf387bd8ad5af36c132a",
     "semantic_hash": ""
   },
   "web/src/pages/Send.tsx": {

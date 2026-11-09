@@ -318,12 +318,41 @@ export function PayPage() {
         </Banner>
       )}
 
-      {isSend && sendKey && (
+      {isSend && sendKey && inv.status === "paid" && (
+        <div className="card ready stack">
+          <div>
+            <h2 style={{ marginBottom: 4 }}>Now share your send link</h2>
+            <p className="muted" style={{ margin: 0 }}>
+              It holds {formatAsset(inv.amount, inv.asset)}. Whoever opens it can claim the money, so send it only to the person it's for.
+            </p>
+          </div>
+          <div className="field">
+            <span className="label">Your send link (save it: it's the only key to the money)</span>
+            <div className="url">{`${location.origin}/claim/${inv.id}#${sendKey}`}</div>
+          </div>
+          <div className="row">
+            <CopyButton text={`${location.origin}/claim/${inv.id}#${sendKey}`} label="Copy link" />
+            <Link className="btn btn-secondary" to={`/claim/${inv.id}#${sendKey}`}>
+              Open the send link
+            </Link>
+          </div>
+          <details>
+            <summary className="small">Show as a QR code (to hand over in person)</summary>
+            <div style={{ marginTop: 8 }}>
+              <QrCode text={`${location.origin}/claim/${inv.id}#${sendKey}`} label="QR code of the send link" />
+            </div>
+          </details>
+        </div>
+      )}
+      {isSend && sendKey && inv.status !== "paid" && (
         <p>
           <Link className="btn btn-secondary" to={`/claim/${inv.id}#${sendKey}`}>
             Back to your send link
           </Link>
         </p>
+      )}
+      {isSend && !sendKey && inv.status === "paid" && (
+        <p className="small muted">Share the send link you saved when you created it. For safety, its key is never stored on our server.</p>
       )}
       <p className="muted small">
         {net === "testnet"
