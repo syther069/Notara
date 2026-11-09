@@ -1,7 +1,7 @@
-# Graph Report - near  (2026-11-09)
+# Graph Report - near  (2026-11-10)
 
 ## Corpus Check
-- 114 files · ~146,671 words
+- 114 files · ~146,752 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 2, .wasm 2, .zip 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d164ce02`
+- Built from commit: `efea3c0d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -121,18 +121,18 @@
 7. `UI Guide: Universal Principles for Visual Composition, Components and Motion` - 30 edges
 8. `17. Source and evidence register` - 30 edges
 9. `near-api-js` - 27 edges
-10. `PayPage()` - 26 edges
+10. `LoaderCircle()` - 26 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `1. First real payment through a link [S] 💰` --references--> `ensureUsdcStorage()`  [INFERRED]
   IMPLEMENTATION.md → server/sends.ts
+- `6. Database instead of JSON files [M] 🗄️` --references--> `updateInvoice()`  [INFERRED]
+  IMPLEMENTATION.md → server/invoices.ts
 - `Nice-to-have build sequence (items 12–20)` --references--> `ensureUsdcStorage()`  [INFERRED]
   IMPLEMENTATION.md → server/sends.ts
 - `6. Database instead of JSON files [M] 🗄️` --references--> `load()`  [INFERRED]
   IMPLEMENTATION.md → passport/src/signals/codeHashCache.ts
 - `6. Database instead of JSON files [M] 🗄️` --references--> `createInvoice()`  [INFERRED]
-  IMPLEMENTATION.md → server/invoices.ts
-- `6. Database instead of JSON files [M] 🗄️` --references--> `updateInvoice()`  [INFERRED]
   IMPLEMENTATION.md → server/invoices.ts
 
 ## Import Cycles
@@ -505,7 +505,7 @@ Nodes (4): 9. Dark patterns, honest persuasion and regulatory context, A practic
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `near-api-js` connect `check.ts` to `near-sign-verify`, `types.ts`, `config.ts`, `package.json`, `setup-testnet.ts`, `linkKey.ts`, `main.tsx`, `assets.ts`, `demo.ts`, `merchants.ts`, `dependencies`, `sends.ts`, `dependencies`, `vaults.ts`, `near.ts`?**
-  _High betweenness centrality (0.108) - this node is a cross-community bridge._
+  _High betweenness centrality (0.096) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `Vault` (e.g. with `pay()` and `setup()`) actually correct?**
   _`Vault` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Allow`, `Block`, `Warn` to the rest of the system?**
@@ -513,8 +513,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Vault` be split into smaller, more focused modules?**
   _Cohesion score 0.0625694187338023 - nodes in this community are weakly interconnected._
 - **Why does `near-sign-verify` connect `near-sign-verify` to `config.ts`, `wallet.tsx`, `package.json`, `merchants.ts`, `dependencies`, `dependencies`, `near.ts`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
 - **Should `registry/src/lib.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.09398496240601503 - nodes in this community are weakly interconnected._
-- **Why does `Signals, data sources and their limits` connect `signals/index.ts` to `Notara`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Should `4. Core components` be split into smaller, more focused modules?**
+  _Cohesion score 0.058823529411764705 - nodes in this community are weakly interconnected._

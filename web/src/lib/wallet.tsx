@@ -87,6 +87,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (switched) {
       setAccountId(null);
       setNetwork(n);
+      // Remembered so a reload restores the session on the network the wallet is now connected to.
+      try {
+        localStorage.setItem("notara-network", n);
+      } catch {}
     }
     return switched;
   }, []);
@@ -104,7 +108,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         await connector.whenManifestLoaded;
         // Restore a previous session, if any.
         const existing = await connector.getConnectedWallet().catch(() => null);
-        if (!cancelled && existing?.accounts?.[0]) setAccountId(existing.accounts[0].accountId);
+        const restored = existing?.accounts?.[0]?.accountId;
+        if (!cancelled && restored) {
+          // A named account tells its network; follow it rather than show a .near account as "testnet".
+          const own: Net | null = restored.endsWith(".testnet") ? "testnet" : restored.endsWith(".near") ? "mainnet" : null;
+          if (own && own !== connector.network) {
+            connector.network = own;
+            setNetwork(own);
+            try {
+              localStorage.setItem("notara-network", own);
+            } catch {}
+          }
+          setAccountId(restored);
+        }
       } catch (e: any) {
         if (!cancelled) setError(`Wallet connector failed to load: ${e?.message ?? e}`);
       } finally {

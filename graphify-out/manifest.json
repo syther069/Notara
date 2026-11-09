@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/wallet.tsx": {
-    "mtime": 1794246898.7123473,
-    "seen": 1794246982.3110156,
-    "ast_hash": "a0c5e89f22d81679510f83967148c228",
+    "mtime": 1794249467.285388,
+    "seen": 1794249534.3086777,
+    "ast_hash": "b7039117ce2f2c0c1a91c93c98fe6855",
     "semantic_hash": ""
   },
   "web/src/main.tsx": {
