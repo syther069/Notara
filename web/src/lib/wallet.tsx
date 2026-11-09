@@ -5,6 +5,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { NearConnector } from "@hot-labs/near-connect";
 import { sign } from "near-sign-verify";
+import { formatAsset } from "./format";
 
 const NETWORK = "testnet" as const;
 type Net = "mainnet" | "testnet";
@@ -149,12 +150,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
     const wallet = existing?.wallet ?? (await c.connect());
     if (!(wallet as any).manifest?.features?.signMessage)
-      throw new Error(`${(wallet as any).manifest?.name ?? "This wallet"} can't sign messages, which this step needs (signed payment links, your own vault). Use Meteor, HOT, Intear, MyNearWallet or another NEAR wallet.`);
+      throw new Error(
+        `${(wallet as any).manifest?.name ?? "This wallet"} can't sign messages, which this step needs (signed payment links, your own vault). ${net === "testnet" ? "On testnet, use Intear Wallet." : "Use HOT, Meteor, Intear or another NEAR wallet."}`,
+      );
     const account = (existing?.accounts ?? (await wallet.getAccounts({ network: net })))[0]?.accountId;
     if (!account) throw new Error(`No ${net} account in this wallet`);
     setAccountId(account);
     const token = await sign(await message(account), {
-      signer: { signMessage: (p: any) => wallet.signMessage({ ...p, network: net, signerId: account }) },
+      signer: { signMessage: (p: any) => walletAnswer(wallet.signMessage({ ...p, network: net, signerId: account }), false) },
       recipient: "notara",
     });
     return { token, accountId: account };
@@ -170,15 +173,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const signerId = (existing?.accounts ?? (await wallet.getAccounts({ network: net })))[0]?.accountId;
       if (!signerId) throw new Error(`No ${net} account in this wallet`);
       setAccountId(signerId);
+      // Say it before the wallet opens, instead of letting the chain refuse it.
+      const have = await ftBalance(net, token, signerId);
+      if (have !== null && have < BigInt(amount))
+        throw new Error(
+          `${signerId} has ${formatAsset(have.toString(), token)}, and this needs ${formatAsset(amount, token)}.${net === "testnet" ? " Get free test USDC at faucet.circle.com (choose NEAR testnet)." : ""} Nothing was sent.`,
+        );
       const fc = (methodName: string, args: object, deposit: string) => ({ type: "FunctionCall" as const, params: { methodName, args, gas: "30000000000000", deposit } });
-      const out: any = await wallet.signAndSendTransaction({
-        network: net,
-        signerId,
-        receiverId: token,
-        // Registers the merchant for USDC if needed (refunded if already registered), then pays.
-        actions: [fc("storage_deposit", { account_id: receiver, registration_only: true }, "1250000000000000000000"), fc("ft_transfer", { receiver_id: receiver, amount, memo }, "1")],
-      });
-      if (out?.status?.Failure) throw new Error("The payment failed on-chain");
+      const out: any = await walletAnswer(
+        wallet.signAndSendTransaction({
+          network: net,
+          signerId,
+          receiverId: token,
+          // Registers the merchant for USDC if needed (refunded if already registered), then pays.
+          actions: [fc("storage_deposit", { account_id: receiver, registration_only: true }, "1250000000000000000000"), fc("ft_transfer", { receiver_id: receiver, amount, memo }, "1")],
+        }),
+        true,
+      );
+      if (out?.status?.Failure) throw new Error(`The payment failed: ${failureReason(out.status.Failure, net, "the network refused it")}`);
       return { txHash: out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "", signerId };
     },
     [switchTo],
@@ -194,8 +206,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const signerId = existing?.accounts?.[0]?.accountId ?? (await wallet.getAccounts({ network: net }))[0]?.accountId;
       if (!signerId) throw new Error("Connect a wallet first");
       setAccountId(signerId);
-      const out: any = await wallet.signAndSendTransaction({ network: net, signerId, receiverId: receiver, actions: [{ type: "Transfer", params: { deposit: yocto } }] });
-      if (out?.status?.Failure) throw new Error("The transfer failed on-chain");
+      const out: any = await walletAnswer(wallet.signAndSendTransaction({ network: net, signerId, receiverId: receiver, actions: [{ type: "Transfer", params: { deposit: yocto } }] }), true);
+      if (out?.status?.Failure) throw new Error(`The transfer failed: ${failureReason(out.status.Failure, net, "the network refused it")}`);
       return out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "";
     },
     [accountId, switchTo],
@@ -212,17 +224,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const signerId = existing?.accounts?.[0]?.accountId ?? (await wallet.getAccounts({ network: net }))[0]?.accountId;
       if (!signerId) throw new Error("Connect a wallet first");
       setAccountId(signerId);
-      const out: any = await wallet.signAndSendTransaction({
-        network: net,
-        signerId,
-        receiverId: contractId,
-        actions: [{ type: "FunctionCall", params: { methodName, args, gas: String(BigInt(gasTgas) * 10n ** 12n), deposit: opts.deposit ?? "0" } }],
-      });
-      const failure = out?.status?.Failure;
-      if (failure) {
-        const panic = JSON.stringify(failure).match(/Smart contract panicked: ([^"\\]+)/)?.[1];
-        throw new Error(panic ?? "Transaction failed on-chain");
-      }
+      const out: any = await walletAnswer(
+        wallet.signAndSendTransaction({
+          network: net,
+          signerId,
+          receiverId: contractId,
+          actions: [{ type: "FunctionCall", params: { methodName, args, gas: String(BigInt(gasTgas) * 10n ** 12n), deposit: opts.deposit ?? "0" } }],
+        }),
+        true,
+      );
+      if (out?.status?.Failure) throw new Error(failureReason(out.status.Failure, net, "Transaction failed on-chain"));
       return out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "";
     },
     [accountId, switchTo],
@@ -233,6 +244,58 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc, sendNear],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+const RPC = { mainnet: "https://rpc.mainnet.fastnear.com", testnet: "https://rpc.testnet.fastnear.com" } as const;
+const WALLET_WAIT_MS = 120_000;
+const TRY_OTHER = "On testnet, Intear Wallet works well.";
+
+/**
+ * Some wallets never answer: Nightly on testnet loses a failed send inside its extension, so the promise
+ * never settles and the button would spin forever. Stop waiting after 2 minutes and say what to do.
+ */
+function walletAnswer<T>(p: Promise<T>, sends: boolean): Promise<T> {
+  let t: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    t = setTimeout(
+      () =>
+        reject(
+          new Error(
+            sends
+              ? `Your wallet didn't answer within 2 minutes. Check your wallet's activity before you try again, in case it went through. ${TRY_OTHER}`
+              : `Your wallet didn't answer within 2 minutes. If it shows a request, approve or reject it there, then try again. ${TRY_OTHER}`,
+          ),
+        ),
+      WALLET_WAIT_MS,
+    );
+  });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(t));
+}
+
+/** Plain-language reason for a failed transaction (the contract's panic text, or NEAR's error kind). */
+function failureReason(failure: unknown, net: Net, fallback: string): string {
+  const s = JSON.stringify(failure);
+  const faucet = net === "testnet" ? " Get free test USDC at faucet.circle.com (choose NEAR testnet)." : "";
+  if (/is not registered/.test(s)) return `Your account has no USDC yet.${faucet}`;
+  if (/doesn't have enough balance/.test(s)) return `Your account doesn't have enough USDC.${faucet}`;
+  if (/NotEnoughBalance|LackBalanceForState/.test(s)) return "Your account doesn't have enough NEAR for this and its gas.";
+  return s.match(/Smart contract panicked: ([^"\\]+)/)?.[1] ?? fallback;
+}
+
+/** The payer's token balance, or null if it can't be read (then the wallet and chain decide). */
+async function ftBalance(net: Net, token: string, account: string): Promise<bigint | null> {
+  try {
+    const args = btoa(JSON.stringify({ account_id: account }));
+    const r = await fetch(RPC[net], {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "call_function", finality: "optimistic", account_id: token, method_name: "ft_balance_of", args_base64: args } }),
+    }).then((x) => x.json());
+    if (!r.result) return null;
+    return BigInt(JSON.parse(new TextDecoder().decode(new Uint8Array(r.result.result))));
+  } catch {
+    return null;
+  }
 }
 
 /** Payment links are signed on mainnet; the vault lives on testnet. Returns true if it had to switch. */

@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/wallet.tsx": {
-    "mtime": 1794225681.0447319,
-    "seen": 1794225757.289071,
-    "ast_hash": "93565ae8501bffb16b788caf5db4a806",
+    "mtime": 1794246175.0871336,
+    "seen": 1794246304.301387,
+    "ast_hash": "181724ec769195640308d9873a924d48",
     "semantic_hash": ""
   },
   "web/src/main.tsx": {
@@ -336,9 +336,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Claim.tsx": {
-    "mtime": 1794232111.0264,
-    "seen": 1794232729.044029,
-    "ast_hash": "1013f3719f0b1be147f2ee164aed5e0e",
+    "mtime": 1794246213.9380765,
+    "seen": 1794246304.301387,
+    "ast_hash": "081d31529dfc9297a28461cbec042227",
     "semantic_hash": ""
   },
   "web/src/pages/Demo.tsx": {
@@ -372,9 +372,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Pay.tsx": {
-    "mtime": 1794245605.258561,
-    "seen": 1794245649.0057137,
-    "ast_hash": "7e9ed012a4b2bf387bd8ad5af36c132a",
+    "mtime": 1794246185.5681322,
+    "seen": 1794246304.301387,
+    "ast_hash": "73b84c710139b770e649ee474e4bcb8c",
     "semantic_hash": ""
   },
   "web/src/pages/Send.tsx": {
@@ -384,9 +384,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Vault.tsx": {
-    "mtime": 1794232667.100439,
-    "seen": 1794232729.044029,
-    "ast_hash": "15b4f75398612f4fa9c514f0c7898cad",
+    "mtime": 1794246192.4413528,
+    "seen": 1794246304.301387,
+    "ast_hash": "55f04d1638c1340ef9e61978e9fe44c5",
     "semantic_hash": ""
   },
   "web/tsconfig.json": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794233972.4933486,
-    "seen": 1794233999.513252,
-    "ast_hash": "0a099ccfd28b777f1fe3ce75eaf73136",
+    "mtime": 1794246201.4225385,
+    "seen": 1794246304.301387,
+    "ast_hash": "b375a90772a67fb4dbe84e0479fe0f3e",
     "semantic_hash": ""
   },
   "demo/inbox/invoice-injected.md": {
@@ -630,9 +630,9 @@
     "semantic_hash": ""
   },
   "web/src/components/MyVault.tsx": {
-    "mtime": 1794232110.6461694,
-    "seen": 1794232729.0435224,
-    "ast_hash": "b63f3772903ef8a719c290323269806d",
+    "mtime": 1794246186.4925473,
+    "seen": 1794246304.301387,
+    "ast_hash": "ce313ef1e355b70a1684049a3c70ecd0",
     "semantic_hash": ""
   },
   "web/src/components/icons.tsx": {
@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Start.tsx": {
-    "mtime": 1794233625.6579962,
-    "seen": 1794233999.513252,
-    "ast_hash": "eaa7e6ec1ac36eeb176b1107f6f270c5",
+    "mtime": 1794246186.0153818,
+    "seen": 1794246304.301387,
+    "ast_hash": "3a1b0128d44c302323f67bf3d9ca1298",
     "semantic_hash": ""
   },
   "scripts/audit-testnet.ts": {

@@ -200,7 +200,7 @@ export function ClaimPage() {
                 <input id="newname" className="input mono" placeholder="yourname" value={newName} onChange={(e) => setNewName(e.target.value)} autoComplete="off" spellCheck={false} />
                 <span className="mono">.{tla}</span>
               </div>
-              <span className="hint">Free for you: we create the account and move the money there. Then import its key into a wallet like Meteor to use it.</span>
+              <span className="hint">Free for you: we create the account and move the money there. Then import its key into a wallet like {net === "testnet" ? "Intear Wallet" : "Meteor"} to use it.</span>
             </div>
             <div>
               <button className="btn btn-primary" disabled={busy || !newName.trim() || !state.claimReady}>
@@ -211,7 +211,7 @@ export function ClaimPage() {
           <details className="card">
             <summary>Or keep the money in this link</summary>
             <p className="small">
-              This link is already a NEAR wallet. Import its key into a wallet app (for example Meteor, "import private key") and the USDC is yours there. Moving it from the wallet needs a little NEAR for gas, so claiming above is easier.
+              This link is already a NEAR wallet. Import its key into a wallet app (for example {net === "testnet" ? "Intear Wallet" : "Meteor"}, "import private key") and the USDC is yours there. Moving it from the wallet needs a little NEAR for gas, so claiming above is easier.
             </p>
             {showKey ? (
               <>

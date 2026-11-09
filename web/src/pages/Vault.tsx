@@ -421,7 +421,7 @@ function OwnerPanel({ summary, onChange }: { summary: VaultSummary; onChange: ()
                 <Wallet size={14} aria-hidden /> Connect EVM wallet (MetaMask)
               </button>
               <span className="muted small">
-                NEAR testnet wallets (Meteor, Intear…) or an Ethereum wallet. EVM wallets sign NEAR transactions through evm-on-near.dev and get a NEAR
+                A NEAR testnet wallet (Intear Wallet works well) or an Ethereum wallet. EVM wallets sign NEAR transactions through evm-on-near.dev and get a NEAR
                 account derived from your 0x address.
               </span>
             </div>

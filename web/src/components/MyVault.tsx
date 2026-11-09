@@ -72,7 +72,7 @@ export function MyVault() {
             <Wallet size={16} aria-hidden /> Connect a NEAR testnet wallet
           </button>
           <p className="hint" style={{ marginTop: 6 }}>
-            No testnet wallet yet? Meteor, Intear and MyNearWallet can create a free testnet account with test NEAR.
+            No testnet wallet yet? Intear Wallet (wallet.intear.tech) creates a free testnet account with test NEAR.
           </p>
         </div>
       ) : w.network !== "testnet" ? (

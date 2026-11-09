@@ -40,7 +40,7 @@ export function StartPage() {
       ) : onTestnet ? (
         <>Connected as <span className="mono">{w.accountId}</span>.</>
       ) : (
-        <>No wallet yet? Meteor, Intear and MyNearWallet create a free testnet account in a minute.</>
+        <>No wallet yet? Intear Wallet (wallet.intear.tech) creates a free testnet account in a minute.</>
       ),
       actions: !onTestnet && (
         <button className="btn btn-primary btn-sm" onClick={() => w.connect(undefined, "testnet")} disabled={!w.ready || w.busy}>

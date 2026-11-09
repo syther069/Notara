@@ -199,7 +199,7 @@ export function PayPage() {
             <p className="muted small" style={{ margin: 0 }}>
               {net === "testnet" ? (
                 <>
-                  Test money: pay with a NEAR testnet wallet (Meteor, Intear, MyNearWallet). Get free testnet USDC at{" "}
+                  Test money: pay with a NEAR testnet wallet (Intear Wallet works well). Get free testnet USDC at{" "}
                   <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">faucet.circle.com</a> (choose NEAR testnet) and free testnet NEAR for gas from the wallet.
                 </>
               ) : (
@@ -210,6 +210,11 @@ export function PayPage() {
               <button type="button" className="btn btn-primary" onClick={payFromNear} disabled={nearBusy}>
                 {nearBusy && <LoaderCircle size={16} className="spin" aria-hidden />} Pay {formatAsset(inv.amount, inv.asset)} with NEAR wallet
               </button>
+              {nearBusy && (
+                <p className="small muted" role="status" style={{ margin: "8px 0 0" }}>
+                  Waiting for your wallet. Approve or reject the request there (for an extension, click its icon in the toolbar).
+                </p>
+              )}
             </div>
           </div>
           {net === "testnet" ? (
