@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "web/src/components/Layout.tsx": {
-    "mtime": 1794206316.8084438,
-    "seen": 1794206866.680923,
-    "ast_hash": "d17be49a7c2a8020cd625bd2315010b7",
+    "mtime": 1794212443.6556807,
+    "seen": 1794212628.953652,
+    "ast_hash": "9790423d27297cd19aa06f84a8a79dda",
     "semantic_hash": ""
   },
   "web/src/components/SafetyPanel.tsx": {
@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/wallet.tsx": {
-    "mtime": 1794211476.6910486,
-    "seen": 1794212055.8080602,
-    "ast_hash": "545739385907e0c9de3273bedf9c3c65",
+    "mtime": 1794212443.6556807,
+    "seen": 1794212628.953652,
+    "ast_hash": "45ab477ed8b2139fafcba323847cc708",
     "semantic_hash": ""
   },
   "web/src/main.tsx": {
@@ -384,9 +384,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Vault.tsx": {
-    "mtime": 1794211622.0391197,
-    "seen": 1794212055.8080602,
-    "ast_hash": "adcbf848a9f2e1fe9e1a38bed91d4720",
+    "mtime": 1794212467.1675231,
+    "seen": 1794212628.953652,
+    "ast_hash": "ebdc62b7e088373b040426ae5049e53c",
     "semantic_hash": ""
   },
   "web/tsconfig.json": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794212048.5759203,
-    "seen": 1794212055.8080602,
-    "ast_hash": "367c9aa457c82a9158a7355e98ae00bc",
+    "mtime": 1794212620.1739497,
+    "seen": 1794212628.953652,
+    "ast_hash": "0a27b05f387de7fd3137e34eee2d4b9c",
     "semantic_hash": ""
   },
   "demo/inbox/invoice-injected.md": {
@@ -630,9 +630,9 @@
     "semantic_hash": ""
   },
   "web/src/components/MyVault.tsx": {
-    "mtime": 1794211511.0788107,
-    "seen": 1794212055.8080602,
-    "ast_hash": "f2eb8644eeca715ccd127e734942b886",
+    "mtime": 1794212467.2821112,
+    "seen": 1794212628.953652,
+    "ast_hash": "19b4fcf7154fc09f47c573182d211088",
     "semantic_hash": ""
   },
   "package-lock.json": {

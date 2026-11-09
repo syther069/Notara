@@ -105,6 +105,8 @@ Tested end to end on testnet (2026-11-09): a testnet link paid by the agent thro
 
 **Not possible on testnet:** paying from another chain (NEAR Intents 1Click has no testnet, so the any-chain checkout and one-click MetaMask pay are mainnet only), real-value money, and reputation for real merchants. That stays on mainnet: account age, history and reports for real `.near` accounts are always read live from mainnet and carry a **Mainnet · real account data** tag on the pay page, the Merchant Passport and the Check page. Testnet results carry a **Testnet · test data** tag.
 
+**Wallets:** every wallet in NEAR Connect's list, on both networks. Pick **Testnet** or **Mainnet** next to **Connect wallet** (the site remembers it). Mainnet shows HOT, Meteor, Intear, Ledger, MyNearWallet, OKX, NEAR Mobile, Trezu, Nightly, Hana, Ethereum wallets and NEAR CLI. Testnet shows the wallets that support it: Meteor, Intear, Ledger, Nightly, Ethereum wallets and NEAR CLI (HOT, NEAR Mobile, MyNearWallet, OKX, Hana and Trezu don't offer testnet). Pages that use one network (your vault is testnet, a mainnet link is mainnet) switch the wallet to it. Signing a payment link needs a wallet that can sign messages, so Ethereum wallets and Trezu can pay but not sign links. WalletConnect is hidden until the app has a WalletConnect (Reown) project id. Sweat Wallet isn't in NEAR Connect, so it can't connect yet.
+
 ## Live site (Vercel)
 
 **https://notara-sable.vercel.app** runs in public mode: payment links, checks, Merchant Passports, scam reports, wallet payments and testnet send links. Owner, demo and agent-pay routes run locally only.

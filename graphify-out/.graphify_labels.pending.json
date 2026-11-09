@@ -29,7 +29,7 @@
   "27": "sends.ts",
   "28": "assets.ts",
   "29": "vaults.ts",
-  "30": "Merchant.tsx",
+  "30": "dependencies",
   "31": "Notara",
   "32": "Claim.tsx",
   "33": "Notara: Project Rules",
@@ -48,7 +48,7 @@
   "46": "evm.ts",
   "47": "vercel.json",
   "48": "Pay.tsx",
-  "49": "Engine",
+  "49": "scripts",
   "50": "embed.js",
   "51": "deploy-contracts.sh"
 }

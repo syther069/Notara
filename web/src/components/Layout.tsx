@@ -208,10 +208,24 @@ function WalletButton() {
         </button>
       </span>
     );
+  // Pick the network first: the wallet list depends on it (HOT, NEAR Mobile, MyNearWallet are mainnet-only).
   return (
-    <button className="btn btn-secondary btn-sm wallet-btn" onClick={() => w.connect()} disabled={!w.ready || w.busy} title={w.error ?? "Connect a NEAR testnet wallet"}>
-      {w.busy || !w.ready ? <LoaderCircle size={14} className="spin" aria-hidden /> : <Wallet size={14} aria-hidden />}
-      <span className="label">Connect wallet</span>
-    </button>
+    <span className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
+      <select
+        className="input"
+        style={{ width: "auto", padding: "4px 8px", fontSize: 13 }}
+        aria-label="Network to connect on"
+        value={w.network}
+        onChange={(e) => w.connect(undefined, e.target.value as "mainnet" | "testnet")}
+        disabled={!w.ready || w.busy}
+      >
+        <option value="testnet">Testnet</option>
+        <option value="mainnet">Mainnet</option>
+      </select>
+      <button className="btn btn-secondary btn-sm wallet-btn" onClick={() => w.connect()} disabled={!w.ready || w.busy} title={w.error ?? `Connect a NEAR ${w.network} wallet`}>
+        {w.busy || !w.ready ? <LoaderCircle size={14} className="spin" aria-hidden /> : <Wallet size={14} aria-hidden />}
+        <span className="label">Connect wallet</span>
+      </button>
+    </span>
   );
 }

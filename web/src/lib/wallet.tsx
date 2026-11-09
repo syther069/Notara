@@ -7,6 +7,21 @@ import type { NearConnector } from "@hot-labs/near-connect";
 import { sign } from "near-sign-verify";
 
 const NETWORK = "testnet" as const;
+type Net = "mainnet" | "testnet";
+/** The network the visitor picked last time (header switch). Testnet by default. */
+const savedNetwork = (): Net => {
+  try {
+    return localStorage.getItem("notara-network") === "mainnet" ? "mainnet" : NETWORK;
+  } catch {
+    return NETWORK;
+  }
+};
+// NEAR Connect itself hides wallets without testnet support while on testnet. We add no network filter of our
+// own: the manifest's "mainnet" flag is set by only a few wallets, so filtering on it hid HOT, MyNearWallet,
+// OKX, Nightly and others. Every wallet in the manifest can send transactions.
+const FEATURES = { signAndSendTransaction: true };
+// WalletConnect needs a project id from cloud.reown.com, which this app doesn't have yet.
+const EXCLUDED = ["wallet-connect"];
 /** near-connect manifest id of the EVM option: MetaMask / WalletConnect sign NEAR transactions via evm-on-near.dev. */
 export const EVM_WALLET_ID = "ethereum-wallets";
 
@@ -18,7 +33,8 @@ type WalletState = {
   busy: boolean;
   error: string | null;
   /** Open the wallet picker, or go straight to one wallet (e.g. "ethereum-wallets" for MetaMask & other EVM wallets). */
-  connect: (walletId?: string) => Promise<void>;
+  /** Opens the wallet picker for that network (testnet by default), or goes straight to one wallet. */
+  connect: (walletId?: string, network?: Net) => Promise<void>;
   disconnect: () => Promise<void>;
   /**
    * Sign a payment link with a NEAR mainnet wallet (NEP-413). `message` gets the signer's account and
@@ -64,7 +80,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [network, setNetwork] = useState<"mainnet" | "testnet">(NETWORK);
+  const [network, setNetwork] = useState<Net>(savedNetwork);
   const switchTo = useCallback(async (c: NearConnector, n: "mainnet" | "testnet") => {
     const switched = await ensureNetwork(c, n);
     if (switched) {
@@ -80,7 +96,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       try {
         // Loaded lazily so pages that never touch the wallet stay fast.
         const { NearConnector } = await import("@hot-labs/near-connect");
-        const connector = new NearConnector({ network: NETWORK, features: { testnet: true, signAndSendTransaction: true } });
+        const connector = new NearConnector({ network: savedNetwork(), features: FEATURES, excludedWallets: EXCLUDED });
         connectorRef.current = connector;
         connector.on("wallet:signIn", (t) => setAccountId(t.accounts[0]?.accountId ?? null));
         connector.on("wallet:signOut", () => setAccountId(null));
@@ -99,15 +115,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const connect = useCallback(async (walletId?: string) => {
+  const connect = useCallback(async (walletId?: string, net: Net = network) => {
     const c = connectorRef.current;
     if (!c) return;
     setBusy(true);
     setError(null);
     try {
-      await switchTo(c, NETWORK);
+      await switchTo(c, net);
+      try {
+        localStorage.setItem("notara-network", net);
+      } catch {}
       const wallet = await c.connect(walletId ? { walletId } : undefined);
-      const accounts = await wallet.getAccounts({ network: NETWORK });
+      const accounts = await wallet.getAccounts({ network: net });
       setAccountId(accounts[0]?.accountId ?? null);
     } catch (e: any) {
       // Closing the picker is not an error worth shouting about.
@@ -116,7 +135,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [network, switchTo]);
 
   const disconnect = useCallback(async () => {
     await connectorRef.current?.disconnect().catch(() => {});
@@ -129,6 +148,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const switched = await switchTo(c, net);
     const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
     const wallet = existing?.wallet ?? (await c.connect());
+    if (!(wallet as any).manifest?.features?.signMessage)
+      throw new Error(`${(wallet as any).manifest?.name ?? "This wallet"} can't sign messages, so it can't sign a payment link. Use Meteor, HOT, Intear, MyNearWallet or another NEAR wallet, or create the link without signing.`);
     const account = (existing?.accounts ?? (await wallet.getAccounts({ network: net })))[0]?.accountId;
     if (!account) throw new Error(`No ${net} account in this wallet`);
     setAccountId(account);
@@ -218,7 +239,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 async function ensureNetwork(c: NearConnector, network: "mainnet" | "testnet"): Promise<boolean> {
   if (c.network === network) return false;
   await c.disconnect().catch(() => {});
-  c.features = network === "mainnet" ? { mainnet: true, signMessage: true } : { testnet: true, signAndSendTransaction: true };
+  c.features = FEATURES;
   c.network = network;
   return true;
 }

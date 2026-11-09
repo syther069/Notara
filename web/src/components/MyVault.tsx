@@ -27,8 +27,8 @@ export function MyVault() {
   const [runs, setRuns] = useState<Record<string, AgentRun>>({});
 
   const load = useCallback(() => {
-    if (w.accountId) api.myVault(w.accountId).then(setInfo).catch((e) => setError(e.message));
-  }, [w.accountId]);
+    if (w.accountId && w.network === "testnet") api.myVault(w.accountId).then(setInfo).catch((e) => setError(e.message));
+  }, [w.accountId, w.network]);
   useEffect(load, [load]);
 
   async function step(name: string, fn: () => Promise<void>) {
@@ -58,11 +58,20 @@ export function MyVault() {
 
       {!w.accountId ? (
         <div>
-          <button className="btn btn-primary" onClick={() => w.connect()} disabled={w.busy}>
+          <button className="btn btn-primary" onClick={() => w.connect(undefined, "testnet")} disabled={w.busy}>
             <Wallet size={16} aria-hidden /> Connect a NEAR testnet wallet
           </button>
           <p className="hint" style={{ marginTop: 6 }}>
             No testnet wallet yet? Meteor, Intear and MyNearWallet can create a free testnet account with test NEAR.
+          </p>
+        </div>
+      ) : w.network !== "testnet" ? (
+        <div>
+          <button className="btn btn-primary" onClick={() => w.connect(undefined, "testnet")} disabled={w.busy}>
+            <Wallet size={16} aria-hidden /> Switch to a testnet wallet
+          </button>
+          <p className="hint" style={{ marginTop: 6 }}>
+            You're connected on mainnet ({w.accountId}). Vaults here use free test NEAR only.
           </p>
         </div>
       ) : !info ? (

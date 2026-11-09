@@ -414,10 +414,10 @@ function OwnerPanel({ summary, onChange }: { summary: VaultSummary; onChange: ()
         <div style={{ marginTop: 14 }}>
           {!w.accountId ? (
             <div className="row">
-              <button className="btn btn-primary btn-sm" onClick={() => w.connect()} disabled={!w.ready || w.busy}>
+              <button className="btn btn-primary btn-sm" onClick={() => w.connect(undefined, "testnet")} disabled={!w.ready || w.busy}>
                 <Wallet size={14} aria-hidden /> Connect NEAR wallet
               </button>
-              <button className="btn btn-secondary btn-sm" onClick={() => w.connect(EVM_WALLET_ID)} disabled={!w.ready || w.busy}>
+              <button className="btn btn-secondary btn-sm" onClick={() => w.connect(EVM_WALLET_ID, "testnet")} disabled={!w.ready || w.busy}>
                 <Wallet size={14} aria-hidden /> Connect EVM wallet (MetaMask)
               </button>
               <span className="muted small">
