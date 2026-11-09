@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
-// MAINNET: deploy the shared report registry (no vault, no funds held). Costs about 2.3 real NEAR,
-// mostly contract storage. Run only after the project owner approves:
+// MAINNET: deploy the shared report registry (no vault, no funds held). Costs about 1.7 real NEAR,
+// mostly contract storage (153 KB wasm at 0.01 NEAR per KB). Build first: bash scripts/deploy-contracts.sh --build. Run only after the project owner approves:
 //
 //   NEAR_MAINNET_OWNER=you.near NEAR_MAINNET_OWNER_KEY=ed25519:... npx tsx scripts/setup-mainnet-registry.ts --yes
 //
@@ -27,7 +27,7 @@ if (!(await viewAccount("mainnet", registry))) {
   const kp = KeyPair.fromRandom("ed25519");
   // Key saved before sending, so a flaky RPC reply can't leave an account we can't control.
   writeKey("mainnet-registry-admin", { account_id: registry, public_key: kp.getPublicKey().toString(), secret_key: kp.toString(), note: "Mainnet registry deploy key." });
-  await owner.createSubAccount({ accountOrPrefix: registry, publicKey: kp.getPublicKey().toString(), nearToTransfer: 2_300_000_000_000_000_000_000_000n });
+  await owner.createSubAccount({ accountOrPrefix: registry, publicKey: kp.getPublicKey().toString(), nearToTransfer: 1_700_000_000_000_000_000_000_000n });
   const admin = new Account(registry, NETWORKS.mainnet.rpc, kp.toString() as KeyPairString);
   await admin.signAndSendTransaction({
     receiverId: registry,

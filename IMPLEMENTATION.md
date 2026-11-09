@@ -57,7 +57,7 @@ Riskiest unknowns come first, so a bad surprise changes the plan early, not on N
   - The sponsor spends about 0.004 NEAR.
 
 ### 5. Mainnet report registry + "Report this link" [M] 💰
-- **Needs:** your approval, and about 2–3 NEAR. The registry is about 185 KB of contract storage.
+- **Needs:** your approval, and about 1.7 NEAR. The registry is about 153 KB of contract storage.
 - **Files:**
   - `scripts/setup-mainnet-registry.ts` (new, owner-signed, registry only, no vault)
   - `deployment.mainnet.json` (new, registry only)
@@ -178,3 +178,20 @@ Goal: a judge can try every flow with free testnet NEAR and Circle testnet USDC 
 - **Mainnet reputation for real merchants**: account age and history of real `.near` accounts only exist on mainnet. The Check page keeps a read-only mainnet mode.
 - **Some wallets**: a few wallets in NEAR Connect only support mainnet; Meteor and MyNearWallet-style testnet wallets work.
 - **`.near` names**: on testnet the new name is `name.testnet`.
+
+---
+
+## Audit fixes (2026-11-09)
+
+| # | Fix | Status |
+|---|---|---|
+| 1 | Sponsor funds a send-link account once (`linkFundedAt`, under a lock); links hold 1–25 USDC | ✅ tested on testnet: second activate and activate-after-close don't re-fund |
+| 2 | "Pay with NEAR wallet" counts only a transfer whose memo is the invoice id | ✅ unit test + testnet: wrong memo refused, right memo paid |
+| 3 | Link creation sponsors USDC storage only for wallet-signed links | ✅ built |
+| 4 | Claims are NEP-366 meta transactions relayed by the sponsor (`/api/sends/:id/claim`); link account gets 0.002 NEAR, not 0.06 | ✅ testnet via script (INV-0012) and via the browser (INV-0013 → notara-browser-mw9.testnet) |
+| 5 | Mainnet registry: `setup-mainnet-registry.ts` ready (about 1.7 NEAR) | ⏳ needs your approval and a funded mainnet account |
+| 6 | `deploy-contracts.sh --build` writes `contracts/res/`, which setup deploys | ✅ res/ now matches the deployed testnet code |
+| 7 | Reproducible-build metadata (official cargo-near template) + `REPRO=1` mode | ⏳ metadata in; the build needs Docker running and a committed tree |
+| 8 | Public site lists only `?merchant=` links; list no longer polls NEAR Intents per link | ✅ checked against a public-mode server |
+| 9 | Tests: claim delegate rules, fund-once rule, memo rule | ✅ 73 tests pass |
+| 10 | Deleted `Space_Grotesk.zip`, `build-contracts.sh`, `upgrade-contract.ts` | ✅ |

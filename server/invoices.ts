@@ -42,6 +42,11 @@ export interface Invoice {
   /** Full explorer link, when the payment isn't on testnet. */
   txUrl?: string;
   checkouts?: Checkout[];
+  /** Send links: when the sponsor made the link account exist (once), and the claim. */
+  linkFundedAt?: string;
+  claimedAt?: string;
+  claimedTo?: string;
+  claimTx?: string;
   /** "send": money sent by link to a one-time account; the receiver claims it. */
   kind?: "send";
   /** Paid directly from a NEAR wallet: the transaction hash that paid it. */

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
-import { Account, actions, type KeyPairString } from "near-api-js";
+import { Account, actions, base64Encode, encodeSignedDelegate, type KeyPairString } from "near-api-js";
 import { api, type SendState } from "../lib/api";
 import { EXPLORER, formatAsset, linkNetwork, usdcFor } from "../lib/format";
 import { fromFragment, isValidNewName, SEND_LINK_DAYS, type LinkKey } from "../lib/linkKey";
@@ -38,7 +38,7 @@ export function ClaimPage() {
   const broken = !!inv && !!key && key.account !== inv.merchant;
   const funded = inv?.status === "paid";
 
-  // Once funded, have the sponsor give the link account a little NEAR for gas (once).
+  // Once funded, the sponsor makes the link account exist (once), so it can sign the claim.
   useEffect(() => {
     if (funded && state && !state.claimReady && !broken) api.activateSend(id).then(setState).catch((e) => setError(e.message));
   }, [funded, state?.claimReady, broken, id]);
@@ -50,21 +50,20 @@ export function ClaimPage() {
   const accountExists = async (id: string) =>
     !!(await api.check({ network: net, recipient: id, amountDecimal: "0.01", asset: usdc })).report.signals.find((s) => s.name === "account_state")?.data?.exists;
 
-  /** Signed here with the link's key: registers the receiver with USDC if needed, then moves everything. */
-  async function moveUsdc(to: string) {
+  /**
+   * The link's key signs one USDC transfer as a NEP-366 meta transaction, here in the browser. The server's
+   * sponsor relays it and pays the gas, after creating the new name (if asked) and registering it for USDC.
+   * The key never leaves this page.
+   */
+  async function moveUsdc(to: string, newName = false) {
     const acct = new Account(key!.account, RPC[net], key!.secret as KeyPairString);
-    const r: any = await acct.signAndSendTransaction({
+    const { signedDelegate } = await acct.createSignedMetaTransaction({
       receiverId: usdc,
-      actions: [
-        actions.functionCall("storage_deposit", { account_id: to, registration_only: true }, 10_000_000_000_000n, 1_250_000_000_000_000_000_000n),
-        actions.functionCall("ft_transfer", { receiver_id: to, amount: state!.balance, memo: "Notara send link" }, 10_000_000_000_000n, 1n),
-      ],
+      actions: [actions.functionCall("ft_transfer", { receiver_id: to, amount: state!.balance, memo: "Notara send link" }, 15_000_000_000_000n, 1n)],
+      blockHeightTtl: 200,
     });
-    if (r?.status?.Failure) throw new Error("The transfer failed on-chain. The money is still in this link.");
-    setDone(r.transaction.hash);
-    // Close the empty link account: its leftover NEAR goes to the receiver as gas money. Best effort.
-    await new Promise((ok) => setTimeout(ok, 3000)); // let gas refunds land first
-    await acct.deleteAccount(to).catch(() => {});
+    const r = await api.claimSend(id, { signedDelegate: base64Encode(encodeSignedDelegate(signedDelegate)), newName });
+    setDone(r.claimTx ?? null);
     load();
   }
 
@@ -100,13 +99,8 @@ export function ClaimPage() {
       if (!isValidNewName(name)) throw new Error("Use 2+ lowercase letters or digits, with - or _ only between them");
       const id = `${name}.${tla}`;
       if (await accountExists(id)) throw new Error(`${id} is taken. Try another name.`);
-      const acct = new Account(key.account, RPC[net], key.secret as KeyPairString);
-      await acct.signAndSendTransaction({
-        receiverId: tla,
-        actions: [actions.functionCall("create_account", { new_account_id: id, new_public_key: key.publicKey }, 30_000_000_000_000n, 2_000_000_000_000_000_000_000n)],
-      });
+      await moveUsdc(id, true); // the sponsor creates the name with this link's key, then relays the transfer
       setCreated(id);
-      await moveUsdc(id);
     });
   }
 
@@ -215,7 +209,7 @@ export function ClaimPage() {
           <details className="card">
             <summary>Or keep the money in this link</summary>
             <p className="small">
-              This link is already a NEAR wallet. Import its key into a wallet app (for example Meteor, "import private key") and the USDC is yours there.
+              This link is already a NEAR wallet. Import its key into a wallet app (for example Meteor, "import private key") and the USDC is yours there. Moving it from the wallet needs a little NEAR for gas, so claiming above is easier.
             </p>
             {showKey ? (
               <>

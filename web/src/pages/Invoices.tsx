@@ -56,8 +56,14 @@ export function InvoicesPage() {
   const decimals = ASSETS[asset].decimals;
 
   const [mine, setMine] = useState(false);
-  const owner = mine ? wallet.accountId ?? undefined : undefined;
+  // The public site only lists the connected wallet's own links.
+  const owner = mine || dep?.public ? wallet.accountId ?? undefined : undefined;
   const load = useCallback(() => {
+    if (dep?.public && !owner) {
+      setList([]);
+      setError("Connect your wallet to see your links.");
+      return;
+    }
     api
       .invoices(owner)
       .then((r) => {
@@ -65,7 +71,7 @@ export function InvoicesPage() {
         setError(null);
       })
       .catch((e) => setError(e.message));
-  }, [owner]);
+  }, [owner, dep?.public]);
   useEffect(load, [load]);
 
   const amountErr =

@@ -30,3 +30,8 @@ test("a log faked by another contract doesn't count", () => {
   for (const r of forged.receipts_outcome) if (r.outcome.executor_id === USDC) r.outcome.executor_id = "attacker.testnet";
   assert.equal(receivedInTx(forged, USDC, VAULT), 0n);
 });
+
+test("with a memo, only a transfer carrying that memo counts", () => {
+  assert.equal(receivedInTx(tx, USDC, VAULT, "fund AgentSpend vault"), 15_000_000n);
+  assert.equal(receivedInTx(tx, USDC, VAULT, "INV-0042"), 0n); // a real transfer, but not a payment for this link
+});

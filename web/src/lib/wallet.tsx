@@ -28,7 +28,8 @@ type WalletState = {
   /** Sign and send one function call with the connected wallet. Returns the tx hash. */
   call: (contractId: string, methodName: string, args: object, gasTgas?: number, opts?: { network?: "mainnet" | "testnet"; deposit?: string }) => Promise<string>;
   /** Pay USDC on NEAR (mainnet by default) straight from the user's wallet. Returns the tx hash and payer. */
-  payUsdc: (token: string, receiver: string, amount: string, network?: "mainnet" | "testnet") => Promise<{ txHash: string; signerId: string }>;
+  /** `memo` must be the invoice id: the server only counts a transfer whose memo names the link it pays. */
+  payUsdc: (token: string, receiver: string, amount: string, memo: string, network?: "mainnet" | "testnet") => Promise<{ txHash: string; signerId: string }>;
 };
 
 const Ctx = createContext<WalletState>({
@@ -134,7 +135,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [switchTo]);
 
   const payUsdc = useCallback(
-    async (token: string, receiver: string, amount: string, net: "mainnet" | "testnet" = "mainnet") => {
+    async (token: string, receiver: string, amount: string, memo: string, net: "mainnet" | "testnet" = "mainnet") => {
       const c = connectorRef.current;
       if (!c) throw new Error("Wallet not ready");
       const switched = await switchTo(c, net);
@@ -149,7 +150,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         signerId,
         receiverId: token,
         // Registers the merchant for USDC if needed (refunded if already registered), then pays.
-        actions: [fc("storage_deposit", { account_id: receiver, registration_only: true }, "1250000000000000000000"), fc("ft_transfer", { receiver_id: receiver, amount, memo: "Notara payment" }, "1")],
+        actions: [fc("storage_deposit", { account_id: receiver, registration_only: true }, "1250000000000000000000"), fc("ft_transfer", { receiver_id: receiver, amount, memo }, "1")],
       });
       if (out?.status?.Failure) throw new Error("The payment failed on-chain");
       return { txHash: out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "", signerId };

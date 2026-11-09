@@ -7,8 +7,10 @@ import type { Network } from "../passport/src/types.ts";
 /**
  * Total `token` units that reached `receiver` in a finished transaction, counted from the
  * token contract's own NEP-141 `ft_transfer` events in receipts that succeeded.
+ * With `memo`, only transfers carrying exactly that memo count. Payment links pass their invoice id,
+ * so an unrelated transfer to the same merchant (public on-chain) can't mark a link paid.
  */
-export function receivedInTx(tx: any, token: string, receiver: string): bigint {
+export function receivedInTx(tx: any, token: string, receiver: string, memo?: string): bigint {
   if (!tx?.status || "Failure" in tx.status) return 0n;
   let total = 0n;
   for (const r of tx.receipts_outcome ?? []) {
@@ -23,7 +25,7 @@ export function receivedInTx(tx: any, token: string, receiver: string): bigint {
         continue;
       }
       if (ev.standard !== "nep141" || ev.event !== "ft_transfer") continue;
-      for (const d of ev.data ?? []) if (d.new_owner_id === receiver && /^\d+$/.test(String(d.amount))) total += BigInt(d.amount);
+      for (const d of ev.data ?? []) if (d.new_owner_id === receiver && /^\d+$/.test(String(d.amount)) && (memo === undefined || d.memo === memo)) total += BigInt(d.amount);
     }
   }
   return total;

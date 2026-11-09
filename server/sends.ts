@@ -2,25 +2,37 @@
 // which browsers never send to a server. Its implicit account (hex of the public key) receives
 // the USDC through the same any-chain checkout. Whoever opens the link holds the key and claims.
 //
-// A small "sponsor" account (one per network) pays the setup costs so the receiver needs no NEAR:
-// USDC storage for the link account, and a little NEAR for gas once the link is funded.
+// A small "sponsor" account (one per network) pays every cost, so the receiver needs no NEAR:
+//  - USDC storage for the link account when the link is made,
+//  - 0.002 NEAR once, so the link account exists on-chain (a meta transaction needs its access key nonce),
+//  - the claim itself, as a NEP-366 meta transaction: the link key signs a DelegateAction with one
+//    ft_transfer, and the sponsor relays it and pays gas and the 1 yoctoNEAR deposit. The sponsor also
+//    creates the receiver's new name and registers it with USDC.
+// So the key holder never gets spendable sponsor NEAR: at most the 0.002 that keeps the account alive.
 
-import { Account, type KeyPairString } from "near-api-js";
+import { Account, SCHEMA, actions, baseEncode, type KeyPairString } from "near-api-js";
+import { deserialize } from "borsh";
 import { NETWORKS } from "../passport/src/config.ts";
 import { viewAccount, viewFunction } from "../passport/src/near.ts";
 import { usdcFor } from "../passport/src/assets.ts";
 import { hasKey, readKey } from "../agent/src/keys.ts";
+import type { Invoice } from "./invoices.ts";
 
 type Net = "mainnet" | "testnet";
 
-// NEAR reserves attached gas at a pessimistic price (~0.001 NEAR per Tgas, refunded after), so the link
-// account needs: ~0.0018 locked for its own storage, a new name (0.002 + 30 Tgas), USDC storage for the
-// receiver (0.00125) and two 10 Tgas calls. Measured on testnet: create_account burns ~12 Tgas, ft_transfer ~3.
-// The claim page then closes the link account, so what is left goes to the receiver as gas money.
-export const CLAIM_GAS_NEAR = 60_000_000_000_000_000_000_000n; // 0.06 NEAR
+/** Enough for the link account to exist: ~0.00182 NEAR is locked for an account with one key. */
+export const LINK_ACCOUNT_NEAR = 2_000_000_000_000_000_000_000n; // 0.002 NEAR
+export const NEW_NAME_DEPOSIT = 2_000_000_000_000_000_000_000n; // 0.002 NEAR, what the near/testnet account contract needs
+export const MIN_SEND_UNITS = 1_000_000n; // 1 USDC: a link must be worth more than what it costs the sponsor
+export const MAX_SEND_UNITS = 25_000_000n; // 25 USDC in this prototype
 export const MAX_SENDS_PER_DAY = 20; // shortcut: global cap, not per person; add accounts or captcha before real launch
+const MAX_DELEGATE_GAS = 50_000_000_000_000n;
 
 export const isImplicit = (id: string) => /^[0-9a-f]{64}$/.test(id);
+/** The ed25519 public key behind an implicit account id (its hex). */
+export const implicitPublicKey = (id: string) => `ed25519:${baseEncode(Buffer.from(id, "hex"))}`;
+/** Top-level suffix for new names: .near on mainnet, .testnet on testnet. */
+export const tla = (net: Net) => (net === "mainnet" ? "near" : "testnet");
 
 /** Mainnet: SPONSOR_ACCOUNT / SPONSOR_PRIVATE_KEY. Testnet: TESTNET_SPONSOR_*, or keys/sponsor.json from `npm run owner -- make-sponsor`. */
 export function sponsor(net: Net): Account {
@@ -47,10 +59,65 @@ export async function ensureUsdcStorage(net: Net, account: string): Promise<void
   });
 }
 
-/** Creates the link's implicit account (sending NEAR to it does that) so the receiver can pay gas. Idempotent. */
-export async function ensureClaimGas(net: Net, account: string): Promise<void> {
+/**
+ * Why the sponsor must not fund this link's account, or null if it may. Funding happens once per link:
+ * after a claim the key holder can close the account, and re-funding it would hand them free NEAR.
+ */
+export function fundRefusal(inv: Pick<Invoice, "kind" | "status" | "linkFundedAt">): string | null {
+  if (inv.kind !== "send") return "Not a send link";
+  if (inv.status !== "paid") return "This link hasn't been funded yet";
+  if (inv.linkFundedAt) return "already";
+  return null;
+}
+
+/** Makes the link's implicit account exist (sending NEAR to it does that). */
+export async function fundLinkAccount(net: Net, account: string): Promise<void> {
   if (await viewAccount(net, account)) return;
-  await sponsor(net).transfer({ receiverId: account, amount: CLAIM_GAS_NEAR });
+  await sponsor(net).transfer({ receiverId: account, amount: LINK_ACCOUNT_NEAR });
+}
+
+/** Reads a base64 borsh SignedDelegate (NEP-366) sent by the claim page. */
+export function decodeSignedDelegate(b64: string): any {
+  return deserialize(SCHEMA.SignedDelegate, Buffer.from(b64, "base64"));
+}
+
+/**
+ * Checks a claim's meta transaction does exactly one thing: the link account sends USDC to one receiver.
+ * Returns that receiver. Anything else would let a link holder spend the sponsor's gas or deposit on their own calls.
+ */
+export function checkClaimDelegate(sd: any, linkAccount: string, net: Net): string {
+  const d = sd?.delegateAction;
+  if (!d || d.senderId !== linkAccount) throw new Error("The claim must be signed by this link's key");
+  if (d.receiverId !== usdcFor(net)) throw new Error("The claim may only call the USDC contract");
+  // An implicit account id is the hex of its ed25519 key, so the signing key must be exactly that.
+  const key = d.publicKey?.ed25519Key?.data;
+  if (!key || Buffer.from(key).toString("hex") !== linkAccount) throw new Error("The claim must be signed by this link's key");
+  if (d.actions?.length !== 1 || !d.actions[0].functionCall) throw new Error("The claim must be one USDC transfer");
+  const fc = d.actions[0].functionCall;
+  if (fc.methodName !== "ft_transfer") throw new Error("The claim must be one USDC transfer");
+  if (BigInt(fc.deposit) !== 1n) throw new Error("ft_transfer must attach exactly 1 yoctoNEAR");
+  if (BigInt(fc.gas) > MAX_DELEGATE_GAS) throw new Error("Too much gas on the claim");
+  const args = JSON.parse(Buffer.from(fc.args).toString());
+  const to = String(args.receiver_id ?? "");
+  if (!/^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/.test(to) || to.length < 2 || to.length > 64) throw new Error("Invalid receiver");
+  if (to === linkAccount) throw new Error("Claim to another account");
+  return to;
+}
+
+/** Sponsor creates <name>.near (or .testnet) owned by the link's key, so the receiver can import that key. */
+export async function createName(net: Net, newAccountId: string, linkAccount: string): Promise<void> {
+  await sponsor(net).callFunction({
+    contractId: tla(net),
+    methodName: "create_account",
+    args: { new_account_id: newAccountId, new_public_key: implicitPublicKey(linkAccount) },
+    deposit: NEW_NAME_DEPOSIT,
+    gas: 30_000_000_000_000n,
+  });
+}
+
+/** Sponsor relays the link's signed transfer (NEP-366) and pays its gas and deposit. */
+export async function relayClaim(net: Net, linkAccount: string, sd: any): Promise<any> {
+  return sponsor(net).signAndSendTransaction({ receiverId: linkAccount, actions: [actions.signedDelegate(sd)], waitUntil: "FINAL" as any });
 }
 
 export const usdcBalance = (net: Net, account: string) => viewFunction<string>(net, usdcFor(net), "ft_balance_of", { account_id: account });

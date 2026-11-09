@@ -210,6 +210,9 @@ export const api = {
   createSend: (b: { amountDecimal: string; implicitAccount: string; note?: string; network?: "mainnet" | "testnet" }) => post<Invoice>("/api/sends", b),
   getSend: (id: string) => req<SendState>(`/api/sends/${encodeURIComponent(id)}`),
   activateSend: (id: string) => post<SendState>(`/api/sends/${encodeURIComponent(id)}/activate`, {}),
+  /** Hands the link-signed transfer (base64 borsh SignedDelegate, NEP-366) to the sponsor to relay. */
+  claimSend: (id: string, b: { signedDelegate: string; newName?: boolean }) =>
+    post<{ invoice: Invoice; claimTx?: string; claimedTo?: string }>(`/api/sends/${encodeURIComponent(id)}/claim`, b),
   nearTx: (id: string, b: { txHash: string; signerId: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/near-tx`, b),
   payTokens: () => req<{ tokens: PayToken[] }>("/api/checkout/tokens"),
   quote: (id: string, b: { originAsset: string; refundTo: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/quote`, b),

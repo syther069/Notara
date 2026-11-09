@@ -26,7 +26,21 @@ import { llmConfigured } from "../agent/src/agent.ts";
 import { LOCAL_ONLY, refuseReason, runOnce } from "./guard.ts";
 import { createCheckout, isDone, overallStatus, payTokens, readCheckout } from "./checkout.ts";
 import { fetchTx, receivedInTx } from "./nearpay.ts";
-import { MAX_SENDS_PER_DAY, ensureClaimGas, ensureUsdcStorage, isImplicit, usdcBalance } from "./sends.ts";
+import {
+  MAX_SENDS_PER_DAY,
+  MAX_SEND_UNITS,
+  MIN_SEND_UNITS,
+  checkClaimDelegate,
+  createName,
+  decodeSignedDelegate,
+  ensureUsdcStorage,
+  fundLinkAccount,
+  fundRefusal,
+  isImplicit,
+  relayClaim,
+  tla,
+  usdcBalance,
+} from "./sends.ts";
 import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, verifyLinkToken } from "./merchants.ts";
 import { createInvoice, getInvoice, type Invoice, listInvoices, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
 
@@ -313,6 +327,55 @@ async function merchantProfile(account: string) {
   };
 }
 
+// ---------------------------------------------------------------- send links
+
+type Net = "mainnet" | "testnet";
+
+/** Once per link: the sponsor makes the link account exist, so the claim's meta transaction has a nonce. */
+async function activateSend(inv: Invoice, net: Net) {
+  const why = fundRefusal(inv);
+  if (why === "already") return inv;
+  if (why) throw new HttpError(409, why);
+  const out = await runOnce(`activate:${inv.id}`, async () => {
+    const cur = getInvoice(inv.id)!;
+    if (cur.linkFundedAt) return cur;
+    await fundLinkAccount(net, cur.merchant).catch((e) => {
+      throw new HttpError(409, e.message);
+    });
+    return updateInvoice(cur.id, { linkFundedAt: new Date().toISOString() });
+  });
+  return out ?? inv;
+}
+
+/** The sponsor relays the link's signed USDC transfer (NEP-366), after creating a new name if asked. Once per link. */
+async function claimSend(inv: Invoice, net: Net, b: any) {
+  const out = await runOnce(`claim:${inv.id}`, async () => {
+    const cur = getInvoice(inv.id)!;
+    if (cur.claimedAt) throw new HttpError(409, "This link was already claimed");
+    if (!cur.linkFundedAt) throw new HttpError(409, "This link isn't ready yet");
+    let sd: any;
+    let to: string;
+    try {
+      sd = decodeSignedDelegate(String(b.signedDelegate ?? ""));
+      to = checkClaimDelegate(sd, cur.merchant, net);
+    } catch (e: any) {
+      throw new HttpError(400, e.message);
+    }
+    const exists = !!(await viewAccount(net, to).catch(() => undefined));
+    if (b.newName) {
+      if (exists) throw new HttpError(409, `${to} is taken. Try another name.`);
+      if (!new RegExp(`^[a-z\\d]+([-_][a-z\\d]+)*\\.${tla(net)}$`).test(to)) throw new HttpError(400, `A new name looks like yourname.${tla(net)}`);
+      await createName(net, to, cur.merchant);
+    } else if (!exists) throw new HttpError(400, `${to} doesn't exist on NEAR ${net}`);
+    await ensureUsdcStorage(net, to);
+    const r: any = await relayClaim(net, cur.merchant, sd);
+    if (receivedInTx(r, cur.asset, to) === 0n) throw new HttpError(502, "The transfer didn't go through. The money is still in the link.");
+    return updateInvoice(cur.id, { claimedAt: new Date().toISOString(), claimedTo: to, claimTx: r.transaction.hash });
+  });
+  if (!out) throw new HttpError(409, "This link is already being claimed");
+  return { invoice: publicInvoice(out), claimTx: out.claimTx, claimedTo: out.claimedTo };
+}
+
 async function payInvoice(id: string) {
   const out = await runOnce(`invoice:${id}`, () => payInvoiceNow(id));
   if (!out) throw new HttpError(409, "This invoice is already being paid");
@@ -453,8 +516,11 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   // invoices
   if (m === "GET" && path === "/api/invoices") {
     const merchant = url.searchParams.get("merchant");
+    if (PUBLIC && !merchant) throw new HttpError(400, "Connect your wallet to see your links"); // no dump of every merchant's sales
     const list = listInvoices().filter((i) => !merchant || i.merchant === merchant);
-    const refreshed = await Promise.all(list.map((i) => (i.status === "pending_approval" || i.checkouts?.length ? refreshInvoice(i.id).catch(() => i) : i)));
+    // Only vault approvals are refreshed here (one cheap view each, local demo only). Any-chain checkouts
+    // update when their pay page polls, so a long list doesn't make one NEAR Intents call per open address.
+    const refreshed = await Promise.all(list.map((i) => (i.status === "pending_approval" ? refreshInvoice(i.id).catch(() => i) : i)));
     return send(res, 200, { invoices: refreshed.map(publicInvoice) });
   }
   // ---- send by link
@@ -464,7 +530,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (!isImplicit(account)) throw new HttpError(400, "Invalid link account");
     const net = b.network === "testnet" ? "testnet" : "mainnet";
     const amount = toAssetUnits(b.amountDecimal, usdcFor(net));
-    if (BigInt(amount) > 25_000_000n) throw new HttpError(400, "Send by link is limited to 25 USDC per link in this prototype");
+    if (BigInt(amount) > MAX_SEND_UNITS) throw new HttpError(400, "Send by link is limited to 25 USDC per link in this prototype");
+    if (BigInt(amount) < MIN_SEND_UNITS) throw new HttpError(400, "A send link must hold at least 1 USDC");
     const today = new Date().toISOString().slice(0, 10);
     if (listInvoices().filter((i) => i.kind === "send" && i.createdAt.startsWith(today)).length >= MAX_SENDS_PER_DAY) throw new HttpError(429, "Daily limit for new send links reached");
     try {
@@ -489,28 +556,24 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const tx = await fetchTx(net, txHash, signerId).catch((e) => {
       throw new HttpError(400, `Couldn't read the transaction: ${e.message}`);
     });
-    const got = receivedInTx(tx, inv.asset, inv.merchant);
-    if (got < BigInt(inv.amount)) throw new HttpError(400, `The transaction sent ${formatUnits(got.toString(), getAsset(inv.asset)!)} USDC to ${inv.merchant}, not the ${formatUnits(inv.amount, getAsset(inv.asset)!)} USDC needed`);
+    // Only a transfer whose memo is this invoice's id counts, so one transfer can pay one link at most.
+    const got = receivedInTx(tx, inv.asset, inv.merchant, inv.id);
+    if (got < BigInt(inv.amount))
+      throw new HttpError(400, `The transaction sent ${formatUnits(got.toString(), getAsset(inv.asset)!)} USDC to ${inv.merchant} with memo ${inv.id}, not the ${formatUnits(inv.amount, getAsset(inv.asset)!)} USDC needed`);
     const paid = updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `${NETWORKS[net].explorer}/txns/${txHash}`, paidAt: new Date().toISOString() });
     return send(res, 200, publicInvoice(paid));
   }
-  const sm = path.match(/^\/api\/sends\/(INV-\d{4,})(\/activate)?$/);
+  const sm = path.match(/^\/api\/sends\/(INV-\d{4,})(\/activate|\/claim)?$/);
   if (sm) {
-    const inv = await refreshInvoice(sm[1]);
+    let inv = await refreshInvoice(sm[1]);
     if (inv.kind !== "send") throw new HttpError(404, "Not a send link");
     const net = linkNetwork(inv.asset) ?? "mainnet";
-    if (m === "POST" && sm[2]) {
-      if (inv.status !== "paid") throw new HttpError(409, "This link hasn't been funded yet");
-      try {
-        await ensureClaimGas(net, inv.merchant);
-      } catch (e: any) {
-        throw new HttpError(409, e.message);
-      }
-    }
-    if (m === "GET" || sm[2]) {
+    if (m === "POST" && sm[2] === "/activate") inv = await activateSend(inv, net);
+    if (m === "POST" && sm[2] === "/claim") return send(res, 200, await claimSend(inv, net, await readJson(req)));
+    if (m === "GET" || sm[2] === "/activate") {
       const [balance, acct] = await Promise.all([usdcBalance(net, inv.merchant).catch(() => "0"), viewAccount(net, inv.merchant).catch(() => undefined)]);
-      // After activate the gas transfer has executed even if "final" state lags a block or two.
-      return send(res, 200, { invoice: publicInvoice(inv), balance, claimReady: !!acct || !!sm[2] });
+      // Right after activate the account exists even if "final" state lags a block or two.
+      return send(res, 200, { invoice: publicInvoice(inv), balance, claimReady: !inv.claimedAt && (!!acct || !!inv.linkFundedAt) });
     }
   }
   if (m === "POST" && path === "/api/links/message") {
@@ -533,8 +596,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   }
   if (m === "GET" && path === "/api/checkout/tokens") return send(res, 200, { tokens: await payTokens() });
   if (m === "GET" && path === "/api/invoices.csv") {
-    res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
     const merchant = url.searchParams.get("merchant");
+    if (PUBLIC && !merchant) throw new HttpError(400, "Connect your wallet to export your links");
+    res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
     return res.end(toCsv(listInvoices().filter((i) => !merchant || i.merchant === merchant), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
   }
   if (m === "POST" && path === "/api/invoices") {
@@ -548,8 +612,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       if (net && !(await viewAccount(net, merchant))) throw new HttpError(400, `${merchant} does not exist on NEAR ${net}`);
       const fields = { merchant, description: String(b.description ?? "").trim(), amount: toAssetUnits(b.amountDecimal ?? b.amountNear, assetId), asset: assetId };
       if (b.signedToken) await verifyLinkToken(String(b.signedToken), fields, true).catch((e) => { throw new HttpError(400, `Signature check failed: ${e.message}`); });
-      // Step 1 fallback: register a new merchant for USDC so payouts can't fail on storage. Best effort.
-      if (net) await ensureUsdcStorage(net, merchant).catch((e) => console.warn(`USDC storage for ${merchant} not sponsored: ${e.message}`));
+      // Only for wallet-signed links: the signature proves the merchant asked, so nobody can make the
+      // sponsor pay USDC storage for arbitrary accounts. Unsigned links still work: the "Pay with NEAR
+      // wallet" transaction registers the merchant itself, paid by the customer.
+      if (net && b.signedToken) await ensureUsdcStorage(net, merchant).catch((e) => console.warn(`USDC storage for ${merchant} not sponsored: ${e.message}`));
       const inv = createInvoice(fields);
       return send(res, 201, publicInvoice(b.signedToken ? updateInvoice(inv.id, { signedToken: String(b.signedToken) }) : inv));
     } catch (e: any) {

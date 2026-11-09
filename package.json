@@ -24,6 +24,7 @@
     "web:build": "npm --prefix web run build"
   },
   "dependencies": {
+    "borsh": "2.0.0",
     "near-api-js": "7.4.0",
     "near-sign-verify": "0.4.5"
   },

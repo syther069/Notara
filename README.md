@@ -96,10 +96,10 @@ Everything except paying from other chains runs on NEAR testnet, with free test 
 1. **Payment link:** on **Get paid**, keep **USDC testnet**, and either click **Sign with my NEAR wallet and create** (the link is signed by your own wallet) or leave the account empty to bill the demo merchant.
 2. **Pay it:** open the link. You see the safety check, the Merchant Passport and whether the link is signed. Pay with **Pay with NEAR wallet**, or **Pay with the demo AI agent** (local runs only), which asks Notara first and pays from the spending vault.
 3. **Report an account:** on any testnet pay or Merchant page, **Report this account** files a report in the testnet registry contract (0.01 testnet NEAR bond). It shows up in the next safety check.
-4. **Send by link:** on **Send**, keep **Testnet USDC**, create the link, fund it from your testnet wallet, then open the link in another browser and claim it to an existing `.testnet` account or a brand-new `name.testnet`. Gas and setup are paid by the testnet sponsor (`npm run owner -- make-sponsor` creates it), and the leftover NEAR goes to the receiver.
+4. **Send by link:** on **Send**, keep **Testnet USDC**, create the link, fund it from your testnet wallet, then open the link in another browser and claim it to an existing `.testnet` account or a brand-new `name.testnet`. The claim is a NEP-366 meta transaction: the link's key signs the transfer in your browser and the testnet sponsor (`npm run owner -- make-sponsor` creates it) relays it and pays the gas.
 5. **AI agent attack demo:** **Security** runs the prompt-injection attacks against the vault on testnet.
 
-Tested end to end on testnet (2026-11-09): a testnet link paid by the agent through the vault (INV-0006), and a send link funded with 0.5 USDC and claimed into a new `notara-e2e-….testnet` account, which also received the 0.05 NEAR left over.
+Tested end to end on testnet (2026-11-09): a testnet link paid by the agent through the vault (INV-0006), and send links claimed into new `name.testnet` accounts through the relayer (INV-0012 → `notara-relay-mw8x1hp5.testnet`). The same run checked that a wrong-memo transfer doesn't mark a link paid, a second claim is refused, and a closed link account isn't re-funded.
 
 **Not possible on testnet:** paying from another chain (NEAR Intents 1Click has no testnet, so the any-chain checkout and one-click MetaMask pay are mainnet only), real-value money, and reputation for real merchants. That stays on mainnet: account age, history and reports for real `.near` accounts are always read live from mainnet and carry a **Mainnet · real account data** tag on the pay page, the Merchant Passport and the Check page. Testnet results carry a **Testnet · test data** tag.
 
@@ -155,7 +155,7 @@ Contracts are built with **cargo-near** and deployed with **near-cli-rs**, as in
 bash scripts/deploy-contracts.sh --build
 ```
 
-No cargo-near? `bash scripts/build-contracts.sh` builds the same contracts with plain cargo.
+This writes `contracts/res/vault.wasm` and `registry.wasm`, which the setup below deploys. With Docker running and a clean, committed git tree, `REPRO=1 bash scripts/deploy-contracts.sh --build` makes a reproducible build instead: anyone can rebuild the same file from this repo and compare its hash with the deployed code.
 
 ```bash
 NEAR_OWNER_ACCOUNT=you.testnet NEAR_OWNER_PRIVATE_KEY=ed25519:... npm run setup:testnet
@@ -186,9 +186,9 @@ AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
 
 **Any-chain payment links (real money, NEAR mainnet):** on the Invoices page, choose **USDC, any chain** and enter your mainnet account. The customer opens `/pay/<id>`, sees the safety check, picks a token, and gets a one-time NEAR Intents deposit address. The merchant receives exact USDC on NEAR, and we never hold the money. NEAR Intents has no testnet, so this uses real funds: keep amounts small. Optionally put `ONECLICK_JWT=...` in `.env` to avoid the unauthenticated fee. **Status: tested up to creating a real deposit address. No real payment has been made yet.**
 
-**Pay from a NEAR wallet:** customers who already hold USDC on NEAR click **Pay with NEAR wallet**. Their wallet registers the merchant for USDC if needed and sends `ft_transfer`. The server then reads the finished transaction from NEAR RPC (archival as a fallback) and marks the link paid only if the USDC token's own `ft_transfer` event shows the full amount reaching the merchant. One transaction can't pay two links. **Status: built and tested against a real recorded transfer; not yet run with real funds.**
+**Pay from a NEAR wallet:** customers who already hold USDC on NEAR click **Pay with NEAR wallet**. Their wallet registers the merchant for USDC if needed and sends `ft_transfer`. The server then reads the finished transaction from NEAR RPC (archival as a fallback) and marks the link paid only if the USDC token's own `ft_transfer` event shows the full amount reaching the merchant with the link's id as the memo. So an unrelated transfer to the same merchant (they are public) can't mark a link paid, and one transfer can't pay two links. **Status: built and tested against a real recorded transfer; not yet run with real funds.**
 
-**Mainnet report registry (needs approval and about 2.3 NEAR):**
+**Mainnet report registry (needs approval and about 1.7 NEAR):**
 
 ```bash
 NEAR_MAINNET_OWNER=you.near NEAR_MAINNET_OWNER_KEY=ed25519:... npx tsx scripts/setup-mainnet-registry.ts --yes
@@ -200,7 +200,7 @@ Once `deployment.mainnet.json` exists, mainnet checks read real reports, and the
 
 **Storage:** Node's built-in SQLite in `data/notara.db` (Node 22.13+). On first start, old `data/*.json` files are imported once and kept as `*.imported`.
 
-**Send by link (testnet or real money):** open `/send`, enter an amount (up to 25 USDC), and you get a link. Fund it from any chain, then send the link to anyone. They open it and move the USDC to their NEAR account; gas and USDC setup are paid by a sponsor account, so they need no NEAR. The key lives only in the link's `#` part, which browsers don't send to servers. Mainnet needs `SPONSOR_ACCOUNT` and `SPONSOR_PRIVATE_KEY` (a mainnet account with a little NEAR) in `.env`; testnet uses `keys/sponsor.json` from `npm run owner -- make-sponsor`, or `TESTNET_SPONSOR_ACCOUNT` / `TESTNET_SPONSOR_PRIVATE_KEY`. Each claim is sponsored with 0.06 NEAR, because NEAR reserves attached gas up front; what is left goes to the receiver. **Status: tested end to end on testnet; not yet tested with real funds.**
+**Send by link (testnet or real money):** open `/send`, enter an amount (up to 25 USDC), and you get a link. Fund it from any chain, then send the link to anyone. They open it and move the USDC to their NEAR account; gas and USDC setup are paid by a sponsor account, so they need no NEAR. The key lives only in the link's `#` part, which browsers don't send to servers. Mainnet needs `SPONSOR_ACCOUNT` and `SPONSOR_PRIVATE_KEY` (a mainnet account with a little NEAR) in `.env`; testnet uses `keys/sponsor.json` from `npm run owner -- make-sponsor`, or `TESTNET_SPONSOR_ACCOUNT` / `TESTNET_SPONSOR_PRIVATE_KEY`. Claims are NEP-366 meta transactions: the link's key signs one USDC transfer in the browser, and the sponsor relays it, paying gas and the 1 yoctoNEAR deposit (it also creates a new name if asked, and registers the receiver for USDC). The server only relays a single `ft_transfer` signed by that link's key, and funds each link account once (0.002 NEAR, so it exists), so a link holder can't turn the sponsor into a faucet. Links hold 1–25 USDC. **Status: tested end to end on testnet; not yet tested with real funds.**
 
 **Extras:** a receiver with no NEAR account can pick a new `name.near` while claiming (created with the link key). Customers with MetaMask or Rabby can pay EVM tokens in one click. Payment pages, deposit addresses and send links have QR codes. Merchants can copy a `<script src=".../embed.js" data-link="INV-…">` "Pay with Notara" button for their site. Send links show a soft 7-day expiry. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env` to get a Telegram message when a link is paid. Agent docs are at `/agents` and `/llms.txt`. **Status: built. New-name claims, one-click EVM pay and Telegram alerts are not yet tested with real funds or a real bot.**
 

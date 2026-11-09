@@ -41,7 +41,7 @@ export function PayPage() {
     setNearBusy(true);
     setError(null);
     try {
-      const { txHash, signerId } = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, linkNetwork(inv.asset) ?? "mainnet");
+      const { txHash, signerId } = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, inv.id, linkNetwork(inv.asset) ?? "mainnet");
       setInv(await api.nearTx(inv.id, { txHash, signerId }));
     } catch (err: any) {
       setError(err.message);
