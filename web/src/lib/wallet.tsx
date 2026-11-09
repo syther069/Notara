@@ -149,7 +149,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
     const wallet = existing?.wallet ?? (await c.connect());
     if (!(wallet as any).manifest?.features?.signMessage)
-      throw new Error(`${(wallet as any).manifest?.name ?? "This wallet"} can't sign messages, so it can't sign a payment link. Use Meteor, HOT, Intear, MyNearWallet or another NEAR wallet, or create the link without signing.`);
+      throw new Error(`${(wallet as any).manifest?.name ?? "This wallet"} can't sign messages, which this step needs (signed payment links, your own vault). Use Meteor, HOT, Intear, MyNearWallet or another NEAR wallet.`);
     const account = (existing?.accounts ?? (await wallet.getAccounts({ network: net })))[0]?.accountId;
     if (!account) throw new Error(`No ${net} account in this wallet`);
     setAccountId(account);

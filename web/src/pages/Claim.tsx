@@ -5,7 +5,7 @@ import { Account, actions, base64Encode, encodeSignedDelegate, type KeyPairStrin
 import { api, type SendState } from "../lib/api";
 import { EXPLORER, formatAsset, linkNetwork, usdcFor } from "../lib/format";
 import { fromFragment, isValidNewName, SEND_LINK_DAYS, type LinkKey } from "../lib/linkKey";
-import { Banner, CopyButton, Skeleton } from "../components/ui";
+import { Banner, CopyButton, MainnetBadge, Skeleton } from "../components/ui";
 
 const RPC = { mainnet: "https://rpc.mainnet.fastnear.com", testnet: "https://rpc.testnet.fastnear.com" } as const;
 const ACCOUNT_RE = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
@@ -129,7 +129,9 @@ export function ClaimPage() {
   return (
     <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
       <div className="card">
-        <p className="eyebrow">Notara send link</p>
+        <p className="eyebrow row" style={{ gap: 8 }}>
+          Notara send link {net === "mainnet" && <MainnetBadge />}
+        </p>
         <h1>{inv.description}</h1>
         <div className="invoice-sheet">
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>

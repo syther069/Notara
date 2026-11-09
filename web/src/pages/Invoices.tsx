@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Download, LoaderCircle, Plus, RefreshCw } from "lucide-react";
 import { api, type Invoice } from "../lib/api";
 import { ASSETS, formatAsset, linkNetwork, USDC_MAINNET, USDC_TESTNET } from "../lib/format";
-import { Banner, CopyButton, Skeleton, TxLink } from "../components/ui";
+import { Banner, CopyButton, MainnetBadge, Skeleton, TxLink } from "../components/ui";
 import { NotDeployed, useDeployment, useToast } from "../components/Layout";
 import { useWallet } from "../lib/wallet";
 
@@ -130,7 +130,7 @@ export function InvoicesPage() {
                   USDC testnet
                 </button>
                 <button type="button" aria-pressed={asset === USDC_MAINNET} onClick={() => setAsset(USDC_MAINNET)}>
-                  USDC mainnet, any chain
+                  USDC mainnet, any chain <MainnetBadge />
                 </button>
                 <button type="button" aria-pressed={asset === "NEAR"} onClick={() => setAsset("NEAR")}>
                   NEAR test

@@ -7,7 +7,7 @@
   "5": "package.json",
   "6": "web/package.json",
   "7": "setup-testnet.ts",
-  "8": "Vault.tsx",
+  "8": "codeHashCache.ts",
   "9": "ui.tsx",
   "10": "Invoices.tsx",
   "11": "Notara: Architecture",
@@ -19,8 +19,8 @@
   "17": "ref_node_assert",
   "18": "Notara: Product Requirements (PRD)",
   "19": "Banner",
-  "20": "config.ts",
-  "21": "check.ts",
+  "20": "wrapper.ts",
+  "21": "vaults.ts",
   "22": "signals/index.ts",
   "23": "merchants.ts",
   "24": "compilerOptions",
@@ -28,7 +28,7 @@
   "26": "compilerOptions",
   "27": "sends.ts",
   "28": "assets.ts",
-  "29": "vaults.ts",
+  "29": "runVisitorScenario",
   "30": "dependencies",
   "31": "Notara",
   "32": "Claim.tsx",
@@ -50,5 +50,7 @@
   "48": "Pay.tsx",
   "49": "scripts",
   "50": "embed.js",
-  "51": "deploy-contracts.sh"
+  "51": "deploy-contracts.sh",
+  "53": "policy.test.ts",
+  "56": "Invoices.tsx"
 }

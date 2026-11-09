@@ -19,7 +19,9 @@ import { loadSigner, signVerdict } from "../passport/src/verdict.ts";
 import { hasKey, readKey } from "../agent/src/keys.ts";
 import { GuardedPayments } from "../agent/src/wrapper.ts";
 import { runAgent } from "../agent/src/agent.ts";
+import { verify } from "near-sign-verify";
 import { docs } from "./db.ts";
+import { SIGN_RECIPIENT, freshNonce } from "./merchants.ts";
 
 /** sha256 of contracts/res/vault.wasm (base58), published with `near contract deploy-as-global ... as-global-hash`. */
 export const VAULT_CODE_HASH = "AjewPGjjqqFwDYD6GnYrKkkH7UyNmhBHgJ5M2r4sehCm";
@@ -55,17 +57,34 @@ export const isVisitorVault = (id: string) => {
 
 const store = docs<{ owner: string; vault: string; createdAt: string; lastRunAt?: string }>("vaults");
 
+/** What the owner's wallet signs (NEP-413) to create or use their vault. One signature is good for 10 minutes. */
+export const vaultMessage = (owner: string) => `Notara: use my vault\nOwner: ${owner}`;
+export const PROOF_MAX_AGE_MS = 10 * 60_000;
+
+/**
+ * Proves the caller controls `owner`: a fresh NEP-413 signature by one of the owner's full-access keys.
+ * Without it anyone could run the agent on someone else's vault, or use up the daily vault limit.
+ */
+export async function verifyOwnerProof(proof: unknown, owner: string): Promise<void> {
+  if (typeof proof !== "string" || !proof) throw new Error("Sign with your wallet to use your vault");
+  const r = await verify(proof, { expectedRecipient: SIGN_RECIPIENT, expectedMessage: vaultMessage(owner), validateNonce: freshNonce(PROOF_MAX_AGE_MS) }).catch((e) => {
+    throw new Error(`Your wallet signature didn't check out: ${e.message}`);
+  });
+  if (r.accountId !== owner) throw new Error(`Signed by ${r.accountId}, not ${owner}`);
+}
+
 export async function getVisitorVault(owner: string) {
   if (!isAccountId(owner)) throw new Error("Enter a NEAR testnet account");
   const vault = vaultIdFor(owner);
   const acct = await viewAccount(net, vault).catch(() => undefined);
-  return { owner, vault, exists: !!acct, balance: acct?.amount ?? "0" };
+  return { owner, vault, exists: !!acct, balance: acct?.amount ?? "0", message: vaultMessage(owner) };
 }
 
-export async function createVisitorVault(owner: string) {
+export async function createVisitorVault(owner: string, proof: unknown) {
   const cur = await getVisitorVault(owner);
   if (cur.exists) return cur;
   if (!owner.endsWith(".testnet") && !/^[0-9a-f]{64}$/.test(owner)) throw new Error("Use your NEAR testnet account (yourname.testnet)");
+  await verifyOwnerProof(proof, owner); // only real owners count toward the daily limit
   if (!(await viewAccount(net, owner).catch(() => undefined))) throw new Error(`${owner} doesn't exist on NEAR testnet`);
   const today = new Date().toISOString().slice(0, 10);
   if ((await store.all()).filter((v) => v.createdAt.startsWith(today)).length >= MAX_VAULTS_PER_DAY) throw new Error("Daily limit for new vaults reached. Try again tomorrow.");
@@ -93,12 +112,16 @@ export const SCENARIOS = ["legit", "injected", "new-shop", "tamper"] as const;
 export type Scenario = (typeof SCENARIOS)[number];
 
 /** Runs one agent scenario against the visitor's own vault. Returns the log lines and what happened. */
-export async function runVisitorScenario(owner: string, scenario: Scenario) {
+export async function runVisitorScenario(owner: string, scenario: Scenario, proof: unknown) {
   const v = await getVisitorVault(owner);
   if (!v.exists) throw new Error("Create your vault first");
+  await verifyOwnerProof(proof, owner); // the agent spends from this vault, so only its owner may start it
   const rec = await store.get(owner);
   if (rec?.lastRunAt && Date.now() - Date.parse(rec.lastRunAt) < RUN_GAP_MS) throw new Error("One run at a time: try again in a few seconds");
-  await store.merge(owner, { lastRunAt: new Date().toISOString() });
+  const now = new Date().toISOString();
+  // A vault made outside this database (or whose row failed to save) gets a row now, so the gap always applies.
+  if (rec) await store.merge(owner, { lastRunAt: now });
+  else await store.put(owner, now, { owner, vault: v.vault, createdAt: now, lastRunAt: now });
 
   const d = loadDeployment(net);
   if (!d?.accounts) throw new Error("Demo accounts are missing");

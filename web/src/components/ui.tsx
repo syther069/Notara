@@ -134,3 +134,12 @@ export function NetworkTag({ network }: { network: string }) {
     </span>
   );
 }
+
+/** Marks every feature that uses NEAR mainnet, so nobody mistakes real money for the testnet demo. */
+export function MainnetBadge({ readOnly = false }: { readOnly?: boolean }) {
+  return (
+    <span className="tag mainnet" title={readOnly ? "Reads live NEAR mainnet data. Nothing is sent." : "Real money on NEAR mainnet. Prototype, not audited: keep amounts small."}>
+      {readOnly ? "Mainnet · read-only" : "Mainnet · real money"}
+    </span>
+  );
+}

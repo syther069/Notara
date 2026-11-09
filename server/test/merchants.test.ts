@@ -29,3 +29,18 @@ test("private and loopback addresses are refused", () => {
   for (const ip of ["127.0.0.1", "10.0.0.5", "192.168.1.1", "172.20.0.1", "169.254.169.254", "::1", "fd00::1", "::ffff:127.0.0.1"]) assert.ok(isPrivateAddress(ip), ip);
   for (const ip of ["8.8.8.8", "104.16.1.1", "2606:4700::1111"]) assert.ok(!isPrivateAddress(ip), ip);
 });
+
+test("a signature stays fresh for its window, even from a clock that runs a little fast", async () => {
+  const { freshNonce } = await import("../merchants.ts");
+  const nonceAt = (ms: number) => {
+    const n = new Uint8Array(32);
+    n.set(new TextEncoder().encode(String(ms).padStart(16, "0")));
+    return n;
+  };
+  const ok = freshNonce(600_000);
+  assert.ok(ok(nonceAt(Date.now())));
+  assert.ok(ok(nonceAt(Date.now() + 6_000)), "signer's clock 6 s ahead (seen live against Vercel)");
+  assert.ok(!ok(nonceAt(Date.now() + 10 * 60_000)), "far in the future");
+  assert.ok(!ok(nonceAt(Date.now() - 11 * 60_000)), "expired");
+  assert.ok(!ok(new Uint8Array(16)), "wrong length");
+});

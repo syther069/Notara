@@ -1,3 +1,4 @@
+import { MainnetBadge } from "./ui";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { LoaderCircle, LogOut, Menu, Moon, ShieldCheck, Sun, TriangleAlert, Wallet, X } from "lucide-react";
@@ -202,7 +203,7 @@ function WalletButton() {
       <span className="wallet-chip" title={`Connected: ${w.accountId}`}>
         <Wallet size={14} aria-hidden />
         <span className="mono wallet-id">{w.accountId}</span>
-        <span className="small muted">{w.network}</span>
+        {w.network === "mainnet" ? <MainnetBadge /> : <span className="small muted">testnet</span>}
         <button onClick={w.disconnect} aria-label="Disconnect wallet">
           <LogOut size={14} />
         </button>

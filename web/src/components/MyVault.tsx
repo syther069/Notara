@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, LoaderCircle, Play, Wallet } from "lucide-react";
 import { api, type AgentRun, type MyVault as MyVaultInfo } from "../lib/api";
@@ -25,6 +25,16 @@ export function MyVault() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [runs, setRuns] = useState<Record<string, AgentRun>>({});
+  // One wallet signature proves the vault is yours; reused for 9 minutes (the server accepts 10).
+  const proofRef = useRef<{ token: string; at: number; owner: string } | null>(null);
+  async function proof(): Promise<string> {
+    const p = proofRef.current;
+    if (p && p.owner === w.accountId && Date.now() - p.at < 9 * 60_000) return p.token;
+    const { token, accountId } = await w.signLink(async () => info!.message, "testnet");
+    if (accountId !== w.accountId) throw new Error(`Your wallet signed as ${accountId}, not ${w.accountId}`);
+    proofRef.current = { token, at: Date.now(), owner: accountId };
+    return token;
+  }
 
   const load = useCallback(() => {
     if (w.accountId && w.network === "testnet") api.myVault(w.accountId).then(setInfo).catch((e) => setError(e.message));
@@ -78,11 +88,11 @@ export function MyVault() {
         <p className="muted">Looking for your vault…</p>
       ) : !info.exists ? (
         <div>
-          <button className="btn btn-primary" disabled={!!busy} onClick={() => step("create", async () => setInfo(await api.createMyVault(w.accountId!)))}>
+          <button className="btn btn-primary" disabled={!!busy} onClick={() => step("create", async () => setInfo({ ...(await api.createMyVault(w.accountId!, await proof())), message: info.message }))}>
             {busy === "create" && <LoaderCircle size={16} className="spin" aria-hidden />} Create my vault
           </button>
           <p className="hint" style={{ marginTop: 6 }}>
-            Owner: <span className="mono">{w.accountId}</span>. Limits: 0.5 NEAR per payment, 1 NEAR a day. Takes a few seconds.
+            Owner: <span className="mono">{w.accountId}</span>. Your wallet signs a short message to prove it's you (no transaction, no cost). Limits: 0.5 NEAR per payment, 1 NEAR a day.
           </p>
         </div>
       ) : (
@@ -121,7 +131,7 @@ export function MyVault() {
                     className="btn btn-secondary btn-sm"
                     disabled={!!busy || !funded}
                     onClick={() => step(s.key, async () => {
-                      const out = await api.runMyVault(w.accountId!, s.key);
+                      const out = await api.runMyVault(w.accountId!, s.key, await proof());
                       setRuns((x) => ({ ...x, [s.key]: out }));
                       load();
                     })}

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { LoaderCircle, Search } from "lucide-react";
 import { api, type CheckResponse } from "../lib/api";
 import { CheckResult } from "../components/CheckResult";
-import { Banner } from "../components/ui";
+import { Banner, MainnetBadge } from "../components/ui";
 import { useDeployment } from "../components/Layout";
 import { SIGNAL_LABELS } from "../lib/format";
 
@@ -111,7 +111,7 @@ export function CheckPage() {
                 Testnet
               </button>
               <button type="button" aria-pressed={network === "mainnet"} onClick={() => setNetwork("mainnet")}>
-                Mainnet (read-only)
+                <MainnetBadge readOnly />
               </button>
             </div>
           </div>

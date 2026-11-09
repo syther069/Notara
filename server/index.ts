@@ -508,12 +508,12 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (vm && m === "GET" && !vm[2]) return send(res, 200, await getVisitorVault(vm[1]).catch((e) => { throw new HttpError(400, e.message); }));
   if (m === "POST" && path === "/api/vaults") {
     const b = await readJson(req);
-    return send(res, 201, await createVisitorVault(String(b.owner ?? "").trim()).catch((e) => { throw new HttpError(400, e.message); }));
+    return send(res, 201, await createVisitorVault(String(b.owner ?? "").trim(), b.proof).catch((e) => { throw new HttpError(400, e.message); }));
   }
   if (vm && m === "POST" && vm[2]) {
     const b = await readJson(req);
     if (!SCENARIOS.includes(b.scenario)) throw new HttpError(400, `scenario must be one of ${SCENARIOS.join(", ")}`);
-    return send(res, 200, await runVisitorScenario(vm[1], b.scenario).catch((e) => { throw new HttpError(400, e.message); }));
+    return send(res, 200, await runVisitorScenario(vm[1], b.scenario, b.proof).catch((e) => { throw new HttpError(400, e.message); }));
   }
 
   if (m === "POST" && (path === "/api/owner/approve" || path === "/api/owner/reject")) {

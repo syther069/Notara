@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { LoaderCircle, Send as SendIcon } from "lucide-react";
 import { api, type Invoice } from "../lib/api";
 import { newLinkKey, SEND_LINK_DAYS, toFragment } from "../lib/linkKey";
-import { Banner, CopyButton } from "../components/ui";
+import { Banner, CopyButton, MainnetBadge } from "../components/ui";
 import { QrCode } from "../components/QrCode";
 
 export function SendPage() {
@@ -57,7 +57,7 @@ export function SendPage() {
                 Testnet USDC (free)
               </button>
               <button type="button" aria-pressed={network === "mainnet"} onClick={() => setNetwork("mainnet")}>
-                Real USDC (mainnet)
+                Real USDC <MainnetBadge />
               </button>
             </div>
             <span className="hint">{network === "testnet" ? "Fund it from a NEAR testnet wallet with free USDC from faucet.circle.com." : "Fund it from any chain through NEAR Intents."}</span>

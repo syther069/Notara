@@ -21,13 +21,27 @@ export function linkMessage(l: { merchant: string; amount: string; asset: string
   return `Notara payment link\nPay to: ${l.merchant}\nAmount: ${formatAmount(l.amount, l.asset)}\nFor: ${l.description}`;
 }
 
+/**
+ * NEP-413 nonce freshness, allowing signers whose clock runs a little fast. near-sign-verify's own
+ * nonceMaxAge refuses any nonce "from the future", and phone/laptop clocks are often seconds ahead of
+ * the server's. The nonce starts with the signing time in ms as 16 ASCII digits (near-sign-verify's format).
+ */
+export function freshNonce(maxAgeMs: number, skewMs = 120_000) {
+  return (nonce: Uint8Array) => {
+    if (nonce.length !== 32) return false;
+    const signedAt = parseInt(new TextDecoder().decode(nonce.slice(0, 16)).replace(/^0+/, ""), 10);
+    const age = Date.now() - signedAt;
+    return Number.isFinite(signedAt) && age >= -skewMs && age <= maxAgeMs;
+  };
+}
+
 /** Verifies a NEP-413 token from the merchant's wallet for exactly this link. Returns the signer, or throws. */
 export async function verifyLinkToken(token: string, l: Parameters<typeof linkMessage>[0], fresh: boolean): Promise<string> {
   const r = await verify(token, {
     expectedRecipient: SIGN_RECIPIENT,
     expectedMessage: linkMessage(l),
     // When a link is created the signature must be new; later views only re-check that it still matches.
-    ...(fresh ? { nonceMaxAge: 600_000 } : { validateNonce: () => true }),
+    validateNonce: fresh ? freshNonce(600_000) : () => true,
   });
   if (r.accountId !== l.merchant) throw new Error(`Signed by ${r.accountId}, not ${l.merchant}`);
   return r.accountId;

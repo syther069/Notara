@@ -4,7 +4,7 @@ import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api, type Checkout, type CheckResponse, type Invoice, type MerchantProfile, type PayToken } from "../lib/api";
 import { EXPLORER, formatAsset, linkNetwork, unitsToDecimal } from "../lib/format";
-import { AccountLink, Banner, CopyButton, Skeleton } from "../components/ui";
+import { AccountLink, Banner, CopyButton, MainnetBadge, Skeleton } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
 import { useWallet } from "../lib/wallet";
 import { useDeployment } from "../components/Layout";
@@ -135,7 +135,10 @@ export function PayPage() {
     <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
       <div className="card">
         <div className="row" style={{ justifyContent: "space-between" }}>
-          <span className="mono muted">{inv.id}</span>
+          <span className="row" style={{ gap: 8 }}>
+            <span className="mono muted">{inv.id}</span>
+            {net === "mainnet" && <MainnetBadge />}
+          </span>
           <InvoiceStatus s={inv.status} />
         </div>
         <h1 style={{ marginTop: 16 }}>{inv.description}</h1>
@@ -225,7 +228,9 @@ export function PayPage() {
             </div>
           ) : (
           <form className="card stack" onSubmit={getAddress}>
-            <h2>Pay from another chain</h2>
+            <h2 className="row" style={{ gap: 8 }}>
+              Pay from another chain <MainnetBadge />
+            </h2>
             <div className="field">
               <label htmlFor="token">Token and network you'll pay from</label>
               <select id="token" className="input" value={token} onChange={(e) => setToken(e.target.value)}>

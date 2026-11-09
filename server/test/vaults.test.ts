@@ -19,3 +19,11 @@ test("?vault= only accepts our visitor vaults, never other contracts", () => {
   for (const bad of ["usdc.testnet", "vaults.demo.testnet", "x.vaults.demo.testnet", "vabc.vaults.demo.testnet.evil.testnet"]) assert.ok(!isVisitorVault(bad), bad);
   assert.ok(isAccountId("alice.testnet") && !isAccountId("Alice!") && !isAccountId("a"));
 });
+
+test("using a vault needs the owner's wallet signature", async () => {
+  const { verifyOwnerProof, vaultMessage } = await import("../vaults.ts");
+  assert.equal(vaultMessage("alice.testnet"), "Notara: use my vault\nOwner: alice.testnet");
+  await assert.rejects(() => verifyOwnerProof(undefined, "alice.testnet"), /Sign with your wallet/);
+  await assert.rejects(() => verifyOwnerProof("", "alice.testnet"), /Sign with your wallet/);
+  await assert.rejects(() => verifyOwnerProof("not-a-token", "alice.testnet"), /didn't check out/);
+});
