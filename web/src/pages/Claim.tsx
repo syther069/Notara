@@ -132,7 +132,7 @@ export function ClaimPage() {
         <p className="eyebrow row" style={{ gap: 8 }}>
           Notara send link {net === "mainnet" && <MainnetBadge />}
         </p>
-        <h1>{inv.description}</h1>
+        <h1 className="link-title">{inv.description}</h1>
         <div className="invoice-sheet">
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
         </div>
@@ -140,7 +140,7 @@ export function ClaimPage() {
       {balance > 0n && Date.now() > expires && (
         <Banner kind="warn" title="This link is past its 7 days">
           <p>
-            The sender asked for it to be claimed by {new Date(expires).toLocaleDateString()}. If you are the sender, claim it back to your own account below.
+            The sender asked for it to be claimed by {new Date(expires).toLocaleDateString(undefined, { dateStyle: "medium" })}. If you are the sender, claim it back to your own account below.
             Nothing stops anyone with the link from claiming it later: the key in the link controls the money.
           </p>
         </Banner>

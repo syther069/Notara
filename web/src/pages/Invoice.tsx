@@ -74,7 +74,7 @@ export function InvoicePage() {
               <span className="mono muted">{inv.id}</span>
               <InvoiceStatus s={inv.status} />
             </div>
-            <h1 style={{ marginTop: 16 }}>{inv.description}</h1>
+            <h1 className="link-title" style={{ marginTop: 16 }}>{inv.description}</h1>
             <div className="amount">
               {formatAsset(inv.amount, inv.asset)}
             </div>
@@ -84,7 +84,7 @@ export function InvoicePage() {
                 <AccountLink id={inv.merchant} />
               </dd>
               <dt>Created</dt>
-              <dd>{new Date(inv.createdAt).toLocaleString()}</dd>
+              <dd>{new Date(inv.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</dd>
               {inv.decision && (
                 <>
                   <dt>Notara verdict</dt>
@@ -108,7 +108,7 @@ export function InvoicePage() {
               {inv.paidAt && (
                 <>
                   <dt>Paid at</dt>
-                  <dd>{new Date(inv.paidAt).toLocaleString()}</dd>
+                  <dd>{new Date(inv.paidAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</dd>
                 </>
               )}
             </dl>

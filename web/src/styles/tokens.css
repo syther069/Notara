@@ -5,9 +5,20 @@
 
 @font-face {
   font-family: "Manrope";
-  src: url("/fonts/Manrope-VariableFont_wght.ttf") format("truetype");
+  /* WOFF2 is 54 KB against 165 KB for the TTF; the TTF stays as a fallback for old browsers. */
+  src: url("/fonts/Manrope-VariableFont_wght.woff2") format("woff2"), url("/fonts/Manrope-VariableFont_wght.ttf") format("truetype");
   font-weight: 200 800;
   font-display: swap;
+}
+/* Arial sized to Manrope's width and line metrics (measured from both font files), so text barely
+   moves when Manrope finishes loading. */
+@font-face {
+  font-family: "Manrope Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
+  size-adjust: 98.6%;
+  ascent-override: 108.1%;
+  descent-override: 30.4%;
+  line-gap-override: 0%;
 }
 
 :root {
@@ -51,7 +62,7 @@
   --fixture-bg: rgba(107, 79, 176, 0.1);
 
   /* type */
-  --font-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Manrope", "Manrope Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 

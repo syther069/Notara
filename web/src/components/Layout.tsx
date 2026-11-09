@@ -87,7 +87,9 @@ function ProductMenu() {
   const enter = (e: React.PointerEvent) => {
     if (e.pointerType !== "mouse") return;
     clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setOpen(true), 80);
+    // 300 ms of intent before opening on hover, so a pointer passing over the nav doesn't flicker it open.
+    // Click and keyboard open it at once.
+    timer.current = window.setTimeout(() => setOpen(true), 300);
   };
   const leave = (e: React.PointerEvent) => {
     if (e.pointerType !== "mouse" || pinned.current) return;

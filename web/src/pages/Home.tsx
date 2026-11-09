@@ -222,8 +222,13 @@ function PayPreview() {
             </div>
           </div>
           <div className="preview-pay" aria-hidden>
-            <span className="btn btn-primary btn-sm">Pay with NEAR wallet</span>
-            <span className="btn btn-secondary btn-sm">From another chain</span>
+            {/* A picture of the pay page, not controls: quieter than the hero's real button, and not clickable. */}
+            <span className="btn btn-tonal btn-sm preview-btn" aria-hidden>
+              Pay with NEAR wallet
+            </span>
+            <span className="btn btn-secondary btn-sm preview-btn" aria-hidden>
+              From another chain
+            </span>
           </div>
         </div>
       </div>

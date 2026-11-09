@@ -325,7 +325,7 @@ export function InvoicesPage() {
                       <Link to={linkNetwork(i.asset) ? `/pay/${i.id}` : `/invoices/${i.id}`} className="mono">
                         {i.id}
                       </Link>
-                      <div className="muted small">{new Date(i.createdAt).toLocaleString()}</div>
+                      <div className="muted small">{new Date(i.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</div>
                     </td>
                     <td data-label="For">
                       {i.description}

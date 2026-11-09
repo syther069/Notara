@@ -107,9 +107,9 @@ function signalSummary(s: Signal): string {
     case "account_state":
       return d.exists ? (d.isContract ? `exists · contract (code ${String(d.codeHash).slice(0, 8)}…)` : "exists · not a contract") : "does not exist";
     case "activity_history":
-      return `${d.txCount} indexed txs · first seen ${d.firstObservedAt ? new Date(d.firstObservedAt).toLocaleDateString() : "never"}`;
+      return `${d.txCount} indexed txs · first seen ${d.firstObservedAt ? new Date(d.firstObservedAt).toLocaleDateString(undefined, { dateStyle: "medium" }) : "never"}`;
     case "contract_deployments":
-      return `${d.deploys.length} deploy(s) in last ${d.scannedTxs} txs${d.lastDeployAt ? ` · last ${new Date(d.lastDeployAt).toLocaleDateString()}` : ""}`;
+      return `${d.deploys.length} deploy(s) in last ${d.scannedTxs} txs${d.lastDeployAt ? ` · last ${new Date(d.lastDeployAt).toLocaleDateString(undefined, { dateStyle: "medium" })}` : ""}`;
     case "prior_interactions":
       return `${d.vaultPayments.executed} paid via vault · ${d.sharedIndexedTxs} shared txs`;
     case "shared_reports":
@@ -193,7 +193,7 @@ export function CheckResult({ res }: { res: CheckResponse }) {
       <ReasonList reasons={res.report.reasons} network={res.report.request.network} />
       <EvidenceTable signals={res.report.signals} />
       <p className="muted small">
-        Policy {res.report.policyVersion} · generated {new Date(res.report.generatedAt).toLocaleString()}. {res.report.disclaimer}
+        Policy {res.report.policyVersion} · generated {new Date(res.report.generatedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}. {res.report.disclaimer}
       </p>
       <div className="row">
         <CopyButton text={JSON.stringify(res, null, 2)} label="Copy JSON report" />

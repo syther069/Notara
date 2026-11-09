@@ -119,7 +119,7 @@ export function SendPage() {
           </div>
           <Banner kind="warn" title="This link works like cash">
             <p>
-              Anyone who has it can take the money. Only send it to the person it's for. If they haven't claimed it within {SEND_LINK_DAYS} days ({new Date(Date.now() + SEND_LINK_DAYS * 86_400_000).toLocaleDateString()}), open the link yourself to take the money back.
+              Anyone who has it can take the money. Only send it to the person it's for. If they haven't claimed it within {SEND_LINK_DAYS} days ({new Date(Date.now() + SEND_LINK_DAYS * 86_400_000).toLocaleDateString(undefined, { dateStyle: "medium" })}), open the link yourself to take the money back.
               We can't recover a lost link: the key exists only in it.
             </p>
           </Banner>

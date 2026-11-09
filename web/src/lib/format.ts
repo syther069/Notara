@@ -20,7 +20,7 @@ export function timeAgo(ms: number | string): string {
   if (s < 60) return `${s}s ago`;
   if (s < 3600) return `${Math.round(s / 60)} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
-  return new Date(t).toLocaleDateString();
+  return new Date(t).toLocaleDateString(undefined, { dateStyle: "medium" });
 }
 
 /** "VERIFIED_REPORT" -> "Verified report" */

@@ -195,6 +195,8 @@ textarea.input { padding: 12px 14px; line-height: 1.5; min-height: 96px; }
 .decision-card.BLOCK { border-left-color: var(--block); animation: rise 0.24s var(--ease-out), pulse 0.4s 0.2s ease-out; }
 .decision-card .who { font-family: var(--font-mono); font-size: 18px; word-break: break-all; margin: 10px 0 4px; }
 .decision-card .meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+/* Inside the safety panel's Technical details the panel is already the box: show the result as flat sections. */
+.tech-details > .card { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; padding: 14px 0 0; margin: 0; animation: none; }
 .coverage { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px; color: var(--text-muted); }
 .coverage .bars { display: flex; gap: 3px; }
 .coverage .bars span { width: 16px; height: 8px; border-radius: 3px; background: var(--green); }
@@ -287,6 +289,8 @@ tbody tr:hover td { background: color-mix(in srgb, var(--surface-3) 70%, transpa
 
 /* ---------------------------------------------------------------- invoice / pay sheet */
 .invoice-sheet { max-width: 580px; }
+/* On a payment page the amount leads; the description names it, clearly but calmer. */
+.link-title { font-size: clamp(22px, 2.4vw, 28px); line-height: 1.25; letter-spacing: -0.015em; overflow-wrap: anywhere; }
 .invoice-sheet .amount { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
 .kv { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; font-size: 14px; margin: 0; }
 .kv dt { color: var(--text-muted); font-weight: 600; }
@@ -316,6 +320,7 @@ tbody tr:hover td { background: color-mix(in srgb, var(--surface-3) 70%, transpa
 .preview-pay .btn { pointer-events: none; white-space: normal; text-align: center; line-height: 1.2; padding: 8px 12px; }
 .preview-caption { position: absolute; right: 22px; top: -16px; background: var(--band); color: var(--band-ink); border-radius: var(--r-sm); padding: 10px 14px; font-size: 13px; font-weight: 700; display: flex; gap: 8px; align-items: center; box-shadow: var(--shadow-pop); }
 .preview-caption svg { color: var(--sage); }
+.preview-btn { pointer-events: none; cursor: default; }
 
 .section-head { max-width: 720px; margin-bottom: 28px; }
 .section-head h2 { font-size: clamp(28px, 3.4vw, 42px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; }

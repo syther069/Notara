@@ -145,7 +145,7 @@ export function PayPage() {
           </span>
           <InvoiceStatus s={inv.status} />
         </div>
-        <h1 style={{ marginTop: 16 }}>{inv.description}</h1>
+        <h1 className="link-title" style={{ marginTop: 16 }}>{inv.description}</h1>
         <div className="invoice-sheet">
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
         </div>

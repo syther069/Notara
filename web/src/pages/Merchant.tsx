@@ -93,7 +93,7 @@ export function MerchantPage() {
         </div>
         {profile?.websiteCheckedAt && (
           <p className="small muted" style={{ margin: 0 }}>
-            Last checked {new Date(profile.websiteCheckedAt).toLocaleString()}: {profile.website} {profile.websiteVerified ? "confirms" : "does not confirm"} this account.
+            Last checked {new Date(profile.websiteCheckedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}: {profile.website} {profile.websiteVerified ? "confirms" : "does not confirm"} this account.
           </p>
         )}
       </form>

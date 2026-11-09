@@ -82,7 +82,7 @@ export function SafetyPanel({ check, merchant, signature, signedBy, registry }: 
         {merchant?.website && !merchant.websiteVerified && <Fact kind="warn">This account claims {merchant.website}, but the website doesn't confirm it.</Fact>}
         {history?.firstObservedAt && (
           <Fact kind="good">
-            Active on NEAR since {new Date(history.firstObservedAt).toLocaleDateString()} ({history.txCount} transactions).
+            Active on NEAR since {new Date(history.firstObservedAt).toLocaleDateString(undefined, { dateStyle: "medium" })} ({history.txCount} transactions).
           </Fact>
         )}
         {!!merchant?.paid && <Fact kind="good">{merchant.paid} earlier payment(s) to this account through Notara.</Fact>}
@@ -98,7 +98,7 @@ export function SafetyPanel({ check, merchant, signature, signedBy, registry }: 
       {registry && <ReportForm registry={registry} subject={r.request.recipient} network={r.request.network === "mainnet" ? "mainnet" : "testnet"} />}
       <details style={{ marginTop: 8 }}>
         <summary className="small">Technical details</summary>
-        <div className="stack" style={{ marginTop: 8 }}>
+        <div className="stack tech-details" style={{ marginTop: 8 }}>
           <DecisionCard res={check} />
           <ReasonList reasons={r.reasons} network={r.request.network} />
         </div>
