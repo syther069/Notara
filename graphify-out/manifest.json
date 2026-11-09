@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/wallet.tsx": {
-    "mtime": 1794246175.0871336,
-    "seen": 1794246304.301387,
-    "ast_hash": "181724ec769195640308d9873a924d48",
+    "mtime": 1794246898.7123473,
+    "seen": 1794246982.3110156,
+    "ast_hash": "a0c5e89f22d81679510f83967148c228",
     "semantic_hash": ""
   },
   "web/src/main.tsx": {
@@ -372,9 +372,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Pay.tsx": {
-    "mtime": 1794246185.5681322,
-    "seen": 1794246304.301387,
-    "ast_hash": "73b84c710139b770e649ee474e4bcb8c",
+    "mtime": 1794246914.6276336,
+    "seen": 1794246982.3110156,
+    "ast_hash": "f13be064bc789185bda7eccb07db463c",
     "semantic_hash": ""
   },
   "web/src/pages/Send.tsx": {

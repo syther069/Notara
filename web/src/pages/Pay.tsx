@@ -6,7 +6,7 @@ import { api, type Checkout, type CheckResponse, type Invoice, type MerchantProf
 import { EXPLORER, formatAsset, linkNetwork, unitsToDecimal } from "../lib/format";
 import { AccountLink, Banner, CopyButton, MainnetBadge, Skeleton, StepBar } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
-import { useWallet } from "../lib/wallet";
+import { TxFailedError, useWallet } from "../lib/wallet";
 import { useDeployment } from "../components/Layout";
 import { InvoiceStatus } from "./Invoices";
 import { evmAccount, evmPay, hasEvmWallet } from "../lib/evm";
@@ -31,6 +31,7 @@ export function PayPage() {
   const [refundTo, setRefundTo] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ txUrl: string | null; raw: string } | null>(null);
   const wallet = useWallet();
   const { dep } = useDeployment();
   const [nearBusy, setNearBusy] = useState(false);
@@ -40,11 +41,13 @@ export function PayPage() {
     if (!inv) return;
     setNearBusy(true);
     setError(null);
+    setFailure(null);
     try {
       const { txHash, signerId } = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, inv.id, linkNetwork(inv.asset) ?? "mainnet");
       setInv(await api.nearTx(inv.id, { txHash, signerId }));
     } catch (err: any) {
       setError(err.message);
+      if (err instanceof TxFailedError) setFailure({ txUrl: err.txUrl, raw: err.raw });
     } finally {
       setNearBusy(false);
     }
@@ -183,6 +186,21 @@ export function PayPage() {
       {error && (
         <Banner kind="error">
           <p>{error}</p>
+          {failure && (
+            <>
+              {failure.txUrl && (
+                <p>
+                  <a href={failure.txUrl} target="_blank" rel="noreferrer">
+                    View the failed transaction <ExternalLink size={12} aria-hidden />
+                  </a>
+                </p>
+              )}
+              <details>
+                <summary className="small">Error details from NEAR</summary>
+                <pre className="mono small" style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", margin: "8px 0 0" }}>{failure.raw}</pre>
+              </details>
+            </>
+          )}
         </Banner>
       )}
 

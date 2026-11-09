@@ -5,7 +5,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { NearConnector } from "@hot-labs/near-connect";
 import { sign } from "near-sign-verify";
-import { formatAsset } from "./format";
+import { EXPLORER, formatAsset } from "./format";
 
 const NETWORK = "testnet" as const;
 type Net = "mainnet" | "testnet";
@@ -190,7 +190,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }),
         true,
       );
-      if (out?.status?.Failure) throw new Error(`The payment failed: ${failureReason(out.status.Failure, net, "the network refused it")}`);
+      if (out?.status?.Failure) throw txFailed(out, net, "The payment failed: ", "the network refused it");
       return { txHash: out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "", signerId };
     },
     [switchTo],
@@ -207,7 +207,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!signerId) throw new Error("Connect a wallet first");
       setAccountId(signerId);
       const out: any = await walletAnswer(wallet.signAndSendTransaction({ network: net, signerId, receiverId: receiver, actions: [{ type: "Transfer", params: { deposit: yocto } }] }), true);
-      if (out?.status?.Failure) throw new Error(`The transfer failed: ${failureReason(out.status.Failure, net, "the network refused it")}`);
+      if (out?.status?.Failure) throw txFailed(out, net, "The transfer failed: ", "the network refused it");
       return out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "";
     },
     [accountId, switchTo],
@@ -233,7 +233,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }),
         true,
       );
-      if (out?.status?.Failure) throw new Error(failureReason(out.status.Failure, net, "Transaction failed on-chain"));
+      if (out?.status?.Failure) throw txFailed(out, net, "", "Transaction failed on-chain");
       return out?.transaction?.hash ?? out?.transaction_outcome?.id ?? "";
     },
     [accountId, switchTo],
@@ -270,6 +270,18 @@ function walletAnswer<T>(p: Promise<T>, sends: boolean): Promise<T> {
     );
   });
   return Promise.race([p, timeout]).finally(() => clearTimeout(t));
+}
+
+/** A transaction that reached NEAR and failed there: the plain reason, plus the tx and NEAR's raw error for details. */
+export class TxFailedError extends Error {
+  constructor(message: string, readonly txUrl: string | null, readonly raw: string) {
+    super(message);
+  }
+}
+function txFailed(out: any, net: Net, prefix: string, fallback: string): TxFailedError {
+  const hash = out?.transaction?.hash ?? out?.transaction_outcome?.id;
+  const raw = JSON.stringify(out.status.Failure, null, 1);
+  return new TxFailedError(`${prefix}${failureReason(out.status.Failure, net, fallback)}`, hash ? `${EXPLORER[net]}/txns/${hash}` : null, raw);
 }
 
 /** Plain-language reason for a failed transaction (the contract's panic text, or NEAR's error kind). */
