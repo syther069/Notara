@@ -14,6 +14,8 @@
   /* brand */
   --deep: #12372a;
   --green: #436850;
+  /* Green for text and icons: the brand green on light surfaces, sage on dark ones (keeps 4.5:1). */
+  --text-green: var(--green);
   --sage: #adbc9f;
   --pale: #fbfada;
   --cream: #f3eee3;
@@ -83,6 +85,7 @@
     --border-strong: #436850;
     --text: var(--pale);
     --text-muted: #c3cdb4;
+    --text-green: var(--sage);
     --accent: var(--sage);
     --accent-hover: #c2cfb5;
     --accent-ink: #0c261d;
@@ -113,6 +116,7 @@
   --border-strong: #436850;
   --text: var(--pale);
   --text-muted: #c3cdb4;
+  --text-green: var(--sage);
   --accent: var(--sage);
   --accent-hover: #c2cfb5;
   --accent-ink: #0c261d;

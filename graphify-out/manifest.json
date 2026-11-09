@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "web/src/components/Layout.tsx": {
-    "mtime": 1794233644.534795,
-    "seen": 1794233999.513252,
-    "ast_hash": "d3143377c2f67992608235fb02f06cba",
+    "mtime": 1794252834.114297,
+    "seen": 1794253147.4765747,
+    "ast_hash": "cfa332d24cdc39946590093bc2edeeef",
     "semantic_hash": ""
   },
   "web/src/components/SafetyPanel.tsx": {

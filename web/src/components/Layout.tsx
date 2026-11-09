@@ -175,6 +175,18 @@ export function Layout() {
     setMenu(false);
     window.scrollTo(0, 0);
   }, [loc.pathname]);
+  // Escape closes the mobile menu and puts focus back on the button that opened it.
+  const menuBtn = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setMenu(false);
+      menuBtn.current?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menu]);
   useEffect(() => {
     if (theme) document.documentElement.dataset.theme = theme;
     else delete document.documentElement.dataset.theme;
@@ -243,10 +255,10 @@ export function Layout() {
                 Try it free
               </Link>
               <WalletButton />
-              <button className="icon-btn" onClick={toggleTheme} aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}>
+              <button className="icon-btn theme-btn" onClick={toggleTheme} aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}>
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-              <button className="icon-btn menu-btn" onClick={() => setMenu((m) => !m)} aria-expanded={menu} aria-controls="mobile-nav" aria-label="Menu">
+              <button ref={menuBtn} className="icon-btn menu-btn" onClick={() => setMenu((m) => !m)} aria-expanded={menu} aria-controls="mobile-nav" aria-label="Menu">
                 {menu ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
@@ -257,6 +269,9 @@ export function Layout() {
                 {label} <ArrowRight size={16} aria-hidden />
               </NavLink>
             ))}
+            <button type="button" className="mobile-theme" onClick={toggleTheme}>
+              {isDark ? "Light theme" : "Dark theme"} {isDark ? <Sun size={18} aria-hidden /> : <Moon size={18} aria-hidden />}
+            </button>
           </nav>
         </header>
         <main id="main">
