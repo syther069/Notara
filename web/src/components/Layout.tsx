@@ -164,6 +164,7 @@ export function Layout() {
   const w = useWallet();
 
   const reload = useCallback(() => {
+    setDepErr(null); // a retry shows "checking" again rather than the old error
     api
       .deployment()
       .then((d) => {
@@ -278,6 +279,17 @@ export function Layout() {
         </header>
         <main id="main">
           <div className="container">
+            {w.error && (
+              <div className="banner warn wallet-notice" role="status">
+                <TriangleAlert size={18} aria-hidden />
+                <div style={{ flex: 1 }}>
+                  <p>{w.error}</p>
+                </div>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={w.clearError}>
+                  Dismiss
+                </button>
+              </div>
+            )}
             <Outlet />
           </div>
         </main>
@@ -361,17 +373,41 @@ export function Layout() {
   );
 }
 
+/** Someone running Notara on their own machine: the only audience for terminal commands. */
+export const isLocalDev = () => typeof location !== "undefined" && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+
+/**
+ * Shown where a page needs the testnet demo setup. Three different situations, never merged:
+ * still checking, server unreachable (retryable), and a server that has no testnet demo set up.
+ */
 export function NotDeployed() {
-  const { error } = useDeployment();
+  const { dep, error, reload } = useDeployment();
+  if (!dep && !error)
+    return (
+      <p className="muted" role="status">
+        <LoaderCircle size={16} className="spin" aria-hidden /> Checking what this site can run…
+      </p>
+    );
   if (error)
     return (
       <div className="banner error" role="alert">
         <TriangleAlert size={18} aria-hidden />
         <div>
-          <p style={{ fontWeight: 700 }}>The backend isn't running</p>
+          <p style={{ fontWeight: 700 }}>Notara's server didn't answer</p>
           <p>
-            Start it in the project folder with <code>npm run serve</code>, then reload this page.
+            We couldn't check what this site can run, so this part can't start right now. Nothing was sent or changed.{" "}
+            <button type="button" className="btn btn-ghost btn-sm" onClick={reload}>
+              Try again
+            </button>
           </p>
+          {isLocalDev() && (
+            <details>
+              <summary className="small">For developers</summary>
+              <p className="small">
+                Start the backend in the project folder with <code>npm run serve</code>, then try again.
+              </p>
+            </details>
+          )}
         </div>
       </div>
     );
@@ -379,10 +415,18 @@ export function NotDeployed() {
     <div className="banner warn">
       <TriangleAlert size={18} aria-hidden />
       <div>
-        <p style={{ fontWeight: 700 }}>Testnet is not set up yet</p>
+        <p style={{ fontWeight: 700 }}>This copy of Notara has no testnet demo</p>
         <p>
-          Run <code>npm run setup:testnet -- --create-owner yourname.testnet</code> in the project folder. The Check page works without it.
+          The demo vault and AI agent need testnet accounts that haven't been set up here. You can still <Link to="/check">check any NEAR account</Link>.
         </p>
+        {isLocalDev() && (
+          <details>
+            <summary className="small">For developers</summary>
+            <p className="small">
+              Run <code>npm run setup:testnet -- --create-owner yourname.testnet</code> in the project folder, then reload.
+            </p>
+          </details>
+        )}
       </div>
     </div>
   );

@@ -3,10 +3,10 @@ import { useParams } from "react-router-dom";
 import { CircleCheck, ExternalLink, LoaderCircle } from "../components/icons";
 import { Link } from "react-router-dom";
 import { api, type Checkout, type CheckResponse, type Invoice, type MerchantProfile, type PayToken } from "../lib/api";
-import { EXPLORER, formatAsset, linkNetwork, unitsToDecimal } from "../lib/format";
+import { EXPLORER, asSentence, formatAsset, linkNetwork, unitsToDecimal } from "../lib/format";
 import { AccountLink, Banner, CopyButton, MainnetBadge, Skeleton, StepBar } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
-import { TxFailedError, useWallet } from "../lib/wallet";
+import { TxFailedError, WalletTimeoutError, useWallet } from "../lib/wallet";
 import { useDeployment } from "../components/Layout";
 import { InvoiceStatus } from "./Invoices";
 import { evmAccount, evmPay, hasEvmWallet } from "../lib/evm";
@@ -36,39 +36,86 @@ export function PayPage() {
   const { dep } = useDeployment();
   const [nearBusy, setNearBusy] = useState(false);
   const [evmTx, setEvmTx] = useState<string | null>(null);
+  // Errors are kept per region: a failed token list or safety check must not read as a failed payment.
+  const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [checkErr, setCheckErr] = useState<string | null>(null);
+  const [tokensErr, setTokensErr] = useState<string | null>(null);
+  /**
+   * A NEAR-wallet payment whose outcome we can't confirm: the wallet stopped answering, or the
+   * transaction was sent but Notara couldn't record it. Paying again could pay twice, so the page
+   * offers a status check first instead of the pay button.
+   */
+  const [unconfirmed, setUnconfirmed] = useState<{ txHash?: string; signerId?: string; why: "wallet" | "report"; detail: string } | null>(null);
+  const [rechecking, setRechecking] = useState(false);
 
   async function payFromNear() {
     if (!inv) return;
     setNearBusy(true);
     setError(null);
     setFailure(null);
+    setUnconfirmed(null);
+    let sent: { txHash: string; signerId: string } | null = null;
     try {
-      const { txHash, signerId } = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, inv.id, linkNetwork(inv.asset) ?? "mainnet");
-      setInv(await api.nearTx(inv.id, { txHash, signerId }));
+      sent = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, inv.id, linkNetwork(inv.asset) ?? "mainnet");
+      setInv(await api.nearTx(inv.id, sent));
     } catch (err: any) {
-      setError(err.message);
-      if (err instanceof TxFailedError) setFailure({ txUrl: err.txUrl, raw: err.raw });
+      if (sent?.txHash) setUnconfirmed({ ...sent, why: "report", detail: err.message });
+      else if (err instanceof WalletTimeoutError) setUnconfirmed({ why: "wallet", detail: err.message });
+      else {
+        setError(err.message);
+        if (err instanceof TxFailedError) setFailure({ txUrl: err.txUrl, raw: err.raw });
+      }
     } finally {
       setNearBusy(false);
     }
   }
 
+  /** Asks Notara again: re-reports a known transaction (the server refuses to count one twice), or re-reads the link. */
+  async function recheck() {
+    if (!inv || !unconfirmed) return;
+    setRechecking(true);
+    try {
+      const next = unconfirmed.txHash && unconfirmed.signerId ? await api.nearTx(inv.id, { txHash: unconfirmed.txHash, signerId: unconfirmed.signerId }) : await api.invoice(inv.id);
+      setInv(next);
+      if (next.status === "paid") setUnconfirmed(null);
+      else setUnconfirmed({ ...unconfirmed, detail: unconfirmed.txHash ? "Notara still can't see this payment." : "This link still shows as unpaid." });
+    } catch (err: any) {
+      setUnconfirmed({ ...unconfirmed, detail: err.message });
+    } finally {
+      setRechecking(false);
+    }
+  }
+
   const load = useCallback(() => {
-    api.invoice(id).then(setInv).catch((e) => setError(e.message));
+    api
+      .invoice(id)
+      .then((i) => {
+        setInv(i);
+        setLoadErr(null);
+      })
+      .catch((e) => setLoadErr(e.message));
   }, [id]);
 
   useEffect(load, [load]);
-  useEffect(() => {
-    api.payTokens().then((r) => {
-      setTokens(r.tokens);
-      setToken((t) => t || (r.tokens.find((x) => x.label === "USDC on base") ?? r.tokens[0])?.assetId || "");
-    }).catch((e) => setError(e.message));
-  }, []);
 
   const asset = inv?.asset;
   const amount = inv?.amount;
   const merchant = inv?.merchant;
   const net = linkNetwork(asset) ?? "mainnet";
+  // The any-chain token list only matters for mainnet links (NEAR Intents has no testnet).
+  const loadTokens = useCallback(() => {
+    setTokensErr(null);
+    api
+      .payTokens()
+      .then((r) => {
+        setTokens(r.tokens);
+        setToken((t) => t || (r.tokens.find((x) => x.label === "USDC on base") ?? r.tokens[0])?.assetId || "");
+      })
+      .catch((e) => setTokensErr(e.message));
+  }, []);
+  useEffect(() => {
+    if (asset && net === "mainnet") loadTokens();
+  }, [asset, net, loadTokens]);
   const [agentBusy, setAgentBusy] = useState(false);
   /** Testnet only: the demo AI agent pays through Notara and the spending vault. */
   async function payWithAgent() {
@@ -83,11 +130,18 @@ export function PayPage() {
       setAgentBusy(false);
     }
   }
+  const runCheck = useCallback(() => {
+    if (!merchant || !amount || !asset) return;
+    setCheckErr(null);
+    api
+      .check({ network: net, recipient: merchant, amountDecimal: unitsToDecimal(amount, asset), asset })
+      .then(setCheck)
+      .catch((e) => setCheckErr(e.message));
+  }, [merchant, amount, asset, net]);
   useEffect(() => {
     if (merchant) api.merchant(merchant).then(setProfile).catch(() => {});
-    if (merchant && amount && asset)
-      api.check({ network: net, recipient: merchant, amountDecimal: unitsToDecimal(amount, asset), asset }).then(setCheck).catch((e) => setError(e.message));
-  }, [merchant, amount, asset, net]);
+    runCheck();
+  }, [merchant, runCheck]);
 
   const current: Checkout | undefined = inv?.checkouts?.at(-1);
   const waiting = !!current && (inv?.status === "unpaid" || inv?.status === "processing");
@@ -97,8 +151,16 @@ export function PayPage() {
     return () => clearInterval(t);
   }, [waiting, load]);
 
+  // The refund address is validated when someone tries to continue, not while they type.
+  const [triedAddress, setTriedAddress] = useState(false);
+  const refundMissing = triedAddress && !refundTo.trim();
   async function getAddress(e: FormEvent) {
     e.preventDefault();
+    setTriedAddress(true);
+    if (!refundTo.trim()) {
+      document.getElementById("refund")?.focus();
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -119,10 +181,15 @@ export function PayPage() {
     }
   }
 
-  if (error && !inv)
+  if (loadErr && !inv)
     return (
-      <Banner kind="error">
-        <p>{error}</p>
+      <Banner kind="error" title="This link couldn't be opened">
+        <p>
+          {asSentence(loadErr)} Check that the link is complete. If it is, Notara may be briefly unreachable.{" "}
+          <button type="button" className="btn btn-ghost btn-sm" onClick={load}>
+            Try again
+          </button>
+        </p>
       </Banner>
     );
   if (!inv) return <Skeleton lines={5} />;
@@ -179,8 +246,56 @@ export function PayPage() {
             <h2 style={{ marginBottom: 4 }}>1. Check who's asking</h2>
             <p className="muted small" style={{ margin: 0 }}>Read this before you pay. It's facts about the account, not a promise.</p>
           </div>
-          <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} registry={net === "testnet" ? dep?.registry : dep?.mainnetRegistry} />
+          {checkErr && !check ? (
+            <Banner kind="warn" title="The safety check didn't run">
+              <p>
+                {asSentence(checkErr)} We can't tell you anything about this account right now, which is not the same as it being fine.{" "}
+                <button type="button" className="btn btn-ghost btn-sm" onClick={runCheck}>
+                  Run the check again
+                </button>
+              </p>
+            </Banner>
+          ) : (
+            <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} registry={net === "testnet" ? dep?.registry : dep?.mainnetRegistry} />
+          )}
         </>
+      )}
+
+      {loadErr && (
+        <p className="small muted" role="status">
+          Couldn't refresh this link's status ({loadErr}). What you see may be out of date.{" "}
+          <button type="button" className="btn btn-ghost btn-sm" onClick={load}>
+            Refresh
+          </button>
+        </p>
+      )}
+
+      {unconfirmed && inv.status !== "paid" && (
+        <Banner kind="warn" title="We can't confirm this payment yet">
+          <p>
+            {unconfirmed.why === "report"
+              ? "Your wallet sent the payment, but Notara couldn't record it yet. Don't pay again: check first."
+              : "Your wallet stopped answering, so we don't know whether it sent the payment. Don't pay again until you've checked."}
+          </p>
+          {unconfirmed.txHash && (
+            <p>
+              <a href={`${EXPLORER[net]}/txns/${unconfirmed.txHash}`} target="_blank" rel="noreferrer">
+                See the transaction in the explorer <ExternalLink size={12} aria-hidden />
+              </a>
+            </p>
+          )}
+          <p className="small muted">{unconfirmed.detail}</p>
+          <div className="row" style={{ marginTop: 8 }}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={recheck} disabled={rechecking} aria-busy={rechecking}>
+              {rechecking && <LoaderCircle size={14} className="spin" aria-hidden />} {rechecking ? "Checking…" : "Check payment status"}
+            </button>
+            {!unconfirmed.txHash && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setUnconfirmed(null)}>
+                My wallet shows no payment: let me pay
+              </button>
+            )}
+          </div>
+        </Banner>
       )}
 
       {error && (
@@ -205,6 +320,7 @@ export function PayPage() {
       )}
 
       {showForm &&
+        !unconfirmed &&
         (blocked ? (
           <Banner kind="error" title="Payment refused">
             <p>A serious policy rule applies to this account, so we won't create a payment address.</p>
@@ -262,27 +378,56 @@ export function PayPage() {
             <p className="muted small" style={{ margin: 0 }}>Ethereum, Base, Solana, Bitcoin and more. You get a one-time address; the merchant receives exact USDC on NEAR.</p>
             <div className="field">
               <label htmlFor="token">Token and network you'll pay from</label>
-              <select id="token" className="input" value={token} onChange={(e) => setToken(e.target.value)}>
-                {tokens.map((t) => (
-                  <option key={t.assetId} value={t.assetId}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+              {tokensErr ? (
+                <p className="err" role="alert" style={{ margin: 0 }}>
+                  The list of tokens didn't load ({tokensErr}).{" "}
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={loadTokens}>
+                    Try again
+                  </button>
+                </p>
+              ) : tokens.length === 0 ? (
+                <p className="muted small" role="status" style={{ margin: 0 }}>
+                  Loading the tokens you can pay with…
+                </p>
+              ) : (
+                <select id="token" className="input" value={token} onChange={(e) => setToken(e.target.value)}>
+                  {tokens.map((t) => (
+                    <option key={t.assetId} value={t.assetId}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div className="field">
               <label htmlFor="refund">Your refund address on that network</label>
-              <input id="refund" className="input mono" value={refundTo} onChange={(e) => setRefundTo(e.target.value)} autoComplete="off" spellCheck={false} required />
+              <input
+                id="refund"
+                className="input mono"
+                value={refundTo}
+                onChange={(e) => setRefundTo(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                aria-invalid={refundMissing}
+                aria-describedby={refundMissing ? "refund-err refund-hint" : "refund-hint"}
+              />
+              {refundMissing && (
+                <span className="err" id="refund-err">
+                  Enter an address on that network you control, so a failed or extra payment can come back to you.
+                </span>
+              )}
               {tokens.find((t) => t.assetId === token)?.chainId && hasEvmWallet() && (
                 <button type="button" className="btn btn-ghost" style={{ alignSelf: "start" }} onClick={() => evm(async () => setRefundTo(await evmAccount()))}>
                   Use my browser wallet's address
                 </button>
               )}
-              <span className="hint">If anything goes wrong, or you overpay, the money comes back here. Use a wallet you control, not an exchange deposit address.</span>
+              <span className="hint" id="refund-hint">
+                If anything goes wrong, or you overpay, the money comes back here. Use a wallet you control, not an exchange deposit address.
+              </span>
             </div>
             <div>
-              <button className="btn btn-primary" disabled={busy || !token || !refundTo.trim()}>
-                {busy && <LoaderCircle size={16} className="spin" aria-hidden />} Get payment address
+              <button className="btn btn-primary" disabled={busy || !token} aria-busy={busy}>
+                {busy && <LoaderCircle size={16} className="spin" aria-hidden />} {busy ? "Getting an address…" : "Get payment address"}
               </button>
             </div>
           </form>

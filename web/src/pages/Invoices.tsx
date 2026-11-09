@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Download, LoaderCircle, Plus, RefreshCw, Wallet } from "../components/icons";
 import { QrCode } from "../components/QrCode";
 import { api, type Invoice } from "../lib/api";
-import { ASSETS, formatAsset, linkNetwork, USDC_MAINNET, USDC_TESTNET } from "../lib/format";
+import { ASSETS, asSentence, formatAsset, linkNetwork, USDC_MAINNET, USDC_TESTNET } from "../lib/format";
 import { Banner, CopyButton, MainnetBadge, Skeleton, StepBar, TxLink } from "../components/ui";
-import { NotDeployed, useDeployment, useToast } from "../components/Layout";
+import { NotDeployed, useDeployment } from "../components/Layout";
 import { useWallet } from "../lib/wallet";
 
 export const INVOICE_STATUS: Record<Invoice["status"], { text: string; cls: string }> = {
@@ -26,8 +26,7 @@ export function InvoiceStatus({ s }: { s: Invoice["status"] }) {
 const STEPS = ["Describe it", "Sign it", "Share it"];
 
 export function InvoicesPage() {
-  const { dep } = useDeployment();
-  const toast = useToast();
+  const { dep, error: depErr, reload: reloadDep } = useDeployment();
   const wallet = useWallet();
   const [list, setList] = useState<Invoice[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,32 +38,62 @@ export function InvoicesPage() {
   const [made, setMade] = useState<Invoice | null>(null);
   const [signing, setSigning] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [formErr, setFormErr] = useState<string | null>(null);
   const linkNet = linkNetwork(asset);
   const isLink = !!linkNet;
   const decimals = ASSETS[asset].decimals;
   const amountErr = amount && !new RegExp(`^\\d+(\\.\\d{1,${decimals}})?$`).test(amount) ? `Enter a number like 2.5 (up to ${decimals} decimals)` : null;
   const ready = !!desc.trim() && !!amount && !amountErr;
+  // Patient validation: a field shows its error after it's been left or after a create attempt,
+  // then updates live while it's being corrected.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [tried, setTried] = useState(false);
+  const touch = (f: string) => setTouched((t) => (t[f] ? t : { ...t, [f]: true }));
+  const shows = (f: string) => tried || !!touched[f];
+  const descErr = shows("desc") && !desc.trim() ? "Say what the payment is for. Your customer sees this." : null;
+  const amountShown = shows("amount") ? (!amount ? "Enter an amount." : amountErr) : null;
 
   const [mine, setMine] = useState(true);
   // The public site only lists the connected wallet's own links.
   const owner = (mine || dep?.public) && wallet.accountId ? wallet.accountId : undefined;
+  // The public site needs a wallet to know whose links to show; that's a prompt, not an error.
+  const needsWallet = !!dep?.public && !owner;
+  const reqSeq = useRef(0);
+  const [listLoading, setListLoading] = useState(false);
   const load = useCallback(() => {
-    if (dep?.public && !owner) {
-      setList([]);
+    // Wait for the deployment answer: before it arrives we don't know if this is the public site.
+    if (!dep) return;
+    const seq = ++reqSeq.current;
+    if (needsWallet) {
+      setList(null);
       setError(null);
       return;
     }
+    setListLoading(true);
     api
       .invoices(owner)
       .then((r) => {
+        if (seq !== reqSeq.current) return; // an older request answered late: keep the newer result
         setList(owner ? r.invoices.filter((i) => i.merchant === owner) : r.invoices);
         setError(null);
       })
-      .catch((e) => setError(e.message));
-  }, [owner, dep?.public]);
+      .catch((e) => seq === reqSeq.current && setError(e.message))
+      .finally(() => seq === reqSeq.current && setListLoading(false));
+  }, [owner, dep, needsWallet]);
   useEffect(load, [load]);
 
+  const merchantErr = shows("merchant") && unsigned && linkNet === "mainnet" && !merchant.trim() ? "Enter the mainnet account that should receive the money, like yourname.near." : null;
+  /** On a create attempt: reveal every error and move focus to the first field that needs fixing. */
+  function validate(needMerchant: boolean): boolean {
+    setTried(true);
+    const first = !desc.trim() ? "desc" : !amount || amountErr ? "iamt" : needMerchant && !merchant.trim() ? "merchant" : null;
+    if (first) document.getElementById(first)?.focus();
+    return !first;
+  }
+
   function done(inv: Invoice) {
+    setTried(false);
+    setTouched({});
     setMade(inv);
     setDesc("");
     load();
@@ -73,13 +102,14 @@ export function InvoicesPage() {
 
   /** The merchant's own wallet signs the link, so customers can see it really came from them. */
   async function createSigned() {
-    if (!ready) return;
+    if (!validate(false)) return;
+    setFormErr(null);
     setSigning(true);
     try {
       const { token, accountId } = await wallet.signLink(async (account) => (await api.linkMessage({ merchant: account, description: desc.trim(), amountDecimal: amount, asset })).message, linkNet);
       done(await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset, merchant: accountId, signedToken: token }));
     } catch (e: any) {
-      toast(e.message, "error");
+      setFormErr(e.message); // stays next to the button; what was typed is kept
     } finally {
       setSigning(false);
     }
@@ -87,12 +117,13 @@ export function InvoicesPage() {
 
   async function create(e: FormEvent) {
     e.preventDefault();
-    if (!ready || (linkNet === "mainnet" && !merchant.trim())) return;
+    if (!validate(isLink && linkNet === "mainnet")) return;
+    setFormErr(null);
     setCreating(true);
     try {
       done(await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset, merchant: isLink && merchant.trim() ? merchant.trim() : undefined }));
     } catch (e: any) {
-      toast(e.message, "error");
+      setFormErr(e.message); // stays next to the button; what was typed is kept
     } finally {
       setCreating(false);
     }
@@ -173,8 +204,25 @@ export function InvoicesPage() {
           <div className="form-2">
             <div className="field">
               <label htmlFor="desc">What is it for?</label>
-              <input id="desc" className="input" maxLength={200} placeholder="Logo design, 2 rounds" value={desc} onChange={(e) => setDesc(e.target.value)} />
-              <span className="hint">Your customer sees this{isLink ? ", and your wallet signs it" : ""}.</span>
+              <input
+                id="desc"
+                className="input"
+                maxLength={200}
+                placeholder="Logo design, 2 rounds"
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                onBlur={() => touch("desc")}
+                aria-invalid={!!descErr}
+                aria-describedby={descErr ? "desc-err desc-hint" : "desc-hint"}
+              />
+              {descErr && (
+                <span className="err" id="desc-err">
+                  {descErr}
+                </span>
+              )}
+              <span className="hint" id="desc-hint">
+                Your customer sees this{isLink ? ", and your wallet signs it" : ""}.
+              </span>
             </div>
             <div className="field">
               <label htmlFor="iamt">Amount ({ASSETS[asset].symbol})</label>
@@ -184,21 +232,29 @@ export function InvoicesPage() {
                 inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                aria-invalid={!!amountErr}
-                aria-describedby={amountErr ? "iamt-err" : undefined}
+                onBlur={() => touch("amount")}
+                aria-invalid={!!amountShown}
+                aria-describedby={amountShown ? "iamt-err" : undefined}
               />
-              {amountErr && (
+              {amountShown && (
                 <span className="err" id="iamt-err">
-                  {amountErr}
+                  {amountShown}
                 </span>
               )}
             </div>
           </div>
 
+          {formErr && (
+            <div style={{ marginTop: 16 }}>
+              <Banner kind="error" title="The link wasn't created">
+                <p>{asSentence(formErr)} Everything you typed is still here, so you can try again.</p>
+              </Banner>
+            </div>
+          )}
           {isLink ? (
             <div className="stack" style={{ marginTop: 20 }}>
               <div className="row">
-                <button type="button" className="btn btn-primary btn-lg" onClick={createSigned} disabled={signing || !ready} aria-busy={signing}>
+                <button type="button" className="btn btn-primary btn-lg" onClick={createSigned} disabled={signing} aria-busy={signing}>
                   {signing ? <LoaderCircle size={18} /> : <Wallet size={18} aria-hidden />}{" "}
                   {signing ? "Waiting for your wallet" : walletOnNet ? "Sign and create link" : "Connect wallet, sign and create"}
                 </button>
@@ -212,7 +268,6 @@ export function InvoicesPage() {
                   )}
                 </span>
               </div>
-              {!ready && <p className="hint" style={{ margin: 0 }}>Fill in what it's for and the amount first.</p>}
               {!unsigned ? (
                 <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => setUnsigned(true)}>
                   No wallet that can sign? Create an unsigned link instead
@@ -229,16 +284,24 @@ export function InvoicesPage() {
                       placeholder={linkNet === "testnet" ? "yourname.testnet" : "yourname.near"}
                       value={merchant}
                       onChange={(e) => setMerchant(e.target.value)}
+                      onBlur={() => touch("merchant")}
                       autoComplete="off"
                       spellCheck={false}
+                      aria-invalid={!!merchantErr}
+                      aria-describedby={merchantErr ? "merchant-err" : undefined}
                     />
+                    {merchantErr && (
+                      <span className="err" id="merchant-err">
+                        {merchantErr}
+                      </span>
+                    )}
                     <span className="hint">
                       {linkNet === "testnet" && dep?.accounts ? <>Leave it empty to bill the demo merchant ({dep.accounts.merchant}). </> : null}
                       Customers will see "Not signed", so they can't be sure it's you.
                     </span>
                   </div>
                   <div>
-                    <button className="btn btn-secondary" type="submit" disabled={creating || !ready || (linkNet === "mainnet" && !merchant.trim())} aria-busy={creating}>
+                    <button className="btn btn-secondary" type="submit" disabled={creating} aria-busy={creating}>
                       {creating ? <LoaderCircle size={16} /> : <Plus size={16} aria-hidden />} Create unsigned link
                     </button>
                   </div>
@@ -247,7 +310,7 @@ export function InvoicesPage() {
             </div>
           ) : (
             <div className="row" style={{ marginTop: 20 }}>
-              <button className="btn btn-primary" type="submit" disabled={creating || !ready} aria-busy={creating}>
+              <button className="btn btn-primary" type="submit" disabled={creating} aria-busy={creating}>
                 {creating ? <LoaderCircle size={16} /> : <Plus size={16} aria-hidden />} Create agent demo invoice
               </button>
               <span className="hint">The demo AI agent pays it from its vault in test NEAR, after asking Notara.</span>
@@ -270,40 +333,65 @@ export function InvoicesPage() {
 
       <section>
         <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-          <h2 style={{ margin: 0 }}>{owner ? "Your links" : "All links on this server"}</h2>
+          <h2 style={{ margin: 0 }}>{owner || dep?.public ? "Your links" : "All links on this server"}</h2>
           <div className="row">
             {wallet.accountId && !dep?.public && (
               <label className="row small" style={{ gap: 6 }}>
                 <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} /> Only mine
               </label>
             )}
-            <button className="btn btn-secondary btn-sm" onClick={load}>
-              <RefreshCw size={14} aria-hidden /> Refresh
-            </button>
-            <a className="btn btn-secondary btn-sm" href={`/api/invoices.csv${owner ? `?merchant=${encodeURIComponent(owner)}` : ""}`} download>
-              <Download size={14} aria-hidden /> Export CSV
-            </a>
+            {dep && !needsWallet && (
+              <>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={load} disabled={listLoading} aria-busy={listLoading}>
+                  <RefreshCw size={14} aria-hidden className={listLoading ? "spin" : ""} /> {listLoading ? "Refreshing" : "Refresh"}
+                </button>
+                <a className="btn btn-secondary btn-sm" href={`/api/invoices.csv${owner ? `?merchant=${encodeURIComponent(owner)}` : ""}`} download>
+                  <Download size={14} aria-hidden /> Export CSV
+                </a>
+              </>
+            )}
           </div>
         </div>
-        {error && (
-          <Banner kind="error" title="Your links didn't load">
+        {depErr ? (
+          <Banner kind="error" title="Your links can't load right now">
             <p>
-              {error}{" "}
-              <button className="btn btn-ghost btn-sm" onClick={load}>
+              Notara's server didn't answer, so this page can't fetch your links. They're safe; nothing was changed.{" "}
+              <button type="button" className="btn btn-ghost btn-sm" onClick={reloadDep}>
                 Try again
               </button>
             </p>
           </Banner>
-        )}
-        {list === null ? (
-          !error && <Skeleton />
+        ) : !dep ? (
+          <Skeleton />
+        ) : needsWallet ? (
+          <div className="card flat empty">
+            <p style={{ margin: "0 0 12px" }}>Connect the wallet you made links with to see them here. Links are listed per wallet, so nobody else can browse yours.</p>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => wallet.connect()} disabled={!wallet.ready || wallet.busy}>
+              <Wallet size={15} aria-hidden /> {wallet.ready ? "Connect wallet" : "Loading wallets…"}
+            </button>
+          </div>
+        ) : error && list === null ? (
+          <Banner kind="error" title="Your links didn't load">
+            <p>
+              {error}{" "}
+              <button type="button" className="btn btn-ghost btn-sm" onClick={load}>
+                Try again
+              </button>
+            </p>
+          </Banner>
+        ) : list === null ? (
+          <Skeleton />
         ) : list.length === 0 ? (
           <div className="card flat empty">
-            <p style={{ margin: 0 }}>
-              {dep?.public && !wallet.accountId ? "Connect your wallet to see the links you've made." : "No links yet. Make your first one above, it takes a minute."}
-            </p>
+            <p style={{ margin: 0 }}>No links yet. Make your first one above; it takes a minute.</p>
           </div>
         ) : (
+          <>
+          {error && (
+            <p className="small muted" role="status">
+              Couldn't refresh ({error}). Showing the list as it was. <button type="button" className="btn btn-ghost btn-sm" onClick={load}>Try again</button>
+            </p>
+          )}
           <div className="table-wrap stack-mobile">
             <table>
               <thead>
@@ -362,6 +450,7 @@ export function InvoicesPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
     </>

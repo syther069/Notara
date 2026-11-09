@@ -40,6 +40,14 @@ function parseLog(lines: string[]) {
   return { results, currentGroup };
 }
 
+/** "2026-11-04T09-57-20-302Z.log" -> "the saved run of 4 Nov 2026, 09:57 UTC". */
+function savedLabel(name: string) {
+  const m = name.match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d)-(\d\d)/);
+  if (!m) return `the saved run ${name}`;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
+  return `the saved run of ${d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC`;
+}
+
 function lineClass(l: string) {
   if (/^(PASS|All \d+ checks|\s+REFUSED)/.test(l)) return "l-good";
   if (/^(FAIL|\s+NOT AS EXPECTED|Demo failed)/.test(l)) return "l-bad";
@@ -99,7 +107,10 @@ export function DemoPage() {
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    api.inbox().then((r) => setDoc(r.docs.find((d) => d.name === "invoice-injected.md")?.text ?? null)).catch(() => {});
+    api
+      .inbox()
+      .then((r) => setDoc(r.docs.find((d) => d.name === "invoice-injected.md")?.text ?? ""))
+      .catch(() => setDoc(""));
     api.demoLogs().then((r) => setLogs(r.logs)).catch(() => {});
     api.demoStatus().then((s) => s.running && setError("A demo run started elsewhere is still in progress. Wait for it to finish, then run again.")).catch(() => {});
     return () => esRef.current?.close();
@@ -110,6 +121,8 @@ export function DemoPage() {
   }, [lines, follow]);
 
   const { results, currentGroup } = useMemo(() => parseLog(lines), [lines]);
+  // What this site can do: run the shared demo (local server), only visitor vaults (public site), or nothing yet.
+  const mode: "checking" | "unavailable" | "public" | "local" = !dep ? "checking" : !dep.deployed ? "unavailable" : dep.public ? "public" : "local";
   const passCount = Object.values(results).filter((r) => r.pass).length;
   const total = Object.keys(results).length;
 
@@ -166,12 +179,17 @@ export function DemoPage() {
       <div className="page-head">
         <h1>Watch a prompt-injected agent get stopped</h1>
         <p>
-          An AI accounts-payable agent reads invoices and pays them from a NEAR testnet vault. One invoice hides an instruction to pay an attacker. Every
-          transaction below is real and links to the testnet explorer.
+          An AI accounts-payable agent reads invoices and pays them from a NEAR testnet vault. One invoice hides an instruction to pay an attacker.{" "}
+          {mode === "local"
+            ? "Runs below send real testnet transactions, and each result links to the explorer."
+            : mode === "public"
+              ? "On this site you run it on your own vault, below. The scenario list after that shows what each case is designed to do; it only runs on a local demo server."
+              : null}
         </p>
         <div className="row">
+          <span className="tag testnet">Testnet</span>
           <span className="tag">{agentMode === "llm" || dep?.agentMode === "llm" ? "Agent: real LLM" : "Agent: scripted (obeys the hidden text)"}</span>
-          {dep?.vault && <span className="tag mono">vault {dep.vault}</span>}
+          {dep?.vault && <span className="tag mono">shared demo vault {dep.vault}</span>}
           <Link to="/vault">Open the vault and approvals →</Link>
         </div>
       </div>
@@ -182,7 +200,9 @@ export function DemoPage() {
         <NotDeployed />
       ) : dep.public ? (
         <p className="muted small" style={{ marginBottom: 20 }}>
-          Below is the full scenario list we run locally on our own demo vault, including attacks on the agent's function-call key. On this site, run it live with your own vault above.
+          The list below is the full scenario set for the shared demo vault, including attacks on the agent's function-call key. It signs with demo keys, so
+          it only runs on a local demo server. "Expected" is what each case is designed to do; nothing here has run on this site. To see it happen for real,
+          use your own vault above.
         </p>
       ) : (
         <div className="row" style={{ marginBottom: 20 }}>
@@ -201,6 +221,14 @@ export function DemoPage() {
         <div style={{ marginBottom: 20 }}>
           <Banner kind="error">
             <p>{error}</p>
+          </Banner>
+        </div>
+      )}
+
+      {viewing && !running && (
+        <div style={{ marginBottom: 16 }}>
+          <Banner kind="warn" title="You're looking at a saved run">
+            <p>These results come from {savedLabel(viewing)}, not from a run you just started.</p>
           </Banner>
         </div>
       )}
@@ -224,7 +252,7 @@ export function DemoPage() {
                   <dt>Expected</dt>
                   <dd>{s.expected}</dd>
                   <dt>Actual</dt>
-                  <dd>{r ? r.got : st === "running" ? "running…" : "not run yet"}</dd>
+                  <dd className={r ? "" : "muted"}>{r ? r.got : st === "running" ? "Running…" : mode === "local" ? "Not run yet" : "Not run on this site"}</dd>
                   {r?.evidence && (
                     <>
                       <dt>Evidence</dt>
@@ -260,7 +288,7 @@ export function DemoPage() {
         <div className="stack">
           <div>
             <h3>The injected invoice</h3>
-            {doc ? <InjectedInvoice text={doc} /> : <div className="doc muted">Loading…</div>}
+            {doc === null ? <div className="doc muted">Loading…</div> : doc ? <InjectedInvoice text={doc} /> : <div className="doc muted">The sample invoice couldn't be loaded.</div>}
           </div>
           <div className="console">
             <div className="console-head">
@@ -286,7 +314,9 @@ export function DemoPage() {
             </div>
             <div className="console-body" ref={consoleRef} aria-live="polite" tabIndex={0}>
               {lines.length === 0 ? (
-                <span className="muted">Press "Run all scenarios" or open a saved run below.</span>
+                <span className="muted">
+                  {mode === "local" ? 'Press "Run all scenarios" or open a saved run below.' : "No runs of the shared demo vault are available on this site."}
+                </span>
               ) : (
                 lines.map((l, i) => (
                   <div key={i} className={`line ${lineClass(l)}`}>

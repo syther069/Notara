@@ -17,10 +17,18 @@ export function SendPage() {
   const { dep } = useDeployment();
   // Off only when the server says so; an unknown answer (still loading) leaves the button alone.
   const mainnetOff = network === "mainnet" && dep?.mainnetSend === false;
-  const amountErr = amount &&!/^\d+(\.\d{1,6})?$/.test(amount) ? "Enter a number like 5 or 2.5" : null;
+  const amountErr = !amount ? "Enter an amount." : !/^\d+(\.\d{1,6})?$/.test(amount) ? "Enter a number like 5 or 2.5" : null;
+  // Shown after the field is left or a create attempt, then updated live while it's fixed.
+  const [amountTouched, setAmountTouched] = useState(false);
+  const amountShown = amountTouched ? amountErr : null;
 
   async function create(e: FormEvent) {
     e.preventDefault();
+    if (amountErr) {
+      setAmountTouched(true);
+      document.getElementById("samt")?.focus();
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -52,8 +60,24 @@ export function SendPage() {
           <StepBar steps={["Create it", "Fund it", "Share it"]} current={0} />
           <div className="field">
             <label htmlFor="samt">Amount (USDC)</label>
-            <input id="samt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
-            {amountErr ? <span className="err">{amountErr}</span> : <span className="hint">Up to 25 USDC per link in this prototype.</span>}
+            <input
+              id="samt"
+              className="input"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              onBlur={() => setAmountTouched(true)}
+              aria-invalid={!!amountShown}
+              aria-describedby={amountShown ? "samt-err samt-hint" : "samt-hint"}
+            />
+            {amountShown && (
+              <span className="err" id="samt-err">
+                {amountShown}
+              </span>
+            )}
+            <span className="hint" id="samt-hint">
+              Between 1 and 25 USDC per link in this prototype.
+            </span>
           </div>
           <div className="field">
             <label id="snet">Money</label>
@@ -80,7 +104,7 @@ export function SendPage() {
             <input id="snote" className="input" maxLength={120} placeholder="Happy birthday!" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
           <div>
-            <button className="btn btn-primary" disabled={busy || !!amountErr || !amount || mainnetOff}>
+            <button className="btn btn-primary" disabled={busy || mainnetOff} aria-busy={busy}>
               {busy ? <LoaderCircle size={16} className="spin" aria-hidden /> : <SendIcon size={16} aria-hidden />} Create send link
             </button>
           </div>

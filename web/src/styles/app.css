@@ -161,12 +161,24 @@ a.card:hover { border-color: var(--border-strong); transform: translateY(-2px); 
 .field label, .field > .label { font-size: 13.5px; font-weight: 700; color: var(--text); }
 .input, select.input {
   min-height: 46px; padding: 0 14px; border-radius: var(--r-ctl); border: 1px solid var(--border-strong); background: var(--surface);
-  color: var(--text); font: 500 15.5px var(--font-body); width: 100%; transition: border-color 0.15s, box-shadow 0.15s;
+  color: var(--text); font: 500 var(--fs-input) var(--font-body); width: 100%; transition: border-color 0.15s, box-shadow 0.15s;
 }
 textarea.input { padding: 12px 14px; line-height: 1.5; min-height: 96px; }
 .input::placeholder { color: color-mix(in srgb, var(--text-muted) 75%, transparent); }
 .input:hover { border-color: var(--green); }
 .input.mono { font-family: var(--font-mono); font-size: 14px; }
+/* Touch screens: field text at 16px (monospace included) and comfortable control heights. */
+@media (pointer: coarse), (max-width: 640px) {
+  .input, select.input, .input.mono, textarea.input { font-size: var(--fs-input-touch); }
+}
+@media (pointer: coarse) {
+  .btn-sm { min-height: var(--tap-comfort); }
+  .icon-btn { width: var(--tap-comfort); height: var(--tap-comfort); }
+}
+/* The field focus ring is a box-shadow, which forced-colors mode removes: give it a real outline there. */
+@media (forced-colors: active) {
+  html .input:focus { outline: 2px solid CanvasText; outline-offset: 1px; }
+}
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 55%, transparent); }
 .input[aria-invalid="true"] { border-color: var(--block); }
 .input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px var(--block-bg); }

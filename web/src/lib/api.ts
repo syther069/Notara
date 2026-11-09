@@ -172,14 +172,15 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(path, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
   } catch {
-    throw new ApiError(0, "Can't reach the backend. Start it with `npm run serve` in the project folder.");
+    throw new ApiError(0, "Couldn't reach Notara's server. Check your connection");
   }
   const text = await res.text();
   let body: any;
   try {
     body = text ? JSON.parse(text) : {};
   } catch {
-    throw new ApiError(res.status, res.status >= 500 || res.status === 404 ? "The backend isn't responding. Start it with `npm run serve`." : text.slice(0, 200));
+    // Visitors see this text: plain words, no terminal commands (developer setup lives in the local-only details).
+    throw new ApiError(res.status, res.status >= 500 || res.status === 404 ? "Notara's server didn't respond" : text.slice(0, 200));
   }
   if (!res.ok) throw new ApiError(res.status, body.error ?? `Request failed (${res.status})`);
   return body as T;

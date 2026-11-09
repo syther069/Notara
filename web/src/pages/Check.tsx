@@ -25,6 +25,13 @@ export function CheckPage() {
   const accountErr = recipient && !ACCOUNT_RE.test(recipient.trim()) ? "Use lowercase letters, digits, - _ and dots (e.g. alice.testnet)" : null;
   const amountErr = amount && !new RegExp(`^\\d+(\\.\\d{1,${maxDecimals}})?$`).test(amount) ? "Enter a number like 0.25" : null;
 
+  // Errors appear once a field is left or a check is attempted, then update live while it's fixed.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [tried, setTried] = useState(false);
+  const shows = (f: string) => tried || !!touched[f];
+  const acctShown = shows("acct") ? (!recipient.trim() ? "Enter the NEAR account you want to check." : accountErr) : null;
+  const amtShown = shows("amt") ? (!amount ? "Enter an amount." : amountErr) : null;
+
   async function run(r = recipient, a = amount, n = network, c: "NEAR" | "USDC" = n === "mainnet" ? "NEAR" : currency) {
     setError(null);
     setRes(null);
@@ -47,7 +54,9 @@ export function CheckPage() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!recipient.trim() || accountErr || amountErr) return;
+    setTried(true);
+    const first = !recipient.trim() || accountErr ? "acct" : !amount || amountErr ? "amt" : null;
+    if (first) return document.getElementById(first)?.focus();
     run();
   };
 
@@ -80,16 +89,31 @@ export function CheckPage() {
               placeholder="alice.testnet"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              aria-invalid={!!accountErr}
+              onBlur={() => setTouched((t) => ({ ...t, acct: true }))}
+              aria-invalid={!!acctShown}
+              aria-describedby={acctShown ? "acct-err" : undefined}
               autoComplete="off"
               spellCheck={false}
             />
-            {accountErr && <span className="err">{accountErr}</span>}
+            {acctShown && (
+              <span className="err" id="acct-err">
+                {acctShown}
+              </span>
+            )}
           </div>
           <div className="field">
             <label htmlFor="amt">Amount</label>
             <div className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
-              <input id="amt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
+              <input
+                id="amt"
+                className="input"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, amt: true }))}
+                aria-invalid={!!amtShown}
+                aria-describedby={amtShown ? "amt-err" : network === "mainnet" ? "amt-hint" : undefined}
+              />
               <select
                 className="input"
                 style={{ width: "auto" }}
@@ -102,7 +126,16 @@ export function CheckPage() {
                 <option value="USDC">USDC</option>
               </select>
             </div>
-            {amountErr && <span className="err">{amountErr}</span>}
+            {amtShown && (
+              <span className="err" id="amt-err">
+                {amtShown}
+              </span>
+            )}
+            {network === "mainnet" && (
+              <span className="hint" id="amt-hint">
+                Mainnet checks use NEAR amounts, so the currency is fixed.
+              </span>
+            )}
           </div>
           <div className="field">
             <label id="net-label">Network</label>
@@ -115,7 +148,7 @@ export function CheckPage() {
               </button>
             </div>
           </div>
-          <button className="btn btn-primary" type="submit" disabled={loading || !recipient.trim() || !!accountErr || !!amountErr}>
+          <button className="btn btn-primary" type="submit" disabled={loading} aria-busy={loading}>
             {loading ? <LoaderCircle size={16} className="spin" aria-hidden /> : <Search size={16} aria-hidden />} Check
           </button>
         </div>

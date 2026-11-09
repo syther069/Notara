@@ -37,6 +37,8 @@ type WalletState = {
   /** Opens the wallet picker for that network (testnet by default), or goes straight to one wallet. */
   connect: (walletId?: string, network?: Net) => Promise<void>;
   disconnect: () => Promise<void>;
+  /** Hides the last wallet error (after the person has read it). */
+  clearError: () => void;
   /**
    * Sign a payment link with a NEAR mainnet wallet (NEP-413). `message` gets the signer's account and
    * returns the exact text to sign. Returns the token for the backend and the signer.
@@ -59,6 +61,7 @@ const Ctx = createContext<WalletState>({
   error: null,
   connect: async () => {},
   disconnect: async () => {},
+  clearError: () => {},
   signLink: async () => {
     throw new Error("Wallet not ready");
   },
@@ -105,7 +108,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         connectorRef.current = connector;
         connector.on("wallet:signIn", (t) => setAccountId(t.accounts[0]?.accountId ?? null));
         connector.on("wallet:signOut", () => setAccountId(null));
-        await connector.whenManifestLoaded;
+        // The wallet list is fetched from a CDN. If it never arrives, say so instead of leaving every
+        // Connect button disabled with no reason.
+        await Promise.race([
+          connector.whenManifestLoaded,
+          new Promise((_, reject) => setTimeout(() => reject(new Error("the list of wallets didn't load (network or ad blocker?)")), 15_000)),
+        ]);
         // Restore a previous session, if any.
         const existing = await connector.getConnectedWallet().catch(() => null);
         const restored = existing?.accounts?.[0]?.accountId;
@@ -122,7 +130,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           setAccountId(restored);
         }
       } catch (e: any) {
-        if (!cancelled) setError(`Wallet connector failed to load: ${e?.message ?? e}`);
+        if (!cancelled) setError(`Wallets couldn't load: ${e?.message ?? e}. Reload the page to try again.`);
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -255,9 +263,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [accountId, switchTo],
   );
 
+  const clearError = useCallback(() => setError(null), []);
   const value = useMemo(
-    () => ({ accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc, sendNear }),
-    [accountId, network, ready, busy, error, connect, disconnect, signLink, call, payUsdc, sendNear],
+    () => ({ accountId, network, ready, busy, error, connect, disconnect, clearError, signLink, call, payUsdc, sendNear }),
+    [accountId, network, ready, busy, error, connect, disconnect, clearError, signLink, call, payUsdc, sendNear],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -270,13 +279,16 @@ const TRY_OTHER = "On testnet, Intear Wallet works well.";
  * Some wallets never answer: Nightly on testnet loses a failed send inside its extension, so the promise
  * never settles and the button would spin forever. Stop waiting after 2 minutes and say what to do.
  */
+/** The wallet never answered: the outcome is unknown (it may still have sent the transaction). */
+export class WalletTimeoutError extends Error {}
+
 function walletAnswer<T>(p: Promise<T>, sends: boolean): Promise<T> {
   let t: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
     t = setTimeout(
       () =>
         reject(
-          new Error(
+          new WalletTimeoutError(
             sends
               ? `Your wallet didn't answer within 2 minutes. Check your wallet's activity before you try again, in case it went through. ${TRY_OTHER}`
               : `Your wallet didn't answer within 2 minutes. If it shows a request, approve or reject it there, then try again. ${TRY_OTHER}`,
@@ -311,7 +323,7 @@ function failureReason(failure: unknown, net: Net, fallback: string): string {
 }
 
 /** The payer's token balance, or null if it can't be read (then the wallet and chain decide). */
-async function ftBalance(net: Net, token: string, account: string): Promise<bigint | null> {
+export async function ftBalance(net: Net, token: string, account: string): Promise<bigint | null> {
   try {
     const args = btoa(JSON.stringify({ account_id: account }));
     const r = await fetch(RPC[net], {

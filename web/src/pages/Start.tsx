@@ -1,59 +1,120 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { api, type Invoice, type MyVault } from "../lib/api";
-import { useWallet } from "../lib/wallet";
+import { ftBalance, useWallet } from "../lib/wallet";
+import { formatAsset, USDC_TESTNET } from "../lib/format";
 import { ArrowRight, ExternalLink, Wallet } from "../components/icons";
 
+/**
+ * How we know a step is done. "seen": real data shows it (wallet, balance, your links, your vault).
+ * "ticked": the visitor says so, because the site can't observe it. "unknown": we couldn't check.
+ */
+type Proof = "seen" | "ticked" | "todo" | "unknown";
+
 interface Step {
+  id: string;
   title: string;
   body: ReactNode;
-  /** true/false when we can see it from real data; undefined when we can't check it. */
-  done?: boolean;
+  proof: Proof;
+  /** Steps the site can't observe can be ticked by hand. */
+  manual?: boolean;
   actions: ReactNode;
 }
 
+/** Hand-ticked steps are remembered per account in this browser only. */
+const tickKey = (account: string, id: string) => `start-tick:${account}:${id}`;
+const readTick = (account: string | null, id: string) => {
+  if (!account) return false;
+  try {
+    return localStorage.getItem(tickKey(account, id)) === "1";
+  } catch {
+    return false;
+  }
+};
+
 /**
  * The guided tour for judges and first-time visitors: every flow on free testnet money, in order.
- * A step is marked done only when real data shows it (wallet connected, your links, your vault).
+ * A step counts as done only when real data shows it, or when the visitor ticks a step we can't see.
  */
 export function StartPage() {
   const w = useWallet();
   const onTestnet = !!w.accountId && w.network === "testnet";
+  const account = onTestnet ? w.accountId : null;
   const [links, setLinks] = useState<Invoice[] | null>(null);
   const [vault, setVault] = useState<MyVault | null>(null);
+  const [usdc, setUsdc] = useState<bigint | null | undefined>(undefined); // undefined: checking, null: couldn't check
+  const [checkErr, setCheckErr] = useState<string | null>(null);
+  const [ticks, setTicks] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     setLinks(null);
     setVault(null);
-    if (!onTestnet) return;
-    api.invoices(w.accountId!).then((r) => setLinks(r.invoices.filter((i) => i.merchant === w.accountId && i.kind !== "send"))).catch(() => setLinks([]));
-    api.myVault(w.accountId!).then(setVault).catch(() => {});
-  }, [onTestnet, w.accountId]);
+    setUsdc(undefined);
+    setCheckErr(null);
+    if (!account) return;
+    api
+      .invoices(account)
+      .then((r) => setLinks(r.invoices.filter((i) => i.merchant === account && i.kind !== "send")))
+      .catch((e) => setCheckErr(e.message));
+    api
+      .myVault(account)
+      .then(setVault)
+      .catch((e) => setCheckErr(e.message));
+    ftBalance("testnet", USDC_TESTNET, account).then(setUsdc);
+  }, [account]);
+  useEffect(refresh, [refresh]);
+  useEffect(() => setTicks({ send: readTick(account, "send") }), [account]);
 
+  const tick = (id: string, on: boolean) => {
+    if (!account) return;
+    setTicks((t) => ({ ...t, [id]: on }));
+    try {
+      localStorage.setItem(tickKey(account, id), on ? "1" : "0");
+    } catch {}
+  };
+
+  // Before a wallet is connected (or while a lookup failed) we can't say a step isn't done.
+  const known = (done: boolean | undefined): Proof => (!account || done === undefined ? "unknown" : done ? "seen" : "todo");
   const unpaid = links?.find((l) => l.status === "unpaid");
   const steps: Step[] = [
     {
+      id: "wallet",
       title: "Connect a NEAR testnet wallet",
-      done: onTestnet,
+      proof: onTestnet ? "seen" : "todo",
       body: w.accountId && !onTestnet ? (
-        <>You're connected on mainnet as <span className="mono">{w.accountId}</span>. This tour uses testnet, so switch networks.</>
+        <>
+          You're connected on mainnet as <span className="mono">{w.accountId}</span>. This tour uses testnet, so switch networks.
+        </>
       ) : onTestnet ? (
-        <>Connected as <span className="mono">{w.accountId}</span>.</>
+        <>
+          Connected as <span className="mono">{w.accountId}</span>.
+        </>
       ) : (
         <>No wallet yet? Intear Wallet (wallet.intear.tech) creates a free testnet account in a minute.</>
       ),
       actions: !onTestnet && (
-        <button className="btn btn-primary btn-sm" onClick={() => w.connect(undefined, "testnet")} disabled={!w.ready || w.busy}>
-          <Wallet size={15} aria-hidden /> {w.accountId ? "Switch to testnet" : "Connect testnet wallet"}
-        </button>
+        <>
+          <button className="btn btn-primary btn-sm" onClick={() => w.connect(undefined, "testnet")} disabled={!w.ready || w.busy} aria-describedby="wallet-why">
+            <Wallet size={15} aria-hidden /> {w.accountId ? "Switch to testnet" : "Connect testnet wallet"}
+          </button>
+          {(!w.ready || w.busy) && (
+            <span className="small muted" id="wallet-why" role="status">
+              {w.busy ? "Waiting for your wallet…" : "Loading the list of wallets…"}
+            </span>
+          )}
+        </>
       ),
     },
     {
+      id: "funds",
       title: "Get free test money",
+      proof: !account ? "unknown" : usdc === undefined || usdc === null ? "unknown" : usdc > 0n ? "seen" : "todo",
       body: (
         <>
-          Testnet NEAR for gas comes from your wallet's faucet. Testnet USDC comes from Circle's faucet: pick <strong>NEAR testnet</strong> and paste your account.
-          We can't see your balance here, so tick this one yourself.
+          Testnet NEAR for gas comes from your wallet's faucet. Test USDC comes from Circle's faucet: pick <strong>NEAR testnet</strong> and paste your account.{" "}
+          {account && usdc !== undefined && (
+            <strong>{usdc === null ? "We couldn't read your test USDC balance just now." : `You have ${formatAsset(usdc.toString(), USDC_TESTNET)}.`}</strong>
+          )}
         </>
       ),
       actions: (
@@ -63,9 +124,16 @@ export function StartPage() {
       ),
     },
     {
+      id: "link",
       title: "Create a payment link signed by your wallet",
-      done: links ? links.length > 0 : undefined,
-      body: links?.length ? <>You have {links.length} link{links.length > 1 ? "s" : ""}.</> : <>Ask for a few test USDC. Your wallet signs who gets paid, how much and for what.</>,
+      proof: known(links ? links.length > 0 : undefined),
+      body: links?.length ? (
+        <>
+          You have {links.length} link{links.length > 1 ? "s" : ""}.
+        </>
+      ) : (
+        <>Ask for a few test USDC. Your wallet signs who gets paid, how much and for what.</>
+      ),
       actions: (
         <Link className="btn btn-secondary btn-sm" to="/invoices">
           Get paid <ArrowRight size={14} className="arrow" aria-hidden />
@@ -73,9 +141,10 @@ export function StartPage() {
       ),
     },
     {
-      title: "Pay a link as a customer",
-      done: links ? links.some((l) => l.status === "paid") : undefined,
-      body: <>Open your link the way a customer would: see the safety check, then pay with your wallet. For a real test, use a second account.</>,
+      id: "pay",
+      title: "Get one of your links paid",
+      proof: known(links ? links.some((l) => l.status === "paid") : undefined),
+      body: <>Open your link as a customer would: read the safety check, then pay. A second testnet account makes this a real test.</>,
       actions: (
         <Link className="btn btn-secondary btn-sm" to={unpaid ? `/pay/${unpaid.id}` : "/invoices"}>
           {unpaid ? "Open my unpaid link" : "Create one first"} <ArrowRight size={14} className="arrow" aria-hidden />
@@ -83,8 +152,16 @@ export function StartPage() {
       ),
     },
     {
+      id: "send",
       title: "Send money with a link",
-      body: <>Fund a link with test USDC, then open it in another browser and claim it, even into a brand-new name.testnet account. Gas is covered.</>,
+      manual: true,
+      proof: !account ? "unknown" : ticks.send ? "ticked" : "todo",
+      body: (
+        <>
+          Fund a send link with test USDC, then open it in another browser and claim it. Send links belong to a one-time account, not your wallet, so we
+          can't see this one for you: tick it when you've done it.
+        </>
+      ),
       actions: (
         <Link className="btn btn-secondary btn-sm" to="/send">
           Send by link <ArrowRight size={14} className="arrow" aria-hidden />
@@ -92,8 +169,9 @@ export function StartPage() {
       ),
     },
     {
-      title: "Let an AI agent try to pay from your own vault",
-      done: vault ? vault.exists : undefined,
+      id: "vault",
+      title: "Create your own AI-agent vault",
+      proof: known(vault ? vault.exists : undefined),
       body: vault?.exists ? (
         <>Your vault exists. Run the four scenarios: a normal bill, a prompt-injected bill, an unknown shop and a hacked agent.</>
       ) : (
@@ -107,67 +185,67 @@ export function StartPage() {
     },
   ];
 
-  const [ticked, setTicked] = useState(() => {
-    try {
-      return localStorage.getItem("start-faucet") === "1";
-    } catch {
-      return false;
-    }
-  });
-  steps[1].done = ticked;
-  steps[1].actions = (
-    <>
-      {steps[1].actions}
-      <button
-        className="btn btn-ghost btn-sm"
-        aria-pressed={ticked}
-        onClick={() => {
-          setTicked(!ticked);
-          try {
-            localStorage.setItem("start-faucet", ticked ? "0" : "1");
-          } catch {}
-        }}
-      >
-        {ticked ? "Undo" : "I have test money"}
-      </button>
-    </>
-  );
-  const doneCount = steps.filter((s) => s.done).length;
+  const done = steps.filter((s) => s.proof === "seen" || s.proof === "ticked").length;
+  const tickedCount = steps.filter((s) => s.proof === "ticked").length;
 
   return (
     <div style={{ maxWidth: 880 }}>
       <div className="page-head">
         <h1>Try every flow on testnet</h1>
         <p>
-          About 10 minutes, free test money only. Steps tick themselves off when we can see them on-chain or in your links. Paying from another chain is the one
-          thing testnet can't do, because NEAR Intents runs only on mainnet.
+          About 10 minutes, free test money only. Paying from another chain is the one thing testnet can't do, because NEAR Intents runs only on mainnet.
         </p>
         <p className="small" style={{ fontWeight: 700, color: "var(--text)" }} aria-live="polite">
-          {doneCount} of {steps.length} done
+          {done} of {steps.length} done
+          {tickedCount > 0 && <span className="muted" style={{ fontWeight: 500 }}> ({tickedCount} ticked by you)</span>}
         </p>
-        <div className="progress" style={{ maxWidth: 320 }}>
-          <span style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+        <div className="progress" style={{ maxWidth: 320 }} role="progressbar" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={done} aria-label="Tour progress">
+          <span style={{ width: `${(done / steps.length) * 100}%` }} />
         </div>
+        <p className="small muted" style={{ marginTop: 10 }}>
+          {account
+            ? "Steps tick themselves when we can see them on testnet or in your links. Ticks you add are kept in this browser only."
+            : "Connect a testnet wallet so we can check your progress. Until then, nothing below is marked done."}
+        </p>
+        {checkErr && (
+          <p className="small" role="status">
+            We couldn't check some steps ({checkErr}), so they show as unknown, not undone.{" "}
+            <button type="button" className="btn btn-ghost btn-sm" onClick={refresh}>
+              Check again
+            </button>
+          </p>
+        )}
       </div>
       <ol className="guide">
         {steps.map((s, i) => (
-          <li key={s.title} className={s.done ? "done" : ""}>
+          <li key={s.id} className={s.proof === "seen" || s.proof === "ticked" ? "done" : ""}>
             <span className="mark" aria-hidden>
-              {s.done ? "✓" : i + 1}
+              {s.proof === "seen" || s.proof === "ticked" ? "✓" : i + 1}
             </span>
             <div>
               <h3>
                 {s.title}
-                {s.done && <span className="sr-only"> (done)</span>}
+                <span className="sr-only">
+                  {s.proof === "seen" ? " (done)" : s.proof === "ticked" ? " (ticked by you)" : s.proof === "unknown" ? " (not checked)" : " (to do)"}
+                </span>
               </h3>
               <p>{s.body}</p>
+              {s.proof === "ticked" && <p className="small muted">Ticked by you. We can't confirm this one.</p>}
+              {s.proof === "unknown" && account && <p className="small muted">Not checked yet.</p>}
             </div>
-            <div className="acts">{s.actions}</div>
+            <div className="acts">
+              {s.actions}
+              {s.manual && account && (
+                <button type="button" className="btn btn-ghost btn-sm" aria-pressed={!!ticks[s.id]} onClick={() => tick(s.id, !ticks[s.id])}>
+                  {ticks[s.id] ? "Undo my tick" : "I've done this"}
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ol>
       <p className="small muted" style={{ marginTop: 20 }}>
-        Want to read first? <Link to="/about">How it works and its limits</Link> · <Link to="/check">Check any NEAR account</Link> (mainnet, read-only).
+        Want to read first? <Link to="/about">How it works and its limits</Link> · <Link to="/check">Check any NEAR account</Link> (read-only).
       </p>
     </div>
   );

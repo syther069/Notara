@@ -78,3 +78,6 @@ export const usdcFor = (net: "mainnet" | "testnet") => (net === "mainnet" ? USDC
 export const EXPLORER = { mainnet: "https://nearblocks.io", testnet: "https://testnet.nearblocks.io" } as const;
 /** Named accounts: .near on mainnet, .testnet on testnet. */
 export const netOfAccount = (id: string): "mainnet" | "testnet" => (id.endsWith(".testnet") ? "testnet" : "mainnet");
+
+/** Ends a message with exactly one full stop, whether or not the server already added one. */
+export const asSentence = (s: string) => s.replace(/[.\s]+$/, "") + ".";

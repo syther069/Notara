@@ -5,7 +5,7 @@ import { EVM_WALLET_ID, useWallet } from "../lib/wallet";
 import { api, type Payment, type VaultSummary } from "../lib/api";
 import { formatAsset, nearAmount, timeAgo, unitsToDecimal } from "../lib/format";
 import { AccountLink, Badge, Banner, Skeleton } from "../components/ui";
-import { NotDeployed, useDeployment, useToast } from "../components/Layout";
+import { NotDeployed, isLocalDev, useDeployment, useToast } from "../components/Layout";
 
 const STATUS_TEXT: Record<Payment["status"], string> = {
   PendingApproval: "Waiting for approval",
@@ -233,7 +233,17 @@ export function VaultPage() {
           </div>
         ) : (
           <p className="muted small" style={{ marginTop: 12 }}>
-            {vaultParam ? "This vault pays in test NEAR." : <>USDC isn't enabled on this vault yet. Run <code>npm run owner -- enable-usdc</code>.</>}
+            {vaultParam ? "This vault pays in test NEAR." : (
+              <>
+                USDC isn't enabled on this vault yet, so it pays in test NEAR only.
+                {isLocalDev() && (
+                  <>
+                    {" "}
+                    Owner: run <code>npm run owner -- enable-usdc</code>.
+                  </>
+                )}
+              </>
+            )}
           </p>
         ))}
       {summary?.usdc.enabled && summary.usdc.balance === "0" && (
@@ -244,8 +254,14 @@ export function VaultPage() {
               <a href="https://faucet.circle.com" target="_blank" rel="noreferrer">
                 faucet.circle.com
               </a>{" "}
-              (network: NEAR testnet, address: <span className="mono">{summary.config.owner}</span>), then run{" "}
-              <code>npm run owner -- fund-usdc 15</code>. Until then, USDC payments fail safely and the vault releases the cap.
+              (network: NEAR testnet, address: <span className="mono">{summary.config.owner}</span>) and send it to the vault.
+              {isLocalDev() && (
+                <>
+                  {" "}
+                  Locally: <code>npm run owner -- fund-usdc 15</code>.
+                </>
+              )}{" "}
+              Until then, USDC payments fail safely and the vault releases the cap.
             </p>
           </Banner>
         </div>

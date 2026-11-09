@@ -65,6 +65,12 @@
   --font-body: "Manrope", "Manrope Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Text typed into fields. 16px on touch screens: smaller input text makes iOS Safari zoom in on focus.
+     A readability choice, not a WCAG requirement. */
+  --fs-input: 15.5px;
+  --fs-input-touch: 16px;
+  /* Comfortable size for primary controls on touch screens (WCAG 2.2 AA's own floor is 24px). */
+  --tap-comfort: 44px;
 
   /* shape: one radius scale. Inner radius = outer radius - padding (min 6). */
   --r-xs: 6px;

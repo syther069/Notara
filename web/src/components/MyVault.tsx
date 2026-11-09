@@ -4,6 +4,7 @@ import { ExternalLink, LoaderCircle, Play, Wallet } from "./icons";
 import { api, type AgentRun, type MyVault as MyVaultInfo } from "../lib/api";
 import { useWallet } from "../lib/wallet";
 import { Banner } from "./ui";
+import { asSentence } from "../lib/format";
 
 const TX = (h: string) => `https://testnet.nearblocks.io/txns/${h}`;
 const near = (yocto: string) => (Number(BigInt(yocto) / 10n ** 20n) / 10_000).toString();
@@ -68,11 +69,11 @@ export function MyVault() {
 
       {!w.accountId ? (
         <div>
-          <button className="btn btn-primary" onClick={() => w.connect(undefined, "testnet")} disabled={w.busy}>
+          <button className="btn btn-primary" onClick={() => w.connect(undefined, "testnet")} disabled={!w.ready || w.busy}>
             <Wallet size={16} aria-hidden /> Connect a NEAR testnet wallet
           </button>
-          <p className="hint" style={{ marginTop: 6 }}>
-            No testnet wallet yet? Intear Wallet (wallet.intear.tech) creates a free testnet account with test NEAR.
+          <p className="hint" style={{ marginTop: 6 }} role="status">
+            {!w.ready ? "Loading the list of wallets… " : null}No testnet wallet yet? Intear Wallet (wallet.intear.tech) creates a free testnet account with test NEAR.
           </p>
         </div>
       ) : w.network !== "testnet" ? (
@@ -85,7 +86,18 @@ export function MyVault() {
           </p>
         </div>
       ) : !info ? (
-        <p className="muted">Looking for your vault…</p>
+        error ? (
+          <Banner kind="error" title="We couldn't look up your vault">
+            <p>
+              {asSentence(error)} Nothing was created or changed.{" "}
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setError(null); load(); }}>
+                Try again
+              </button>
+            </p>
+          </Banner>
+        ) : (
+          <p className="muted" role="status">Looking for your vault…</p>
+        )
       ) : !info.exists ? (
         <div>
           <button className="btn btn-primary" disabled={!!busy} onClick={() => step("create", async () => setInfo({ ...(await api.createMyVault(w.accountId!, await proof())), message: info.message }))}>
@@ -117,6 +129,7 @@ export function MyVault() {
               <span className="hint">The agent pays from this. You can withdraw it again from your vault.</span>
             </div>
           )}
+          {!funded && <p className="small muted" style={{ margin: 0 }}>The scenarios pay from your vault, so they unlock once it holds at least 0.3 test NEAR.</p>}
           <div className="stack" style={{ gap: 10 }}>
             {SCENARIOS.map((s) => {
               const r = runs[s.key];
@@ -125,7 +138,7 @@ export function MyVault() {
                   <div style={{ flex: 1, minWidth: 220 }}>
                     <strong>{s.title}</strong>
                     <div className="muted small">Expected: {s.expect}</div>
-                    {r && <RunResult run={r} vault={info.vault} />}
+                    {r ? <RunResult run={r} vault={info.vault} /> : <div className="muted small">Actual: not run yet</div>}
                   </div>
                   <button
                     className="btn btn-secondary btn-sm"
@@ -144,7 +157,7 @@ export function MyVault() {
           </div>
         </>
       )}
-      {error && (
+      {error && info && (
         <Banner kind="error">
           <p>{error}</p>
         </Banner>

@@ -9,7 +9,7 @@ import { DecisionCard, ReasonList } from "./CheckResult";
 import { NetworkTag } from "./ui";
 
 const HEADLINE: Record<Decision, { text: string; sub: string }> = {
-  ALLOW: { text: "Looks OK", sub: "We found no problems with this account." },
+  ALLOW: { text: "No problems found", sub: "None of our checks found a problem with this account. That isn't a guarantee." },
   WARN: { text: "Be careful", sub: "Check the points below before you pay." },
   BLOCK: { text: "Blocked", sub: "A serious problem was found. Don't pay this account." },
 };
@@ -71,9 +71,16 @@ export function SafetyPanel({ check, merchant, signature, signedBy, registry }: 
         {h.sub}
       </p>
       <ul className="reasons" style={{ marginTop: 8 }}>
-        {signature === "valid" && <Fact kind="good">This request was signed by {signedBy}'s own wallet, so the amount and recipient are what they approved.</Fact>}
+        {signature === "valid" && (
+          <Fact kind="good">
+            This request was signed by {signedBy}'s own wallet, so the amount, recipient and description are what they approved. It shows who is asking,
+            not that they'll deliver.
+          </Fact>
+        )}
         {signature === "invalid" && <Fact kind="bad">This request's signature no longer checks out. It may have been changed, or the key was removed.</Fact>}
-        {signature === "none" && <Fact kind="warn">This request wasn't signed by the merchant's wallet, so we can't confirm it came from them.</Fact>}
+        {signature === "none" && (
+          <Fact kind="warn">This request wasn't signed by the merchant's wallet, so anyone could have made it. Confirm with them another way before paying.</Fact>
+        )}
         {merchant?.websiteVerified && (
           <Fact kind="good">
             {r.request.recipient} proved it owns <strong>{merchant.website}</strong>. That proves ownership, not honesty.
