@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import { Check, LoaderCircle, RefreshCw, Wallet, X } from "lucide-react";
+import { Check, LoaderCircle, RefreshCw, Wallet, X } from "../components/icons";
 import { EVM_WALLET_ID, useWallet } from "../lib/wallet";
 import { api, type Payment, type VaultSummary } from "../lib/api";
 import { formatAsset, nearAmount, timeAgo, unitsToDecimal } from "../lib/format";
@@ -164,7 +164,7 @@ export function VaultPage() {
     <>
       <div className="page-head">
         <div className="row" style={{ justifyContent: "space-between" }}>
-          <h1>Vault</h1>
+          <h1>AI-agent vault</h1>
           <button className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
             <RefreshCw size={14} className={loading ? "spin" : ""} aria-hidden /> Refresh
           </button>
@@ -348,7 +348,7 @@ function NotDeployedPage() {
   return (
     <>
       <div className="page-head">
-        <h1>Vault</h1>
+        <h1>AI-agent vault</h1>
       </div>
       <NotDeployed />
     </>

@@ -11,7 +11,8 @@
   "dependencies": {
     "@hot-labs/near-connect": "0.12.0",
     "@types/qrcode": "^1.5.5",
-    "lucide-react": "1.68.0",
+    "iconoir-react": "^7.12.2",
+    "motion": "^12.23.24",
     "near-api-js": "7.4.0",
     "near-sign-verify": "0.4.5",
     "qrcode": "^1.5.4",

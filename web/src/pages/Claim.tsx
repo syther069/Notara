@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
+import { CircleCheck, ExternalLink, LoaderCircle } from "../components/icons";
 import { Account, actions, base64Encode, encodeSignedDelegate, type KeyPairString } from "near-api-js";
 import { api, type SendState } from "../lib/api";
 import { EXPLORER, formatAsset, linkNetwork, usdcFor } from "../lib/format";

@@ -15,8 +15,8 @@ test("a signature for one link can't be reused for another amount or merchant", 
   const kp = KeyPair.fromRandom("ed25519");
   const token = await sign(linkMessage(link), { signer: kp.toString(), accountId: "priya.near", recipient: SIGN_RECIPIENT });
   // Fails before the on-chain key lookup: the message no longer matches.
-  await assert.rejects(verifyLinkToken(token, { ...link, amount: "500000000" }, true), /Message mismatch/);
-  await assert.rejects(verifyLinkToken(token, { ...link, merchant: "scammer.near" }, true), /Message mismatch/);
+  await assert.rejects(verifyLinkToken(token, { ...link, amount: "500000000" }, true), /signed text doesn.t match/);
+  await assert.rejects(verifyLinkToken(token, { ...link, merchant: "scammer.near" }, true), /signed text doesn.t match/);
 });
 
 test("website input becomes a bare public hostname", () => {

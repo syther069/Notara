@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { CircleCheck, CircleX, Download, ExternalLink, LoaderCircle, Pause, Play } from "lucide-react";
+import { CircleCheck, CircleX, Download, ExternalLink, LoaderCircle, Pause, Play } from "../components/icons";
 import { api } from "../lib/api";
 import { Banner } from "../components/ui";
 import { NotDeployed, useDeployment } from "../components/Layout";
@@ -164,7 +164,6 @@ export function DemoPage() {
   return (
     <>
       <div className="page-head">
-        <p className="eyebrow">Security · AI agents</p>
         <h1>Watch a prompt-injected agent get stopped</h1>
         <p>
           An AI accounts-payable agent reads invoices and pays them from a NEAR testnet vault. One invoice hides an instruction to pay an attacker. Every

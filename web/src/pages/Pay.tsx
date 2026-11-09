@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
-import { CircleCheck, ExternalLink, LoaderCircle } from "lucide-react";
+import { CircleCheck, ExternalLink, LoaderCircle } from "../components/icons";
 import { Link } from "react-router-dom";
 import { api, type Checkout, type CheckResponse, type Invoice, type MerchantProfile, type PayToken } from "../lib/api";
 import { EXPLORER, formatAsset, linkNetwork, unitsToDecimal } from "../lib/format";
-import { AccountLink, Banner, CopyButton, MainnetBadge, Skeleton } from "../components/ui";
+import { AccountLink, Banner, CopyButton, MainnetBadge, Skeleton, StepBar } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
 import { useWallet } from "../lib/wallet";
 import { useDeployment } from "../components/Layout";
@@ -133,6 +133,7 @@ export function PayPage() {
 
   return (
     <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
+      {!isSend && <StepBar steps={["Check who's asking", "Pay", "Done"]} current={inv.status === "paid" ? 3 : check ? 1 : 0} />}
       <div className="card">
         <div className="row" style={{ justifyContent: "space-between" }}>
           <span className="row" style={{ gap: 8 }}>
@@ -146,7 +147,7 @@ export function PayPage() {
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
         </div>
         <p className="muted" style={{ marginTop: 8 }}>
-          {isSend ? "You're funding a send link. The money waits in a one-time account until someone opens the link." : <>Pay to <AccountLink id={inv.merchant} explorer={EXPLORER[net]} /> · <Link to={`/m/${inv.merchant}`}>Merchant Passport</Link></>}
+          {isSend ? "You're funding a send link. The money waits in a one-time account until someone opens the link." : <>To <AccountLink id={inv.merchant} explorer={EXPLORER[net]} /> · <Link to={`/m/${inv.merchant}`}>See this merchant's profile</Link></>}
         </p>
         {!isSend && inv.status !== "paid" && (
           <details style={{ marginTop: 8 }}>
@@ -171,7 +172,10 @@ export function PayPage() {
         </Banner>
       ) : isSend ? null : (
         <>
-          <h2 style={{ marginBottom: 0 }}>Before you pay</h2>
+          <div>
+            <h2 style={{ marginBottom: 4 }}>1. Check who's asking</h2>
+            <p className="muted small" style={{ margin: 0 }}>Read this before you pay. It's facts about the account, not a promise.</p>
+          </div>
           <SafetyPanel check={check} merchant={profile} signature={inv.signature} signedBy={inv.merchant} registry={net === "testnet" ? dep?.registry : dep?.mainnetRegistry} />
         </>
       )}
@@ -189,8 +193,9 @@ export function PayPage() {
           </Banner>
         ) : (
           <>
+          <h2 style={{ marginBottom: 0 }}>2. Choose how to pay</h2>
           <div className="card stack">
-            <h2>Have USDC on NEAR?</h2>
+            <h3 style={{ margin: 0 }}>Pay with a NEAR wallet</h3>
             <p className="muted small" style={{ margin: 0 }}>
               {net === "testnet" ? (
                 <>
@@ -211,7 +216,7 @@ export function PayPage() {
             <div className="card stack">
               {!isSend && !dep?.public && (
                 <>
-                  <h2>Or let an AI agent pay it</h2>
+                  <h3 style={{ margin: 0 }}>Or let the demo AI agent pay it</h3>
                   <p className="muted small" style={{ margin: 0 }}>
                     The demo agent asks Notara first, then pays from its spending vault. Big or unusual payments wait for the vault owner to approve.
                   </p>
@@ -228,9 +233,10 @@ export function PayPage() {
             </div>
           ) : (
           <form className="card stack" onSubmit={getAddress}>
-            <h2 className="row" style={{ gap: 8 }}>
-              Pay from another chain <MainnetBadge />
-            </h2>
+            <h3 className="row" style={{ gap: 8, margin: 0 }}>
+              Or pay from another chain <MainnetBadge />
+            </h3>
+            <p className="muted small" style={{ margin: 0 }}>Ethereum, Base, Solana, Bitcoin and more. You get a one-time address; the merchant receives exact USDC on NEAR.</p>
             <div className="field">
               <label htmlFor="token">Token and network you'll pay from</label>
               <select id="token" className="input" value={token} onChange={(e) => setToken(e.target.value)}>
@@ -263,7 +269,7 @@ export function PayPage() {
 
       {current && !showForm && inv.status !== "paid" && (
         <div className="card stack" aria-live="polite">
-          <h2>Send your payment</h2>
+          <h2>3. Send your payment</h2>
           <p>
             Send <strong>{current.amountIn} {current.label}</strong> to this one-time address:
           </p>

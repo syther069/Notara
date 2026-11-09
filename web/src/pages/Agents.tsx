@@ -20,7 +20,6 @@ if (r.report.decision === "WARN") return askHuman(r.report.reasons);
   return (
     <div className="stack" style={{ maxWidth: 760, margin: "0 auto" }}>
       <div>
-        <p className="eyebrow">For AI agents</p>
         <h1>Check before your agent pays</h1>
         <p className="muted">
           One call tells your agent if a NEAR payment looks safe: whether the account exists, is new, is on a scam report list, can receive the token, and if the

@@ -28,90 +28,35 @@ Scope: the website in `web/`. Pages: Home, Check, Attack demo, Vault, Invoices (
 
 ## 3. Visual language
 
-### 3.0 Theme: "Evergreen Ledger"
+### 3.0 Theme: "Notary Seal" (redesign, 2026-11-09)
 
-A deep-forest, calm, private-bank look: dark evergreen surfaces, sage and olive mid-tones, warm parchment text, and a soft lime glow as the one bright accent. It says *steady and trustworthy*, not *hacker terminal*, and it stands out from the usual blue/purple crypto sites.
+A calm, paper-and-ink look: cream surfaces like a signed document, evergreen ink, and a notary-seal mark. Light theme first, with a deep-green dark theme. Tokens live in `web/src/styles/tokens.css`.
 
-Brand palette (owner's choice, 2026-11-04):
-
-| Swatch | Hex | Name | Role |
-|---|---|---|---|
-| ■ | `#0F1F17` | Forest Night | page background (dark) |
-| ■ | `#1E3A2E` | Evergreen | cards, nav |
-| ■ | `#3E5A3F` | Moss | raised surfaces, borders, primary button hover |
-| ■ | `#6B7F67` | Sage | muted text, icons, dividers |
-| ■ | `#C7CBB8` | Parchment | main text on dark, page background in light mode |
-| ■ | `#3D4337` | Graphite Olive | inputs, tables, code and log blocks |
-| ✦ | `#B8D26A` | Lime Glow | accent: links, focus ring, primary CTA, hero glow (taken from the photo's background light) |
-
-### 3.1 Color tokens
-
-Dark theme first (it records well and fits security), with a light theme. All colors are CSS variables on `:root`.
-
-| Token | Dark | Light | Use |
-|---|---|---|---|
-| `--bg` | `#0F1F17` | `#EEF0E6` | page background |
-| `--surface` | `#1E3A2E` | `#FFFFFF` | cards |
-| `--surface-2` | `#3D4337` | `#E3E6D8` | inputs, table stripes, log console |
-| `--border` | `#3E5A3F` | `#C7CBB8` | dividers, card borders |
-| `--text` | `#E4E7D9` | `#0F1F17` | body text (a lighter Parchment for AA contrast) |
-| `--text-muted` | `#A3AE9C` | `#3E5A3F` | secondary text (Sage lifted for contrast on dark) |
-| `--accent` | `#B8D26A` | `#4E6B1F` | links, focus ring, primary button |
-| `--accent-ink` | `#0F1F17` | `#FFFFFF` | text on accent buttons |
-| `--allow` | `#5FD4A0` | `#137A52` | ALLOW (mint, kept distinct from the olive brand greens) |
-| `--warn` | `#E8B04B` | `#965F00` | WARN (amber) |
-| `--block` | `#E5674F` | `#B53A24` | BLOCK (rust red) |
-| `--fixture` | `#B9A3E3` | `#6B4FB0` | DEMO FIXTURE tag only (lavender) |
-| `--allow-bg`, `--warn-bg`, `--block-bg` | color at 14% opacity | color at 10% opacity | badge and card backgrounds |
-
-Background treatment: a soft radial **lime glow** (`#B8D26A` at 10–18% opacity, large blur) behind the hero and behind the decision card, like the light in the palette photo. Nowhere else.
-
-Rules:
-- Brand greens (Evergreen, Moss, Sage) are for surfaces only. **Mint, amber and rust are used only for decisions.**
-- Lavender is reserved for **DEMO FIXTURE**, so fixtures can't be mistaken for live data.
-- Color is never the only signal: every decision also has an icon and a word.
-- Text contrast is at least WCAG AA (4.5:1) in both themes. Raw `#6B7F67` on `#0F1F17` is too low for body text, which is why `--text-muted` is lifted.
-
-### 3.2 Typography (Google Fonts)
-
-| Role | Font | Size / weight |
+| Hex | Name | Role |
 |---|---|---|
-| Display (hero), H1, H2 | **Space Grotesk** | 52 / 700 hero (34 on phone), 34 / 700 H1, 22 / 600 H2 |
-| Body, UI, buttons | **Manrope** | 16 / 400–600, line-height 1.6 |
-| Small / caption | Manrope | 13 / 600 |
-| Code, account ids, hashes, logs | **JetBrains Mono** | 14 / 400 |
-| Decision word on a badge | Space Grotesk | 14 / 700, letter-spacing 0.08em, uppercase |
+| `#F3EEE3` | Cream | page background (about 60% of the screen) |
+| `#FBFADA` | Pale cream | text on dark bands; cards use a near-white tint of it |
+| `#ADBC9F` | Sage | supporting fills, selection, dark-theme primary |
+| `#436850` | Green | secondary text on cream, icons, progress |
+| `#12372A` | Deep green | primary buttons, the top strip, the trust band, the footer (about 10%) |
+| `#111111` | Near-black | body text |
 
-Why: Space Grotesk has a technical, slightly engineered feel for a security product without looking cold. Manrope is warm and very readable for long explanations. JetBrains Mono keeps account ids and hashes unambiguous.
+Decision colors stay apart from the brand greens and always come with an icon and a word: ALLOW `#146B4A`, WARN `#8A5A00`, BLOCK `#A8321E`, demo fixture purple `#6B4FB0` (lighter versions in dark mode). Mainnet tags are solid deep green, testnet tags dashed.
 
-```html
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-```
+### 3.2 Typography
 
-Account ids, transaction hashes and amounts always use the monospace font. Long hashes are shortened in the middle (`7NnkTE…BmfhBk`) with copy-on-click.
+One family, **Manrope** (variable 200–800, self-hosted from `web/public/fonts`): 800 with tight tracking for headlines, 450–700 for body and UI. **JetBrains Mono** only for account ids, hashes and logs. Amounts and tables use tabular numbers. Headlines use `text-wrap: balance`.
 
 ### 3.3 Spacing, shape, elevation
 
-- 4px base grid. Common steps: 8, 12, 16, 24, 32, 48, 64.
-- Radius: 12px for cards, 8px for inputs and buttons, 999px for tags.
-- Elevation: borders instead of heavy shadows. One soft shadow for the hovered or active card.
-- Max content width 1120px; reading width 720px.
-- Phone: 16px side gutter, single column, no horizontal scroll.
+- 4px grid. Radius scale: 6 · 10 · 16 · 24 · pill. Inner radius = outer radius minus padding.
+- Buttons are pills in three sizes (36 / 44 / 52) and five variants (primary, secondary, tonal, ghost, danger), each with hover, pressed (scale 0.97), focus ring, loading (Orbit spinner, same width) and disabled states.
+- Borders for structure; one soft shadow for raised or hovered items.
+- Max width 1200px; 24px gutters, 16px on phones.
 
 ### 3.4 Icons
 
-Lucide icons, 20px, 1.75 stroke.
-
-| Meaning | Icon |
-|---|---|
-| ALLOW | `shield-check` |
-| WARN | `shield-alert` |
-| BLOCK | `shield-x` |
-| Live data | `radio` |
-| Our contract | `file-code` |
-| Unavailable | `cloud-off` |
-| Fixture | `flask-conical` |
-| Explorer link | `external-link` |
+Iconoir, one stroke weight (1.7), imported only through `web/src/components/icons.tsx`. Loading uses the Orbit spinner from the same file.
 
 ### 3.5 Motion
 
@@ -347,8 +292,8 @@ Long-form reading page (720px wide):
 
 ## 10. Implementation notes
 
-- Vite + React + TypeScript, plain CSS with the tokens above in `web/src/styles/tokens.css`. No UI framework. Theme: Evergreen Ledger (section 3.0).
-- Fonts: Space Grotesk, Manrope and JetBrains Mono from Google Fonts. Icons: `lucide-react`.
+- Vite + React + TypeScript, plain CSS with the tokens above in `web/src/styles/tokens.css`. No UI framework. Theme: Notary Seal (section 3.0). Motion (`motion`) only for the landing list and the expanding questions.
+- Fonts: Manrope (self-hosted) and JetBrains Mono (Google Fonts). Icons: `iconoir-react` through `components/icons.tsx`.
 - One shared component per section 4 item in `web/src/components/`.
 - Theme follows the system setting, with a manual toggle (stored in `localStorage`).
 - Before calling a page done, check it at 375px and 1440px, in both themes and with keyboard only.

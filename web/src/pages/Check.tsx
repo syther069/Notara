@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { LoaderCircle, Search } from "lucide-react";
+import { LoaderCircle, Search } from "../components/icons";
 import { api, type CheckResponse } from "../lib/api";
 import { CheckResult } from "../components/CheckResult";
 import { Banner, MainnetBadge } from "../components/ui";

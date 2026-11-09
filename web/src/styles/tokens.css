@@ -1,79 +1,131 @@
-/* Evergreen Ledger theme (design.md section 3). */
-:root {
-  --bg: #0f1f17;
-  --surface: #1e3a2e;
-  --surface-2: #3d4337;
-  --surface-3: #16291f;
-  --border: #3e5a3f;
-  --text: #e4e7d9;
-  --text-muted: #a3ae9c;
-  --accent: #b8d26a;
-  --accent-ink: #0f1f17;
-  --allow: #5fd4a0;
-  --warn: #e8b04b;
-  --block: #e5674f;
-  --fixture: #b9a3e3;
-  --allow-bg: rgba(95, 212, 160, 0.14);
-  --warn-bg: rgba(232, 176, 75, 0.14);
-  --block-bg: rgba(229, 103, 79, 0.14);
-  --fixture-bg: rgba(185, 163, 227, 0.16);
-  --glow: rgba(184, 210, 106, 0.16);
+/* Notary Seal theme. Palette: #12372A deep green, #436850 green, #ADBC9F sage, #FBFADA pale cream,
+   plus #F3EEE3 cream and #111111 near-black. Balance: ~60% cream surfaces, ~30% greens and sage,
+   ~10% deep green / near-black emphasis. Decision colors are kept apart from the brand greens and
+   always come with an icon and a word. */
 
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-body: "Manrope", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-
-  --r-card: 12px;
-  --r-ctl: 8px;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
-  --max: 1120px;
-  color-scheme: dark;
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/Manrope-VariableFont_wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #eef0e6;
-    --surface: #ffffff;
-    --surface-2: #e3e6d8;
-    --surface-3: #f6f7f0;
-    --border: #c7cbb8;
-    --text: #0f1f17;
-    --text-muted: #3e5a3f;
-    --accent: #4e6b1f;
-    --accent-ink: #ffffff;
-    --allow: #137a52;
-    --warn: #965f00;
-    --block: #b53a24;
-    --fixture: #6b4fb0;
-    --allow-bg: rgba(19, 122, 82, 0.1);
-    --warn-bg: rgba(150, 95, 0, 0.1);
-    --block-bg: rgba(181, 58, 36, 0.1);
-    --fixture-bg: rgba(107, 79, 176, 0.1);
-    --glow: rgba(140, 170, 60, 0.18);
-    --shadow: 0 8px 24px rgba(15, 31, 23, 0.08);
-    color-scheme: light;
+:root {
+  /* brand */
+  --deep: #12372a;
+  --green: #436850;
+  --sage: #adbc9f;
+  --pale: #fbfada;
+  --cream: #f3eee3;
+  --ink-black: #111111;
+
+  /* surfaces (light, the default) */
+  --bg: var(--cream);
+  --surface: #fbf9ee;
+  --surface-2: #e8e3d2;
+  --surface-3: #efe9da;
+  --surface-sage: #dfe5d2;
+  --band: var(--deep);
+  --band-ink: var(--pale);
+  --border: #d6d0bd;
+  --border-strong: #b8b29c;
+
+  /* text */
+  --text: var(--ink-black);
+  --text-muted: #3f5a48;
+  --accent: var(--deep);
+  --accent-hover: #0b2a1f;
+  --accent-ink: var(--pale);
+  --link: #1f5a3f;
+
+  /* decisions and status */
+  --allow: #146b4a;
+  --warn: #8a5a00;
+  --block: #a8321e;
+  --fixture: #6b4fb0;
+  --allow-bg: rgba(20, 107, 74, 0.1);
+  --warn-bg: rgba(138, 90, 0, 0.1);
+  --block-bg: rgba(168, 50, 30, 0.09);
+  --fixture-bg: rgba(107, 79, 176, 0.1);
+
+  /* type */
+  --font-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* shape: one radius scale. Inner radius = outer radius - padding (min 6). */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --r-card: var(--r-md);
+  --r-ctl: var(--r-sm);
+
+  --shadow: 0 1px 0 rgba(18, 55, 42, 0.04), 0 12px 32px -12px rgba(18, 55, 42, 0.18);
+  --shadow-pop: 0 18px 48px -16px rgba(18, 55, 42, 0.32);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --max: 1200px;
+  color-scheme: light;
+}
+
+/* Dark: deep green surfaces with pale cream text. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c261d;
+    --surface: #12372a;
+    --surface-2: #1d4636;
+    --surface-3: #0f2e23;
+    --surface-sage: #1a3f31;
+    --band: #081c15;
+    --band-ink: var(--pale);
+    --border: #2b5443;
+    --border-strong: #436850;
+    --text: var(--pale);
+    --text-muted: #c3cdb4;
+    --accent: var(--sage);
+    --accent-hover: #c2cfb5;
+    --accent-ink: #0c261d;
+    --link: #cfe0b8;
+    --allow: #6fd3a5;
+    --warn: #eab654;
+    --block: #f08068;
+    --fixture: #c2aeea;
+    --allow-bg: rgba(111, 211, 165, 0.13);
+    --warn-bg: rgba(234, 182, 84, 0.13);
+    --block-bg: rgba(240, 128, 104, 0.13);
+    --fixture-bg: rgba(194, 174, 234, 0.14);
+    --shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.5);
+    --shadow-pop: 0 18px 48px -16px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
   }
 }
 
-:root[data-theme="light"] {
-  --bg: #eef0e6;
-  --surface: #ffffff;
-  --surface-2: #e3e6d8;
-  --surface-3: #f6f7f0;
-  --border: #c7cbb8;
-  --text: #0f1f17;
-  --text-muted: #3e5a3f;
-  --accent: #4e6b1f;
-  --accent-ink: #ffffff;
-  --allow: #137a52;
-  --warn: #965f00;
-  --block: #b53a24;
-  --fixture: #6b4fb0;
-  --allow-bg: rgba(19, 122, 82, 0.1);
-  --warn-bg: rgba(150, 95, 0, 0.1);
-  --block-bg: rgba(181, 58, 36, 0.1);
-  --fixture-bg: rgba(107, 79, 176, 0.1);
-  --glow: rgba(140, 170, 60, 0.18);
-  --shadow: 0 8px 24px rgba(15, 31, 23, 0.08);
-  color-scheme: light;
+:root[data-theme="dark"] {
+  --bg: #0c261d;
+  --surface: #12372a;
+  --surface-2: #1d4636;
+  --surface-3: #0f2e23;
+  --surface-sage: #1a3f31;
+  --band: #081c15;
+  --band-ink: var(--pale);
+  --border: #2b5443;
+  --border-strong: #436850;
+  --text: var(--pale);
+  --text-muted: #c3cdb4;
+  --accent: var(--sage);
+  --accent-hover: #c2cfb5;
+  --accent-ink: #0c261d;
+  --link: #cfe0b8;
+  --allow: #6fd3a5;
+  --warn: #eab654;
+  --block: #f08068;
+  --fixture: #c2aeea;
+  --allow-bg: rgba(111, 211, 165, 0.13);
+  --warn-bg: rgba(234, 182, 84, 0.13);
+  --block-bg: rgba(240, 128, 104, 0.13);
+  --fixture-bg: rgba(194, 174, 234, 0.14);
+  --shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 18px 48px -16px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
 }

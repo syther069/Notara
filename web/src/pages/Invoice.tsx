@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bot, LoaderCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Bot, LoaderCircle, RefreshCw } from "../components/icons";
 import { api, type CheckResponse, type Invoice } from "../lib/api";
 import { formatAsset, linkNetwork } from "../lib/format";
 import { AccountLink, Banner, Skeleton, TxLink } from "../components/ui";

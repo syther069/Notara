@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "../components/icons";
 import { api, type CheckResponse, type MerchantProfile } from "../lib/api";
 import { EXPLORER, netOfAccount, usdcFor } from "../lib/format";
 import { AccountLink, Banner, NetworkTag, Skeleton } from "../components/ui";

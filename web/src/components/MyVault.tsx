@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, LoaderCircle, Play, Wallet } from "lucide-react";
+import { ExternalLink, LoaderCircle, Play, Wallet } from "./icons";
 import { api, type AgentRun, type MyVault as MyVaultInfo } from "../lib/api";
 import { useWallet } from "../lib/wallet";
 import { Banner } from "./ui";

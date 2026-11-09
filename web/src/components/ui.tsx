@@ -14,7 +14,7 @@ import {
   ShieldX,
   TriangleAlert,
   CircleCheck,
-} from "lucide-react";
+} from "./icons";
 import type { Decision, SourceKind } from "../lib/api";
 import { shortHash } from "../lib/format";
 
@@ -141,5 +141,22 @@ export function MainnetBadge({ readOnly = false }: { readOnly?: boolean }) {
     <span className="tag mainnet" title={readOnly ? "Reads live NEAR mainnet data. Nothing is sent." : "Real money on NEAR mainnet. Prototype, not audited: keep amounts small."}>
       {readOnly ? "Mainnet · read-only" : "Mainnet · real money"}
     </span>
+  );
+}
+
+/** Where the user is in a short task ("1 Create · 2 Fund · 3 Share"). The current step is announced to screen readers. */
+export function StepBar({ steps, current }: { steps: string[]; current: number }) {
+  return (
+    <ol className="stepbar" aria-label="Progress">
+      {steps.map((s, i) => (
+        <li key={s} className={i < current ? "done" : i === current ? "now" : ""} aria-current={i === current ? "step" : undefined}>
+          <span className="n" aria-hidden>
+            {i < current ? "✓" : i + 1}
+          </span>
+          {s}
+          {i < current && <span className="sr-only"> (done)</span>}
+        </li>
+      ))}
+    </ol>
   );
 }

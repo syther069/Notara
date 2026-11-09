@@ -2,7 +2,7 @@
 // technical report stays one click away for anyone who wants it.
 
 import { useState, type FormEvent } from "react";
-import { CircleAlert, CircleCheck, CircleX, Flag, LoaderCircle } from "lucide-react";
+import { CircleAlert, CircleCheck, CircleX, Flag, LoaderCircle } from "./icons";
 import { useWallet } from "../lib/wallet";
 import type { CheckResponse, Decision, MerchantProfile } from "../lib/api";
 import { DecisionCard, ReasonList } from "./CheckResult";

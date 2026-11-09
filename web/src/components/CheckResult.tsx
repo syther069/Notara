@@ -1,4 +1,4 @@
-import { CircleAlert, CircleX, Info } from "lucide-react";
+import { CircleAlert, CircleX, Info } from "./icons";
 import type { CheckResponse, Reason, Signal } from "../lib/api";
 import { codeToWords, DECISION_TEXT, formatAsset, SIGNAL_LABELS } from "../lib/format";
 import { Badge, CopyButton, FixtureTag, NetworkTag, SourceTag } from "./ui";

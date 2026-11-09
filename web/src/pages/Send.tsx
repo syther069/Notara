@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { LoaderCircle, Send as SendIcon } from "lucide-react";
+import { LoaderCircle, Send as SendIcon } from "../components/icons";
 import { api, type Invoice } from "../lib/api";
 import { newLinkKey, SEND_LINK_DAYS, toFragment } from "../lib/linkKey";
-import { Banner, CopyButton, MainnetBadge } from "../components/ui";
+import { Banner, CopyButton, MainnetBadge, StepBar } from "../components/ui";
 import { QrCode } from "../components/QrCode";
 
 export function SendPage() {
@@ -45,6 +45,7 @@ export function SendPage() {
 
       {!made ? (
         <form className="card stack" onSubmit={create} noValidate>
+          <StepBar steps={["Create it", "Fund it", "Share it"]} current={0} />
           <div className="field">
             <label htmlFor="samt">Amount (USDC)</label>
             <input id="samt" className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={!!amountErr} />
@@ -78,9 +79,23 @@ export function SendPage() {
           )}
         </form>
       ) : (
-        <div className="card stack">
-          <h2>Your link is ready. Save it now.</h2>
-          <div className="doc">{made.url}</div>
+        <div className="card ready stack">
+          <StepBar steps={["Create it", "Fund it", "Share it"]} current={1} />
+          <div>
+            <h2 style={{ marginBottom: 4 }}>Link created. Now put the money in.</h2>
+            <p className="muted" style={{ margin: 0 }}>
+              Fund it first, then share it. Until it's funded, the person you send it to will see an empty link.
+            </p>
+          </div>
+          <div>
+            <Link className="btn btn-primary btn-lg" to={made.path}>
+              Fund it now
+            </Link>
+          </div>
+          <div className="field">
+            <span className="label">Your send link (save it: it's the only key to the money)</span>
+            <div className="url">{made.url}</div>
+          </div>
           <details>
             <summary className="small">Show as a QR code (to hand over in person)</summary>
             <div style={{ marginTop: 8 }}>
@@ -89,9 +104,6 @@ export function SendPage() {
           </details>
           <div className="row">
             <CopyButton text={made.url} label="Copy link" />
-            <Link className="btn btn-primary" to={made.path}>
-              Fund it now
-            </Link>
           </div>
           <Banner kind="warn" title="This link works like cash">
             <p>

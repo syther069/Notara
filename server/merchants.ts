@@ -3,9 +3,9 @@
 
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
-import { verify } from "near-sign-verify";
+import { verifySigned } from "./nep413.ts";
 import { docs } from "./db.ts";
-import { formatAmount } from "../passport/src/assets.ts";
+import { formatAmount, linkNetwork } from "../passport/src/assets.ts";
 
 export const SIGN_RECIPIENT = "notara";
 
@@ -37,12 +37,17 @@ export function freshNonce(maxAgeMs: number, skewMs = 120_000) {
 
 /** Verifies a NEP-413 token from the merchant's wallet for exactly this link. Returns the signer, or throws. */
 export async function verifyLinkToken(token: string, l: Parameters<typeof linkMessage>[0], fresh: boolean): Promise<string> {
-  const r = await verify(token, {
-    expectedRecipient: SIGN_RECIPIENT,
-    expectedMessage: linkMessage(l),
-    // When a link is created the signature must be new; later views only re-check that it still matches.
-    validateNonce: fresh ? freshNonce(600_000) : () => true,
-  });
+  const r = await verifySigned(
+    token,
+    {
+      expectedRecipient: SIGN_RECIPIENT,
+      expectedMessage: linkMessage(l),
+      // When a link is created the signature must be new; later views only re-check that it still matches.
+      validateNonce: fresh ? freshNonce(600_000) : () => true,
+    },
+    // The key is checked on the link's own network (a testnet implicit account isn't on mainnet).
+    linkNetwork(l.asset) ?? (l.merchant.endsWith(".testnet") ? "testnet" : "mainnet"),
+  );
   if (r.accountId !== l.merchant) throw new Error(`Signed by ${r.accountId}, not ${l.merchant}`);
   return r.accountId;
 }

@@ -15,6 +15,8 @@ import { AboutPage } from "./pages/About";
 import { AgentsPage } from "./pages/Agents";
 import { PayPage } from "./pages/Pay";
 import { MerchantPage } from "./pages/Merchant";
+import { DashboardPage } from "./pages/Dashboard";
+import { StartPage } from "./pages/Start";
 // near-api-js is large: load the send and claim pages only when opened.
 const SendPage = lazy(() => import("./pages/Send").then((m) => ({ default: m.SendPage })));
 const ClaimPage = lazy(() => import("./pages/Claim").then((m) => ({ default: m.ClaimPage })));
@@ -24,7 +26,7 @@ function NotFound() {
     <div className="page-head">
       <h1>Page not found</h1>
       <p>
-        <a href="/">Go to the home page</a>
+        <a className="btn btn-primary" href="/">Go to the home page</a>
       </p>
     </div>
   );
@@ -37,6 +39,8 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="start" element={<StartPage />} />
           <Route path="check" element={<CheckPage />} />
           <Route path="security" element={<DemoPage />} />
           <Route path="demo" element={<Navigate to="/security" replace />} />

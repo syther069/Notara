@@ -19,7 +19,7 @@ import { loadSigner, signVerdict } from "../passport/src/verdict.ts";
 import { hasKey, readKey } from "../agent/src/keys.ts";
 import { GuardedPayments } from "../agent/src/wrapper.ts";
 import { runAgent } from "../agent/src/agent.ts";
-import { verify } from "near-sign-verify";
+import { verifySigned } from "./nep413.ts";
 import { docs } from "./db.ts";
 import { SIGN_RECIPIENT, freshNonce } from "./merchants.ts";
 
@@ -67,7 +67,7 @@ export const PROOF_MAX_AGE_MS = 10 * 60_000;
  */
 export async function verifyOwnerProof(proof: unknown, owner: string): Promise<void> {
   if (typeof proof !== "string" || !proof) throw new Error("Sign with your wallet to use your vault");
-  const r = await verify(proof, { expectedRecipient: SIGN_RECIPIENT, expectedMessage: vaultMessage(owner), validateNonce: freshNonce(PROOF_MAX_AGE_MS) }).catch((e) => {
+  const r = await verifySigned(proof, { expectedRecipient: SIGN_RECIPIENT, expectedMessage: vaultMessage(owner), validateNonce: freshNonce(PROOF_MAX_AGE_MS) }, "testnet").catch((e) => {
     throw new Error(`Your wallet signature didn't check out: ${e.message}`);
   });
   if (r.accountId !== owner) throw new Error(`Signed by ${r.accountId}, not ${owner}`);
