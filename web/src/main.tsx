@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import "./styles/pages.css";
+import "./styles/vault.css";
 import "./styles/landing.css";
 import { Layout } from "./components/Layout";
 import { WalletProvider } from "./lib/wallet";
