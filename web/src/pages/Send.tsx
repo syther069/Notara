@@ -5,7 +5,9 @@ import { api, type Invoice } from "../lib/api";
 import { newLinkKey, SEND_LINK_DAYS, toFragment } from "../lib/linkKey";
 import { Banner, CopyButton, MainnetBadge, StepBar } from "../components/ui";
 import { QrCode } from "../components/QrCode";
+import { PayPreview } from "../components/PayPreview";
 import { useDeployment } from "../components/Layout";
+import { formatAsset } from "../lib/format";
 
 export function SendPage() {
   const [amount, setAmount] = useState("5");
@@ -48,13 +50,18 @@ export function SendPage() {
     }
   }
 
+  const shownAmount = `${made ? formatAsset(made.inv.amount, made.inv.asset) : `${amount && !amountErr ? amount : "0"} USDC`}`;
+  const shownNote = made ? made.inv.description : note.trim();
   return (
-    <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
+    <>
       <div className="page-head">
-        <h1>Send money with a link</h1>
+        <div className="tags">{network === "mainnet" ? <MainnetBadge /> : <span className="tag testnet">Testnet</span>}</div>
+        <h1>Send links for USDC on NEAR</h1>
         <p>Pay from any chain. The person you send the link to gets USDC on NEAR, with no wallet or NEAR needed to start.</p>
       </div>
 
+      <div className="tool-split">
+      <div className="tool-main stack">
       {!made ? (
         <form className="card stack" onSubmit={create} noValidate>
           <StepBar steps={["Create it", "Fund it", "Share it"]} current={0} />
@@ -124,7 +131,7 @@ export function SendPage() {
             </p>
           </div>
           <div>
-            <Link className="btn btn-primary btn-lg" to={made.path}>
+            <Link className="btn btn-primary" to={made.path}>
               Fund it now
             </Link>
           </div>
@@ -150,6 +157,27 @@ export function SendPage() {
         </div>
       )}
       <p className="muted small">{network === "mainnet" ? "Real money on NEAR mainnet. Prototype, not audited: keep amounts small." : "Testnet: free test money, nothing of value moves."}</p>
-    </div>
+      </div>
+      <aside className="tool-side" aria-labelledby="spv-h">
+        <p className="side-label" id="spv-h">
+          What the person you send it to sees
+        </p>
+        <PayPreview
+          path={made ? `/claim/${made.inv.id}` : "/claim/…"}
+          forText={shownNote}
+          emptyFor="Your note appears here"
+          amount={shownAmount}
+          to="for whoever opens this link"
+          checks={[
+            made ? { state: "wait", text: "Waiting for you to fund it" } : { state: "wait", text: "You fund it next, from any chain" },
+            { state: "ok", text: "No NEAR needed to claim: gas and the USDC setup are covered" },
+            { state: "ok", text: `Not claimed in ${SEND_LINK_DAYS} days? You can take it back` },
+          ]}
+          primary="Claim"
+          secondary="Get your own NEAR name"
+        />
+      </aside>
+      </div>
+    </>
   );
 }

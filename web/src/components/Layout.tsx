@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { ArrowRight, Bot, ChevronDown, FileCode as Code, Link2, ShieldCheck, LoaderCircle, LogOut, Menu, Moon, Search, Send, Sun, TriangleAlert, Wallet, X } from "./icons";
 import { useWallet } from "../lib/wallet";
 import { api, type Deployment } from "../lib/api";
+import { kitRefresh } from "../lib/kit";
 
 // ---------------------------------------------------------------- deployment context
 
@@ -178,6 +179,17 @@ export function Layout() {
     setMenu(false);
     window.scrollTo(0, 0);
   }, [loc.pathname]);
+  // The design-taste-frontend kit (motion layer, moments, the one effect) learns about each rendered page:
+  // once right after the route renders, and once more when async content (lists, checks) has arrived.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const a = requestAnimationFrame(() => mainRef.current && kitRefresh(mainRef.current, true));
+    const b = setTimeout(() => mainRef.current && kitRefresh(mainRef.current, false), 1500);
+    return () => {
+      cancelAnimationFrame(a);
+      clearTimeout(b);
+    };
+  }, [loc.pathname]);
   // Escape closes the mobile menu and puts focus back on the button that opened it.
   const menuBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -218,35 +230,35 @@ export function Layout() {
         <a href="#main" className="sr-only">
           Skip to content
         </a>
-        {notice && (
-          <div className="notice">
-            <div className="container">
-              <TriangleAlert size={15} aria-hidden />
-              <span>
-                {moneyPage
-                  ? "Prototype, not audited. Mainnet links move real money; testnet links use free test money."
-                  : "Testnet prototype, not audited. Every flow here runs on free test money."}
-              </span>
-              <button
-                aria-label="Dismiss notice"
-                onClick={() => {
-                  setNotice(false);
-                  try {
-                    sessionStorage.setItem("notice", "hidden");
-                  } catch {}
-                }}
-              >
-                <X size={16} />
-              </button>
+        <header className="site-header nav">
+          {notice && (
+            <div className="notice">
+              <div className="container wrap">
+                <TriangleAlert size={15} aria-hidden />
+                <span>
+                  {moneyPage
+                    ? "Prototype, not audited. Mainnet links move real money; testnet links use free test money."
+                    : "Testnet prototype, not audited. Every flow here runs on free test money."}
+                </span>
+                <button
+                  aria-label="Dismiss notice"
+                  onClick={() => {
+                    setNotice(false);
+                    try {
+                      sessionStorage.setItem("notice", "hidden");
+                    } catch {}
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-        <header className="site-header">
-          <div className="container">
+          )}
+          <div className="container wrap">
             <NavLink to="/" className="brand" aria-label="Notara home">
               <SealMark /> Notara
             </NavLink>
-            <nav className="nav" aria-label="Main">
+            <nav className="nav-links" aria-label="Main">
               {w.accountId && <NavLink to="/dashboard">Dashboard</NavLink>}
               <NavLink to="/invoices">Get paid</NavLink>
               <NavLink to="/send">Send</NavLink>
@@ -254,7 +266,7 @@ export function Layout() {
               <NavLink to="/about">How it works</NavLink>
             </nav>
             <div className="header-tools">
-              <Link to="/start" className="btn btn-tonal btn-sm try-btn">
+              <Link to="/start" className="btn btn-secondary btn-sm try-btn">
                 Try it free
               </Link>
               <WalletButton />
@@ -276,10 +288,9 @@ export function Layout() {
               {isDark ? "Light theme" : "Dark theme"} {isDark ? <Sun size={18} aria-hidden /> : <Moon size={18} aria-hidden />}
             </button>
           </nav>
-        </header>
-        <main id="main">
-          <div className="container">
-            {w.error && (
+          {/* A wallet problem sits under the bar, on every page, so the landing page's main holds only its sections. */}
+          {w.error && (
+            <div className="container wrap">
               <div className="banner warn wallet-notice" role="status">
                 <TriangleAlert size={18} aria-hidden />
                 <div style={{ flex: 1 }}>
@@ -289,12 +300,35 @@ export function Layout() {
                   Dismiss
                 </button>
               </div>
-            )}
+            </div>
+          )}
+        </header>
+        {/* The landing page's sections are main's own children (one section per screen); task pages sit in the content box. */}
+        <main id="main" ref={mainRef} className={loc.pathname === "/" ? "landing-main" : undefined}>
+          {loc.pathname === "/" ? (
             <Outlet />
-          </div>
+          ) : (
+            <div className="container">
+              <Outlet />
+            </div>
+          )}
         </main>
-        <footer className="site-footer">
-          <div className="container">
+        <footer className={`site-footer${loc.pathname === "/" ? " closing" : ""}`} id="contact">
+          <div className="container wrap">
+            {/* On the landing page the close and the footer are one screen (design-taste-frontend, close-type). */}
+            {loc.pathname === "/" && (
+              <div className="closing-row">
+                <div>
+                  <h2>Get paid in USDC from your next client</h2>
+                  <p>Make the link in a minute. Signing is free and moves no money.</p>
+                </div>
+                <Link to="/invoices" className="btn btn-primary closing-btn">
+                  Create a payment link <ArrowRight size={22} className="arrow" aria-hidden />
+                </Link>
+              </div>
+            )}
+            {/* The footer's links and its fine print: one block, so the closing screen is the call, then this. */}
+            <div className="footer-legal">
             <div className="footer-grid">
               <div>
                 <div className="footer-brand">
@@ -358,6 +392,7 @@ export function Layout() {
                 </a>
                 .
               </span>
+            </div>
             </div>
           </div>
         </footer>

@@ -1,107 +1,186 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, BadgeCheck, Bot, CircleCheck, Globe, Link2, Lock, Search, Send, ShieldCheck, Wallet } from "../components/icons";
-import { Badge } from "../components/ui";
-import { ExpandGroup, TrustList } from "../components/landing";
+import { ArrowRight, Bot, CircleCheck, CircleX, Coins, Lock, Search, Send, ShieldCheck, TriangleAlert, Wallet } from "../components/icons";
 
-const STEPS = [
-  { title: "Create a link", text: "Priya, a freelance designer, asks for 50 USDC for a logo. Her NEAR wallet signs the link." },
-  { title: "Share it anywhere", text: "WhatsApp, email or an invoice PDF. Neither side needs to know crypto." },
-  { title: "The client checks, then pays", text: "They see it's really Priya, then pay with the wallet and chain they already use." },
-  { title: "Priya gets USDC on NEAR", text: "The exact amount, seconds to a minute later, with a receipt and a CSV for her accountant." },
+/*
+  design-taste-frontend plan (tasteskill 2.5.1)
+  1. kind: software (fintech: payment links paid in USDC on NEAR)
+  2. deal: hero centred (deal.mjs --type software --has ui) · effect grain-gradient in the hero frame
+     (effects.mjs pick, quiet, UI-safe) · moments counter-rolls + liquid-type (moments.mjs pick) ·
+     nav-mega · footer-columns · close-type · rhythm space · buttons tonal · mark ring (Notara keeps its
+     own seal mark, as the kit prefers a client's logo). Palette: Notara's own Notary Seal tokens, kept
+     by the client (not dealt): deep green and sage on cream fits a payments product that must read calm
+     and trustworthy. Type: Manrope, the client's chosen face (not dealt).
+  sections, 1440x900:
+   hero      the pay page a customer opens: check runs, signature shown, Paid       ui      1  hero entrance; one timed loop in the window
+   product   your links beside the page each customer sees                          ui      1
+   signed    what the wallet signs, and the check it passes                         ui      1
+   more      send by link, account check, any-chain, agent vault (2x2)              ui      2
+   settle    how a cross-chain payment settles + three real figures                 diagram 1  counter-rolls on the figures row
+   statement an account check before every payment, and that check's three answers type    1  liquid-type on the headline
+   faq       questions, answers open; paste a link you were sent                    -       1
+   close     create a payment link: row 1 of footer.closing (Layout), one screen with the links
+*/
+
+const MAIN_ACTION = "Create a payment link";
+
+/** The hero window's own loop: the checks arrive one by one, the link turns Paid, it holds, it plays again.
+ *  The kit's motion layer (motion.js) adds the loop's pause button to the window and holds it off-screen. */
+function HeroWindow() {
+  return (
+    <div className="ls-frame" data-fx="grain-gradient" data-fx-seed="1104">
+      {/* role="img" sits on the picture inside, so the kit's pause button stays reachable */}
+      <div className="ls-window hero__window" data-m-loop data-ui>
+        <div className="ls-bar" aria-hidden>
+          <Lock size={13} aria-hidden />
+          <span className="mono">notara-sable.vercel.app/pay/INV-0042</span>
+        </div>
+        <div className="ls-pay" role="img" aria-label="The Notara page a customer opens: 50 USDC to design-studio.near, signed by its wallet, safety check passed, then paid">
+          <div className="ls-pay__head">
+            <span className="ls-pay__for">Logo design, 2 rounds</span>
+            <span className="ls-status">
+              <span className="ls-status__unpaid">Waiting for payment</span>
+              <span className="ls-status__paid">Paid</span>
+            </span>
+          </div>
+          <div className="ls-pay__amount num">50 USDC</div>
+          <div className="ls-pay__to">
+            to <span className="mono">design-studio.near</span>
+          </div>
+          <ul className="ls-checks">
+            <li className="ls-step ls-step--1">
+              <CircleCheck size={16} aria-hidden /> Signed by this account's wallet
+            </li>
+            <li className="ls-step ls-step--2">
+              <CircleCheck size={16} aria-hidden /> Website proven: design-studio.example
+            </li>
+            <li className="ls-step ls-step--3">
+              <CircleCheck size={16} aria-hidden /> No problems found in the account check
+            </li>
+          </ul>
+          <div className="ls-pay__actions">
+            <span className="ls-fakebtn ls-fakebtn--primary">Pay 50 USDC</span>
+            <span className="ls-fakebtn">From another chain</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const LINKS = [
+  { id: "INV-0042", what: "Logo design, 2 rounds", amount: "50 USDC", status: "Paid", tone: "ok" },
+  { id: "INV-0041", what: "Website copy, 3 pages", amount: "120 USDC", status: "Waiting", tone: "wait" },
+  { id: "INV-0039", what: "Monthly retainer, October", amount: "400 USDC", status: "Paid", tone: "ok" },
+  { id: "INV-0036", what: "Brand guidelines PDF", amount: "75 USDC", status: "Refunded", tone: "warn" },
 ];
 
-const CHAINS = ["Ethereum", "Base", "Arbitrum", "Solana", "Bitcoin", "BNB Chain", "Polygon", "NEAR"];
+function ProductWindow() {
+  return (
+    <div className="ls-window ls-app" data-ui role="img" aria-label="Notara's dashboard: four payment links with their status, and the open link as its customer sees it">
+      <div className="ls-bar">
+        <Lock size={13} aria-hidden />
+        <span className="mono">notara-sable.vercel.app/dashboard</span>
+      </div>
+      <div className="ls-app__body">
+        <ul className="ls-app__list">
+          {LINKS.map((l, i) => (
+            <li key={l.id} className={i === 0 ? "is-open" : ""}>
+              <span className="ls-app__what">{l.what}</span>
+              <span className="mono small muted">{l.id}</span>
+              <span className="ls-app__amt num">{l.amount}</span>
+              <span className={`ls-pill ls-pill--${l.tone}`}>{l.status}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="ls-app__open">
+          <span className="small muted">What the customer saw before paying INV-0042</span>
+          <div className="ls-pay__amount num">50 USDC</div>
+          <ul className="ls-checks">
+            <li>
+              <CircleCheck size={16} aria-hidden /> Signed by design-studio.near's wallet
+            </li>
+            <li>
+              <CircleCheck size={16} aria-hidden /> Active on NEAR since March 2025
+            </li>
+            <li>
+              <CircleCheck size={16} aria-hidden /> No scam reports
+            </li>
+          </ul>
+          <div className="ls-receipt">
+            <span>Paid from</span>
+            <strong>USDC on Base</strong>
+            <span>Received</span>
+            <strong>50 USDC on NEAR</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-const TRUST = [
-  {
-    icon: <BadgeCheck size={28} aria-hidden />,
-    title: "Signed by the merchant's wallet",
-    body: "Who gets paid, how much and for what are signed with NEAR's message-signing standard (NEP-413). Change one character and the link shows a warning.",
-    panel: (
-      <>
-        <h4>What the merchant's wallet signs</h4>
-        <pre className="doc" style={{ margin: 0 }}>
-          {"Notara payment link\nPay to: priya.testnet\nAmount: 50 USDC\nFor: Logo design, 2 rounds"}
-        </pre>
-        <p className="small muted" style={{ margin: "12px 0 0" }}>
-          The customer's page checks this signature against the account's keys on NEAR before showing "Signed".
-        </p>
-      </>
-    ),
-  },
-  {
-    icon: <Globe size={28} aria-hidden />,
-    title: "A website they can prove",
-    body: "A merchant publishes their NEAR account on their own website. Customers then see the real business behind the account, not just a name.",
-    panel: (
-      <>
-        <h4>The proof file on the merchant's site</h4>
-        <div className="doc" style={{ margin: 0 }}>
-          <span className="muted">https://priya-studio.example/.well-known/near.txt</span>
-          {"\n\npriya.testnet"}
-        </div>
-        <p className="small muted" style={{ margin: "12px 0 0" }}>
-          Anyone can ask Notara to re-check it. The file is the proof, so nobody can claim a site they don't control.
-        </p>
-      </>
-    ),
-  },
-  {
-    icon: <ShieldCheck size={28} aria-hidden />,
-    title: "A safety check before every payment",
-    body: "Account age, activity, contract changes and shared scam reports, read live from NEAR and explained in plain words. Facts, never a promise.",
-    panel: (
-      <>
-        <h4>What a customer sees</h4>
-        <div className="card flat" style={{ borderLeft: "5px solid var(--allow)" }}>
-          <Badge d="ALLOW" size="lg" />
-          <p style={{ margin: "10px 0 0", fontWeight: 650 }}>No configured policy rule was broken.</p>
-          <p className="small muted" style={{ margin: "4px 0 0" }}>This is not a guarantee. Every signal shows its source and when it was read.</p>
-        </div>
-        <p className="small muted" style={{ margin: "12px 0 0" }}>
-          If a data source can't be reached, the answer is never "allow": a human has to approve.
-        </p>
-      </>
-    ),
-  },
-];
+/** A diagram card: chains on the left, NEAR Intents in the middle, the merchant's USDC on the right; a pulse runs each line. */
+function SettleDiagram() {
+  const chains = ["Ethereum", "Base", "Arbitrum", "Solana", "Bitcoin"];
+  return (
+    <svg className="ls-diagram" viewBox="0 0 720 300" role="img" aria-label="Customers pay from Ethereum, Base, Arbitrum, Solana or Bitcoin; NEAR Intents swaps and routes it; the merchant receives USDC on NEAR">
+      {chains.map((c, i) => {
+        const y = 30 + i * 60;
+        return (
+          <g key={c}>
+            <path id={`ln-${i}`} d={`M150 ${y} C 250 ${y}, 260 150, 330 150`} className="ls-diagram__line" />
+            <circle r="4" className="ls-diagram__pulse" style={{ offsetPath: `path("M150 ${y} C 250 ${y}, 260 150, 330 150")`, animationDelay: `${i * 0.35}s` }} />
+            <rect x="10" y={y - 18} width="140" height="36" rx="18" className="ls-diagram__node" />
+            <text x="80" y={y + 5} textAnchor="middle" className="ls-diagram__label">
+              {c}
+            </text>
+          </g>
+        );
+      })}
+      <path d="M470 150 L 560 150" className="ls-diagram__line" />
+      <circle r="4" className="ls-diagram__pulse" style={{ offsetPath: 'path("M470 150 L 560 150")', animationDelay: "1.8s" }} />
+      <rect x="330" y="112" width="140" height="76" rx="16" className="ls-diagram__hub" />
+      <text x="400" y="146" textAnchor="middle" className="ls-diagram__hublabel">
+        NEAR Intents
+      </text>
+      <text x="400" y="168" textAnchor="middle" className="ls-diagram__sub">
+        swaps and routes
+      </text>
+      <rect x="560" y="118" width="150" height="64" rx="16" className="ls-diagram__node ls-diagram__node--end" />
+      <text x="635" y="146" textAnchor="middle" className="ls-diagram__label">
+        Your NEAR account
+      </text>
+      <text x="635" y="166" textAnchor="middle" className="ls-diagram__sub">
+        exact USDC
+      </text>
+    </svg>
+  );
+}
 
 const FAQ = [
   {
-    title: "Does Notara ever hold my money?",
-    body: (
-      <p>
-        No. Payments go from the customer's wallet to the merchant's account. Cross-chain payments are routed by NEAR Intents, which delivers USDC to the
-        merchant on NEAR.
-      </p>
-    ),
+    icon: <Wallet size={24} aria-hidden />,
+    q: "Does Notara hold my money?",
+    a: "No. Money goes from the customer's wallet to your account. Payments from other chains are routed by NEAR Intents, which delivers USDC to you on NEAR.",
   },
   {
-    title: "What can I try for free?",
-    body: (
-      <p>
-        Everything except paying from another chain: payment links, wallet payments, send links, scam reports and the AI-agent vault all run on NEAR testnet
-        with free test money. NEAR Intents has no testnet, so cross-chain payments are mainnet only and marked with a mainnet badge.
-      </p>
-    ),
+    icon: <ShieldCheck size={24} aria-hidden />,
+    q: "What does the wallet signature prove?",
+    a: "That the link's amount, recipient and description were approved by the wallet that gets paid. It shows who is asking, not that they will deliver.",
   },
   {
-    title: "Does a safety check mean the merchant is honest?",
-    body: (
-      <p>
-        No. It states facts about an account: its age, activity, code changes and verified scam reports. A verified person can still be dishonest.{" "}
-        <Link to="/about">Read the honest limits.</Link>
-      </p>
-    ),
+    icon: <Coins size={24} aria-hidden />,
+    q: "What can I try for free?",
+    a: "Payment links, wallet payments, send links, scam reports and the AI-agent vault all run on NEAR testnet with free test money. Paying from another chain needs mainnet.",
   },
   {
-    title: "Is it audited?",
-    body: <p>No. It's a hackathon prototype. Keep mainnet amounts small.</p>,
+    icon: <TriangleAlert size={24} aria-hidden />,
+    q: "Is it audited?",
+    a: "No. Notara is a hackathon prototype, so keep mainnet amounts small.",
   },
 ];
 
-/** Customers usually arrive from a link; this lets someone paste one they were sent. */
+/** Customers usually arrive from a link; this opens one they were sent. */
 function OpenLink() {
   const nav = useNavigate();
   const [v, setV] = useState("");
@@ -113,15 +192,19 @@ function OpenLink() {
     nav(`/${m[1] || "pay"}/${m[2].toUpperCase()}${m[3] ?? ""}`);
   }
   return (
-    <form onSubmit={go} className="stack" style={{ gap: 6, marginTop: "auto" }} noValidate>
-      <label htmlFor="open-link" className="sr-only">
-        Payment or send link
-      </label>
-      <div className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
-        <input id="open-link" className="input" style={{ minHeight: 40 }} placeholder="Paste the link" value={v} onChange={(e) => (setV(e.target.value), setErr(null))} aria-invalid={!!err} aria-describedby={err ? "open-link-err" : undefined} />
-        <button className="btn btn-secondary btn-sm" style={{ minHeight: 40 }}>
-          Open
-        </button>
+    <form onSubmit={go} className="ls-open" noValidate>
+      <label htmlFor="open-link">Open a link you were sent</label>
+      <div className="row" style={{ gap: 8, flexWrap: "nowrap" }}>
+        <input
+          id="open-link"
+          className="input"
+          placeholder="https://…/pay/INV-0042"
+          value={v}
+          onChange={(e) => (setV(e.target.value), setErr(null))}
+          aria-invalid={!!err}
+          aria-describedby={err ? "open-link-err" : undefined}
+        />
+        <button className="btn btn-secondary">Open link</button>
       </div>
       {err && (
         <span id="open-link-err" className="err">
@@ -132,207 +215,206 @@ function OpenLink() {
   );
 }
 
-function Roles() {
-  return (
-    <section aria-labelledby="roles-h" style={{ marginTop: 8 }}>
-      <div className="section-head" style={{ marginBottom: 20 }}>
-        <h2 id="roles-h">What do you want to do?</h2>
-      </div>
-      <div className="roles">
-        <Link to="/invoices" className="role">
-          <span className="ic" aria-hidden>
-            <Link2 size={20} />
-          </span>
-          <strong>Get paid</strong>
-          <span className="d">For freelancers and shops. Make a link your wallet signs, share it, receive USDC.</span>
-          <span className="go">
-            Create a payment link <ArrowRight size={14} aria-hidden />
-          </span>
-        </Link>
-        <div className="role">
-          <span className="ic" aria-hidden>
-            <Wallet size={20} />
-          </span>
-          <strong>Pay a link you got</strong>
-          <span className="d">Someone sent you a Notara link? Open it to see who's asking and pay from your wallet.</span>
-          <OpenLink />
-        </div>
-        <Link to="/send" className="role">
-          <span className="ic" aria-hidden>
-            <Send size={20} />
-          </span>
-          <strong>Send money</strong>
-          <span className="d">Send USDC to anyone with a link. They don't need a wallet or any NEAR to claim it.</span>
-          <span className="go">
-            Send by link <ArrowRight size={14} aria-hidden />
-          </span>
-        </Link>
-        <Link to="/security" className="role">
-          <span className="ic" aria-hidden>
-            <Bot size={20} />
-          </span>
-          <strong>Protect an AI agent</strong>
-          <span className="d">For agent owners and builders. A vault that pays only after a signed check, within your limits.</span>
-          <span className="go">
-            See it stop an attack <ArrowRight size={14} aria-hidden />
-          </span>
-        </Link>
-      </div>
-      <div className="judge-strip">
-        <p>Judging or just curious? Try every flow in about 10 minutes, with free test money.</p>
-        <div className="row">
-          <Link to="/start" className="btn btn-primary btn-sm">
-            Start the testnet tour <ArrowRight size={14} className="arrow" aria-hidden />
-          </Link>
-          <Link to="/check" className="btn btn-ghost btn-sm">
-            <Search size={14} aria-hidden /> Check an account
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** The real pay page, as a customer sees it, framed as an example link. */
-function PayPreview() {
-  return (
-    <figure className="preview" style={{ margin: 0 }} aria-label="Example of a Notara payment link page">
-      <div className="preview-frame">
-        <div className="preview-bar" aria-hidden>
-          <Lock size={13} />
-          <span className="url">notara-sable.vercel.app/pay/42</span>
-        </div>
-        <div className="preview-sheet">
-          <p className="small muted" style={{ margin: 0 }}>
-            Logo design, 2 rounds
-          </p>
-          <div className="amount num">50 USDC</div>
-          <p className="small" style={{ margin: "4px 0 0" }}>
-            to <span className="mono">priya.testnet</span>
-          </p>
-          <div className="preview-check">
-            <div>
-              <CircleCheck size={16} aria-hidden /> Signed by this account's wallet
-            </div>
-            <div>
-              <CircleCheck size={16} aria-hidden /> Website proven: priya-studio.example
-            </div>
-            <div>
-              <Badge d="ALLOW" /> <span className="muted small">No policy rule broken</span>
-            </div>
-          </div>
-          <div className="preview-pay" aria-hidden>
-            {/* A picture of the pay page, not controls: quieter than the hero's real button, and not clickable. */}
-            <span className="btn btn-tonal btn-sm preview-btn" aria-hidden>
-              Pay with NEAR wallet
-            </span>
-            <span className="btn btn-secondary btn-sm preview-btn" aria-hidden>
-              From another chain
-            </span>
-          </div>
-        </div>
-      </div>
-      <figcaption className="preview-caption">
-        <BadgeCheck size={16} aria-hidden /> Example link
-      </figcaption>
-    </figure>
-  );
-}
-
 export function Home() {
+  // The hero is exactly the first screen. The header lies over the top of the landing page, so the hero
+  // pads its content down by the header's height (which changes with the notice and the wallet notice).
+  const hero = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const head = document.querySelector<HTMLElement>(".site-header");
+    if (!head || !hero.current) return;
+    const set = () => hero.current?.style.setProperty("--hero-top", `${Math.round(head.getBoundingClientRect().height)}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(head);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div className="landing">
-      <section className="hero">
-        <div>
-          <h1>Payment links people can trust.</h1>
-          <p className="lede">
-            Get paid in USDC from any chain, and let your customer see it's really you before they pay. Or send money to anyone with just a link, even if
-            they've never used crypto.
-          </p>
-          <div className="hero-actions">
-            <Link to="/invoices" className="btn btn-primary btn-lg">
-              <Link2 size={18} aria-hidden /> Create a payment link
-            </Link>
-            <Link to="/send" className="btn btn-secondary btn-lg">
-              <Send size={18} aria-hidden /> Send money
-            </Link>
+    <>
+      <section className="hero ls-hero" data-enter ref={hero} aria-labelledby="hero-h">
+        <div className="wrap">
+          <div className="hero-text ls-hero__in">
+            <div className="hero__c">
+              <p className="ls-notice">Live on NEAR mainnet since 9 November 2026</p>
+              <h1 id="hero-h">USDC payment links for freelancers</h1>
+              <p className="hero__lead">
+                Your NEAR wallet signs the link. Your customer sees who is asking, pays from the chain they already use, and exact USDC arrives in your
+                NEAR account.
+              </p>
+              <div className="btn-row">
+                <Link to="/invoices" className="btn btn-primary">
+                  {MAIN_ACTION} <ArrowRight size={18} className="arrow" aria-hidden />
+                </Link>
+                <Link to="/start" className="btn btn-secondary">
+                  Try it on testnet
+                </Link>
+              </div>
+            </div>
+            <HeroWindow />
           </div>
-          <p className="hero-foot">
-            <CircleCheck size={16} aria-hidden />
-            <span>Free to try on NEAR testnet with any NEAR wallet. Only paying from other chains needs mainnet.</span>
-          </p>
         </div>
-        <PayPreview />
       </section>
 
-      <Roles />
-
-      <section>
-        <div className="section-head">
-          <h2>From request to receipt in four steps</h2>
+      <section className="ls-sec" id="product" style={{ ["--h" as string]: 1 }} aria-labelledby="product-h">
+        <div className="wrap">
+          <h2 id="product-h">
+            Your links, and what each customer saw. <span className="muted">Paid, waiting or refunded, in one list.</span>
+          </h2>
+          <ProductWindow />
         </div>
-        <ol className="steps">
-          {STEPS.map((s, i) => (
-            <li key={s.title}>
-              <span className="n">{i + 1}</span>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-            </li>
-          ))}
-        </ol>
       </section>
 
-      <section className="trust-band">
-        <div className="section-head">
-          <h2>Why a customer can trust a Notara link</h2>
-          <p>Three checks run before anyone pays. Each one shows where its answer came from.</p>
-        </div>
-        <TrustList items={TRUST} />
-      </section>
-
-      <section>
-        <div className="paths">
-          <div className="path sage">
-            <h3>Pay with what you already have</h3>
-            <p>
-              Routed by NEAR Intents: the customer pays from their own chain, the merchant receives exact USDC on NEAR, and Notara never holds the money.
+      <section className="ls-sec" id="signed" style={{ ["--h" as string]: 1 }} aria-labelledby="signed-h">
+        <div className="wrap ls-split">
+          <div>
+            <h2 id="signed-h">Wallet signatures on every payment link</h2>
+            <p className="ls-lead">
+              The amount, the recipient and what it's for are signed with NEAR's message standard, NEP-413. Change one character and the customer's page
+              says the signature no longer checks out.
             </p>
-            <div className="chain-row" aria-label="Chains a customer can pay from">
-              {CHAINS.map((c) => (
-                <span key={c}>{c}</span>
-              ))}
+            <Link to="/invoices" className="link">
+              Sign your first link
+            </Link>
+          </div>
+          <div className="ls-window ls-sig" data-ui role="img" aria-label="The message a merchant's wallet signs, and the page confirming the signature">
+            <div className="ls-bar">
+              <Lock size={13} aria-hidden />
+              <span className="mono">Wallet: sign message</span>
+            </div>
+            <div className="ls-sig__from">
+              <Wallet size={18} aria-hidden /> <span>notara-sable.vercel.app asks design-studio.near to sign</span>
+            </div>
+            <pre className="ls-sig__msg mono">{"Notara payment link\nPay to: design-studio.near\nAmount: 50 USDC\nFor: Logo design, 2 rounds"}</pre>
+            <div className="ls-sig__ok">
+              <CircleCheck size={18} aria-hidden /> Signature checks out against this account's keys on NEAR
+            </div>
+            <div className="ls-sig__bad">
+              <CircleX size={18} aria-hidden /> Edited link: "Amount: 500 USDC" no longer matches the signature
+            </div>
+            <div className="ls-sig__acts">
+              <span className="ls-fakebtn">Reject</span>
+              <span className="ls-fakebtn ls-fakebtn--primary">Approve and sign</span>
             </div>
           </div>
-          <div className="path">
-            <h3>Send money with a link</h3>
-            <p>Fund a link, share it, and whoever opens it claims USDC on NEAR. Account setup and gas are covered, so they need no NEAR to start.</p>
-            <div className="row">
-              <Link to="/send" className="btn btn-tonal">
-                Send by link <ArrowRight size={16} className="arrow" aria-hidden />
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="path" style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 20 }}>
-          <span className="card-icon" style={{ margin: 0 }}>
-            <Bot size={22} aria-hidden />
-          </span>
-          <div style={{ flex: "1 1 320px" }}>
-            <h3>Safe for AI agents that pay bills</h3>
-            <p>Even a hacked agent can't move money: a NEAR vault contract pays only with a valid, signed check, within the owner's limits.</p>
-          </div>
-          <Link to="/security" className="btn btn-primary">
-            Watch the attack demo <ArrowRight size={16} className="arrow" aria-hidden />
-          </Link>
         </div>
       </section>
 
-      <section style={{ maxWidth: 860 }}>
-        <div className="section-head">
-          <h2>Questions before you try it</h2>
+      <section className="ls-sec" id="more" style={{ ["--h" as string]: 1 }} aria-labelledby="more-h">
+        <div className="wrap">
+          <h2 id="more-h">Four more things Notara does</h2>
+          <div className="ls-cards">
+            <Link to="/send" className="card ls-card">
+              <div className="ls-card__panel" data-ui>
+                <span className="ls-frag mono">notara…/claim/INV-0051#k…</span>
+                <span className="ls-frag ls-frag--ok">
+                  <CircleCheck size={14} aria-hidden /> 10 USDC claimed into maya.near
+                </span>
+              </div>
+              <h3>
+                <Send size={16} aria-hidden /> Sends money with a link
+              </h3>
+              <p>Fund a link and share it; whoever opens it claims USDC on NEAR, with gas covered.</p>
+            </Link>
+            <Link to="/check" className="card ls-card ls-card--low">
+              <div className="ls-card__panel" data-ui>
+                <span className="ls-frag ls-frag--warn">Be careful</span>
+                <span className="ls-frag">This account is new (5 days of activity)</span>
+              </div>
+              <h3>
+                <Search size={16} aria-hidden /> Checks any NEAR account
+              </h3>
+              <p>Account age, activity, code changes and shared scam reports, read live and in plain words.</p>
+            </Link>
+            <Link to="/invoices" className="card ls-card ls-card--low">
+              <div className="ls-card__panel" data-ui>
+                <span className="ls-frag">Send 0.000478 ETH on Base</span>
+                <span className="ls-frag ls-frag--ok">
+                  <CircleCheck size={14} aria-hidden /> You receive 1.00 USDC on NEAR
+                </span>
+              </div>
+              <h3>
+                <ArrowRight size={16} aria-hidden /> Takes payment from other chains
+              </h3>
+              <p>A one-time address per payment; NEAR Intents swaps it and the exact amount lands with you.</p>
+            </Link>
+            <Link to="/security" className="card ls-card">
+              <div className="ls-card__panel" data-ui>
+                <span className="ls-frag ls-frag--bad">
+                  <CircleX size={14} aria-hidden /> Vault refused: verdict is BLOCK
+                </span>
+                <span className="ls-frag">Hacked agent tried to pay attacker.near</span>
+              </div>
+              <h3>
+                <Bot size={16} aria-hidden /> Guards an AI agent's spending
+              </h3>
+              <p>A vault contract pays only with a signed check, within your caps, even if the agent is hacked.</p>
+            </Link>
+          </div>
         </div>
-        <ExpandGroup items={FAQ} />
       </section>
-    </div>
+
+      <section className="ls-sec" id="settle" style={{ ["--h" as string]: 1 }} aria-labelledby="settle-h">
+        <div className="wrap">
+          <h2 id="settle-h">How a payment from another chain settles</h2>
+          <p className="ls-lead">The customer sends their own token to a one-time address. NEAR Intents swaps it and delivers the exact USDC to you on NEAR.</p>
+          <div className="ls-diagram-card">
+            <SettleDiagram />
+          </div>
+          <div className="ls-figures" data-moment="counter-rolls">
+            <div>
+              <p className="t-stat num">55</p>
+              <p className="small muted">tokens a customer can pay with, as listed by NEAR Intents on 9 November 2026</p>
+            </div>
+            <div>
+              <p className="t-stat num">25</p>
+              <p className="small muted">USDC at most in one send link</p>
+            </div>
+            <div>
+              <p className="t-stat num">1</p>
+              <p className="small muted">NEAR a day at most from an AI-agent vault</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="ls-sec ls-statement" id="statement" style={{ ["--h" as string]: 1 }} aria-labelledby="statement-h">
+        <div className="wrap" data-moment="liquid-type" data-moment-opts='{"strength": 0.9}'>
+          <h2 id="statement-h" className="mo-lt__type">
+            An account check before every payment
+          </h2>
+          <p className="ls-lead">Every Notara link opens on its account check: the signature, the account's age and activity, and any scam reports.</p>
+          <ul className="ls-verdict" data-ui aria-label="The account check for design-studio.near">
+            <li>
+              <ShieldCheck size={20} aria-hidden /> <span>Signature</span> <strong>checks out</strong>
+            </li>
+            <li>
+              <CircleCheck size={20} aria-hidden /> <span>On NEAR since</span> <strong>March 2025</strong>
+            </li>
+            <li>
+              <CircleCheck size={20} aria-hidden /> <span>Scam reports</span> <strong>none</strong>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="ls-sec" id="faq" style={{ ["--h" as string]: 1 }} aria-labelledby="faq-h">
+        <div className="wrap ls-split">
+          <div>
+            <h2 id="faq-h">Questions</h2>
+            <OpenLink />
+          </div>
+          <dl className="ls-faq">
+            {FAQ.map((f) => (
+              <div key={f.q}>
+                <dt>
+                  {f.icon} {f.q}
+                </dt>
+                <dd>{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+    </>
   );
 }

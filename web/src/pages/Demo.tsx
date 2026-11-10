@@ -177,7 +177,11 @@ export function DemoPage() {
   return (
     <>
       <div className="page-head">
-        <h1>Watch a prompt-injected agent get stopped</h1>
+        <div className="tags">
+          <span className="tag testnet">Testnet</span>
+          <span className="tag">{agentMode === "llm" || dep?.agentMode === "llm" ? "Agent: real LLM" : "Agent: scripted (obeys the hidden text)"}</span>
+        </div>
+        <h1>The AI-agent attack demo</h1>
         <p>
           An AI accounts-payable agent reads invoices and pays them from a NEAR testnet vault. One invoice hides an instruction to pay an attacker.{" "}
           {mode === "local"
@@ -186,11 +190,11 @@ export function DemoPage() {
               ? "On this site you run it on your own vault, below. The scenario list after that shows what each case is designed to do; it only runs on a local demo server."
               : null}
         </p>
-        <div className="row">
-          <span className="tag testnet">Testnet</span>
-          <span className="tag">{agentMode === "llm" || dep?.agentMode === "llm" ? "Agent: real LLM" : "Agent: scripted (obeys the hidden text)"}</span>
-          {dep?.vault && <span className="tag mono">shared demo vault {dep.vault}</span>}
-          <Link to="/vault">Open the vault and approvals →</Link>
+        <div className="head-actions" style={{ alignItems: "center" }}>
+          <Link to="/vault" className="btn btn-secondary">
+            Open the vault and approvals
+          </Link>
+          {dep?.vault && <span className="small muted mono">Shared demo vault: {dep.vault}</span>}
         </div>
       </div>
 

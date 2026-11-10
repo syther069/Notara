@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api, type Invoice, type MerchantProfile, type MyVault } from "../lib/api";
 import { useWallet } from "../lib/wallet";
 import { formatAsset, linkNetwork, nearAmount, timeAgo } from "../lib/format";
+import { mountMoment } from "../lib/kit";
 import { ArrowRight, Bot, Globe, Link2, RefreshCw, Search, Send, Wallet } from "../components/icons";
 import { Banner, MainnetBadge, Skeleton } from "../components/ui";
 import { InvoiceStatus } from "./Invoices";
@@ -34,184 +35,246 @@ export function DashboardPage() {
   if (!w.accountId)
     return (
       <div className="page-head">
-        <h1>Your dashboard</h1>
-        <p>Connect a NEAR wallet to see your payment links, what you've been paid and your AI-agent vault.</p>
-        <button className="btn btn-primary btn-lg" onClick={() => w.connect()} disabled={!w.ready || w.busy}>
-          <Wallet size={18} aria-hidden /> Connect wallet
-        </button>
+        <h1>Your Notara dashboard</h1>
+        <p>Connect a NEAR wallet to see your payment links, what you've been paid and your AI-agent vault. Notara reads them live; nothing is sent.</p>
+        <div className="head-actions">
+          <button className="btn btn-primary" onClick={() => w.connect()} disabled={!w.ready || w.busy}>
+            <Wallet size={18} aria-hidden /> Connect wallet
+          </button>
+          <Link to="/start" className="btn btn-secondary">
+            Try it on testnet
+          </Link>
+        </div>
       </div>
     );
 
   const paidLinks = links?.filter((l) => l.status === "paid").length ?? 0;
+  const vaultFigure = vault === null ? null : vault === "n/a" ? "Testnet only" : vault.exists ? `${nearAmount(vault.balance)} NEAR` : "None yet";
+  // The figures roll once (counter-rolls) when every one of them is final: a figure that changes later is a new row.
+  const figures = profile && links ? [profile.paidTotal, String(paidLinks), String(links.length), vaultFigure ?? "…"] : null;
 
   return (
     <>
       <div className="dash-head">
         <div>
-          <p className="eyebrow" style={{ marginBottom: 6 }}>
+          <div className="row" style={{ gap: 8, marginBottom: 16 }}>
             {w.network === "mainnet" ? <MainnetBadge /> : <span className="tag testnet">Testnet</span>}
-          </p>
-          <h1 className="mono" style={{ fontSize: "clamp(22px, 3vw, 32px)", letterSpacing: "-0.02em", wordBreak: "break-all" }}>
-            {w.accountId}
-          </h1>
+          </div>
+          <h1 style={{ margin: 0 }}>Your Notara dashboard</h1>
+          <p className="acct">{w.accountId}</p>
         </div>
-        <button className="btn btn-secondary btn-sm" onClick={load} disabled={refreshing} aria-busy={refreshing}>
-          <RefreshCw size={15} aria-hidden className={refreshing ? "spin" : ""} /> {refreshing ? "Refreshing" : "Refresh"}
-        </button>
+        <div className="row">
+          <Link to="/invoices" className="btn btn-primary">
+            <Link2 size={18} aria-hidden /> Create a payment link
+          </Link>
+          <button className="btn btn-secondary" onClick={load} disabled={refreshing} aria-busy={refreshing}>
+            <RefreshCw size={16} aria-hidden className={refreshing ? "spin" : ""} /> {refreshing ? "Refreshing" : "Refresh"}
+          </button>
+        </div>
       </div>
 
-      <nav className="dash-actions" aria-label="Quick actions">
-        <Link to="/invoices" className="primary">
-          <span className="ic">
-            <Link2 size={18} aria-hidden />
-          </span>
-          New payment link
-        </Link>
-        <Link to="/send">
-          <span className="ic">
-            <Send size={18} aria-hidden />
-          </span>
-          Send by link
-        </Link>
-        <Link to="/check">
-          <span className="ic">
-            <Search size={18} aria-hidden />
-          </span>
-          Check an account
-        </Link>
-        <Link to={`/m/${encodeURIComponent(w.accountId)}`}>
-          <span className="ic">
-            <Globe size={18} aria-hidden />
-          </span>
-          Public profile
-        </Link>
-      </nav>
-
       {error && (
-        <Banner kind="error" title="Some of your data didn't load">
-          <p>
-            {error}. What loaded is still shown. <button className="btn btn-ghost btn-sm" onClick={load}>Try again</button>
-          </p>
-        </Banner>
+        <div style={{ marginBottom: 24 }}>
+          <Banner kind="error" title="Some of your data didn't load">
+            <p>
+              {error}. What loaded is still shown.{" "}
+              <button className="btn btn-ghost btn-sm" onClick={load}>
+                Try again
+              </button>
+            </p>
+          </Banner>
+        </div>
       )}
 
-      <div className="dash-grid" style={{ marginTop: error ? 16 : 0 }}>
-        <section className="card" style={{ margin: 0 }}>
-          <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
-            <h2 style={{ margin: 0 }}>Your payment links</h2>
-            {links && links.length > 0 && (
-              <Link to="/invoices" className="small">
-                All links
-              </Link>
-            )}
+      {figures && vault !== null ? (
+        <div className="dash-stats" data-moment="counter-rolls" key={figures.join("|")} ref={mountMoment} aria-label="Your totals, read live">
+          <div>
+            <p className="label">USDC paid to you</p>
+            <p className="t-stat num">{figures[0]}</p>
           </div>
-          {!links ? (
-            <Skeleton lines={4} />
-          ) : links.length === 0 ? (
-            <div className="empty">
-              <p>No payment links yet. Create one and share it to get paid in USDC.</p>
-              <Link to="/invoices" className="btn btn-primary btn-sm">
-                <Link2 size={15} aria-hidden /> Create a payment link
-              </Link>
+          <div>
+            <p className="label">Links paid</p>
+            <p className="t-stat num">{figures[1]}</p>
+          </div>
+          <div>
+            <p className="label">Payment links</p>
+            <p className="t-stat num">{figures[2]}</p>
+          </div>
+          <div>
+            <p className="label">AI-agent vault</p>
+            <p className="t-stat num">{figures[3]}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="dash-stats" aria-busy="true">
+          {["USDC paid to you", "Links paid", "Payment links", "AI-agent vault"].map((l) => (
+            <div key={l}>
+              <p className="label">{l}</p>
+              <div className="skeleton" style={{ height: 34, width: "60%", marginTop: 8 }} />
             </div>
-          ) : (
-            <ul className="list-rows">
-              {links.slice(0, 6).map((l) => (
-                <li key={l.id}>
-                  <div style={{ minWidth: 0 }}>
-                    <Link to={`/pay/${l.id}`} className="t" style={{ display: "block", color: "inherit" }}>
-                      {l.description || l.id}
-                    </Link>
-                    <span className="small muted">
-                      {l.id}, {timeAgo(l.createdAt)} {linkNetwork(l.asset) === "mainnet" && <MainnetBadge />}
-                    </span>
-                  </div>
-                  <div className="row" style={{ gap: 10, flexWrap: "nowrap" }}>
+          ))}
+        </div>
+      )}
+
+      <section aria-labelledby="links-h">
+        <div className="tool-split">
+          <div className="tool-main card">
+            <div className="sec-head">
+              <h2 id="links-h">Your payment links</h2>
+              {links && links.length > 0 && (
+                <Link to="/invoices" className="ulink always">
+                  All links <ArrowRight size={14} aria-hidden />
+                </Link>
+              )}
+            </div>
+            {!links ? (
+              <Skeleton lines={4} />
+            ) : links.length === 0 ? (
+              <div className="empty">
+                <p>No payment links yet. Create one and share it to get paid in USDC.</p>
+                <Link to="/invoices" className="btn btn-primary btn-sm">
+                  <Link2 size={15} aria-hidden /> Create a payment link
+                </Link>
+              </div>
+            ) : (
+              <ul className="dash-rows">
+                {links.slice(0, 6).map((l) => (
+                  <li key={l.id}>
+                    <div style={{ minWidth: 0 }}>
+                      <Link to={`/pay/${l.id}`} className="t">
+                        {l.description || l.id}
+                      </Link>
+                      <span className="small muted">
+                        <span className="mono">{l.id}</span>, {timeAgo(l.createdAt)} {linkNetwork(l.asset) === "mainnet" && <MainnetBadge />}
+                      </span>
+                    </div>
                     <strong className="num" style={{ whiteSpace: "nowrap" }}>
                       {formatAsset(l.amount, l.asset)}
                     </strong>
                     <InvoiceStatus s={l.status} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-        <div className="stack" style={{ margin: 0 }}>
-          <section className="card" style={{ margin: 0 }}>
-            <h2>Received</h2>
-            {!profile ? (
-              <Skeleton lines={2} />
-            ) : (
-              <div className="grid-2" style={{ gap: 12 }}>
-                <div className="stat">
-                  <div className="label">USDC paid to you</div>
-                  <div className="value">{profile.paidTotal}</div>
-                </div>
-                <div className="stat">
-                  <div className="label">Links paid</div>
-                  <div className="value">
-                    {paidLinks} <span className="muted" style={{ fontSize: 16, fontWeight: 600 }}>of {profile.links}</span>
-                  </div>
-                </div>
+          <div className="tool-side dash-side">
+            <section className="card" style={{ margin: 0 }} aria-labelledby="vault-h">
+              <div className="row" style={{ gap: 12, marginBottom: 12 }}>
+                <span className="card-icon" style={{ margin: 0 }}>
+                  <Bot size={20} aria-hidden />
+                </span>
+                <h2 id="vault-h" style={{ margin: 0 }}>
+                  AI-agent vault
+                </h2>
               </div>
-            )}
-            {profile && (
-              <p className="small muted" style={{ margin: "12px 0 0" }}>
-                Website:{" "}
-                {profile.website ? (
-                  <>
-                    {profile.website} {profile.websiteVerified ? "(proven)" : "(not proven yet)"}
-                  </>
-                ) : (
-                  <Link to={`/m/${encodeURIComponent(w.accountId)}`}>prove your website</Link>
-                )}
-              </p>
-            )}
-          </section>
+              {vault === null ? (
+                <Skeleton lines={2} />
+              ) : vault === "n/a" ? (
+                <p className="muted" style={{ margin: 0 }}>
+                  Vaults run on testnet with free test NEAR. Switch your wallet to testnet to create one.
+                </p>
+              ) : vault.exists ? (
+                <>
+                  <p className="small muted mono" style={{ margin: "0 0 16px", wordBreak: "break-all" }}>
+                    {vault.vault}
+                  </p>
+                  <div className="row">
+                    <Link to={`/vault?vault=${encodeURIComponent(vault.vault)}`} className="btn btn-secondary btn-sm">
+                      Open the vault
+                    </Link>
+                    <Link to="/security" className="btn btn-ghost btn-sm">
+                      Run the agent
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="muted">You don't have a vault yet. Create one you own, then watch an AI agent try to pay from it.</p>
+                  <Link to="/security" className="btn btn-secondary btn-sm">
+                    Create my vault <ArrowRight size={14} className="arrow" aria-hidden />
+                  </Link>
+                </>
+              )}
+            </section>
 
-          <section className="card" style={{ margin: 0 }}>
-            <div className="row" style={{ gap: 10, marginBottom: 6 }}>
-              <span className="card-icon" style={{ margin: 0, width: 34, height: 34 }}>
-                <Bot size={18} aria-hidden />
-              </span>
-              <h2 style={{ margin: 0 }}>AI-agent vault</h2>
-            </div>
-            {vault === null ? (
-              <Skeleton lines={2} />
-            ) : vault === "n/a" ? (
-              <p className="small muted" style={{ margin: 0 }}>
-                Vaults run on testnet with free test NEAR. Switch your wallet to testnet to create one.
-              </p>
-            ) : vault.exists ? (
-              <>
-                <p className="small" style={{ margin: "0 0 4px" }}>
-                  Balance <strong className="num">{nearAmount(vault.balance)} NEAR</strong>
+            <section className="card" style={{ margin: 0 }} aria-labelledby="site-h">
+              <div className="row" style={{ gap: 12, marginBottom: 12 }}>
+                <span className="card-icon" style={{ margin: 0 }}>
+                  <Globe size={20} aria-hidden />
+                </span>
+                <h2 id="site-h" style={{ margin: 0 }}>
+                  Public profile
+                </h2>
+              </div>
+              {!profile ? (
+                <Skeleton lines={2} />
+              ) : (
+                <p className="muted" style={{ margin: "0 0 16px" }}>
+                  Website:{" "}
+                  {profile.website ? (
+                    <>
+                      <span className="mono">{profile.website}</span> {profile.websiteVerified ? "(proven)" : "(not proven yet)"}
+                    </>
+                  ) : (
+                    "none added yet"
+                  )}
+                  . Customers see this before they pay.
                 </p>
-                <p className="small muted mono" style={{ margin: "0 0 12px", wordBreak: "break-all" }}>
-                  {vault.vault}
-                </p>
-                <div className="row">
-                  <Link to={`/vault?vault=${encodeURIComponent(vault.vault)}`} className="btn btn-secondary btn-sm">
-                    Open vault
-                  </Link>
-                  <Link to="/security" className="btn btn-ghost btn-sm">
-                    Run the agent <ArrowRight size={14} className="arrow" aria-hidden />
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="small muted">You don't have a vault yet. Create one you own, then watch an AI agent try to pay from it.</p>
-                <Link to="/security" className="btn btn-tonal btn-sm">
-                  Create my vault <ArrowRight size={14} className="arrow" aria-hidden />
-                </Link>
-              </>
-            )}
-          </section>
+              )}
+              <Link to={`/m/${encodeURIComponent(w.accountId)}`} className="btn btn-secondary btn-sm">
+                {profile?.websiteVerified ? "Open my profile" : "Prove my website"}
+              </Link>
+            </section>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section aria-labelledby="do-h">
+        <h2 id="do-h">Get paid, send or check</h2>
+        <nav className="dash-tiles" aria-label="What you can do">
+          <Link to="/invoices" className="dash-tile is-main">
+            <span className="ic">
+              <Link2 size={22} aria-hidden />
+            </span>
+            <span>
+              <strong>Payment link</strong>
+              <br />
+              <span className="d">Signed by your wallet, paid from any chain.</span>
+            </span>
+          </Link>
+          <Link to="/send" className="dash-tile">
+            <span className="ic">
+              <Send size={22} aria-hidden />
+            </span>
+            <span>
+              <strong>Send link</strong>
+              <br />
+              <span className="d">USDC anyone can claim, no wallet needed yet.</span>
+            </span>
+          </Link>
+          <Link to="/check" className="dash-tile">
+            <span className="ic">
+              <Search size={22} aria-hidden />
+            </span>
+            <span>
+              <strong>Account check</strong>
+              <br />
+              <span className="d">Age, activity and scam reports, read live.</span>
+            </span>
+          </Link>
+          <Link to={`/m/${encodeURIComponent(w.accountId)}`} className="dash-tile">
+            <span className="ic">
+              <Globe size={22} aria-hidden />
+            </span>
+            <span>
+              <strong>Public profile</strong>
+              <br />
+              <span className="d">What customers see about you.</span>
+            </span>
+          </Link>
+        </nav>
+      </section>
     </>
   );
 }

@@ -18,10 +18,13 @@ if (r.report.decision === "WARN") return askHuman(r.report.reasons);
 // ALLOW: no known risk found. Not a guarantee.`;
 
   return (
-    <div className="stack" style={{ maxWidth: 760, margin: "0 auto" }}>
-      <div>
-        <h1>Check before your agent pays</h1>
-        <p className="muted">
+    <div className="stack" style={{ maxWidth: 800 }}>
+      <div className="page-head" style={{ marginBottom: 16 }}>
+        <div className="tags">
+          <span className="tag">For developers</span>
+        </div>
+        <h1>Notara's payment check for AI agents</h1>
+        <p>
           One call tells your agent if a NEAR payment looks safe: whether the account exists, is new, is on a scam report list, can receive the token, and if the
           amount is unusual. No API key. Machine-readable docs are at <a href="/llms.txt">/llms.txt</a>.
         </p>

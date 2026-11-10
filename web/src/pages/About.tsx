@@ -2,7 +2,7 @@ export function AboutPage() {
   return (
     <div className="reading">
       <div className="page-head">
-        <h1>How it works, and its limits</h1>
+        <h1>How Notara works, and its limits</h1>
         <p>What Notara checks, where the data comes from, what NEAR function-call keys do and don't protect, and what is still missing.</p>
       </div>
 

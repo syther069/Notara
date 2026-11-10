@@ -85,7 +85,35 @@
   --shadow-pop: 0 18px 48px -16px rgba(18, 55, 42, 0.32);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --max: 1200px;
+  /* One content box for the header, every page and the footer (design-taste-frontend's .wrap):
+     1280 wide, the same side margin left and right: 80 on desktop, 48 on tablet, 24 on a phone. */
+  --wrap: 1280px;
+  --gut: 80px;
   color-scheme: light;
+
+  /* Bridge to the design-taste-frontend motion layer (web/public/kit, MIT). The kit reads its own role
+     names; these map them onto Notara's palette, so the palette stays as it is in both themes. */
+  --ink: var(--text);
+  --action: var(--accent);
+  --action-ink: var(--accent-ink);
+  --line-strong: var(--border-strong);
+  --card: var(--surface);
+  --s-2: 8px;
+  --r-btn: var(--r-pill);
+  /* Motion timings and curves, as the kit's motion.md sets them. */
+  --m-in: 150ms;
+  --m-out: 120ms;
+  --m-press: 90ms;
+  --m-panel: 200ms;
+  --m-close: 120ms;
+  --m-slide: 240ms;
+  --m-image: 600ms;
+  --m-image-out: 400ms;
+  --m-cycle: 3.2s;
+  --m-lift: -2px;
+  --m-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --m-ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --m-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 /* Dark: deep green surfaces with pale cream text. */
@@ -150,3 +178,6 @@
   --shadow-pop: 0 18px 48px -16px rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
+
+@media (max-width: 1023px) { :root { --gut: 48px; } }
+@media (max-width: 639px) { :root { --gut: 24px; } }

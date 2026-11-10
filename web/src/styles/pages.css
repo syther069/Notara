@@ -1,0 +1,149 @@
+/* The task pages (dashboard, get paid, send, pay, claim, vault, check, start, about, agents), built to the same
+   design-taste-frontend system as the landing page: one content box (.wrap lines), one type scale, one button
+   pair, one radius scale, fields to the kit's form recipe (48px, labels you can see above, errors under the
+   field), and a page head that enters once. One deviation, on purpose: a task page is a tool, not a story, so
+   it is as long as its task, not one screen per section. Scoped to main:not(.landing-main): the landing page
+   keeps landing.css. Palette and Manrope are the client's own (tokens.css). */
+
+main:not(.landing-main) { padding: 56px 0 120px; }
+
+/* ---- type: the landing page's scale, a step down */
+main:not(.landing-main) h1 { font-size: clamp(34px, 2.2vw + 18px, 56px); line-height: 1.04; font-weight: 600; letter-spacing: -0.035em; max-width: 20ch; }
+main:not(.landing-main) h2 { font-size: clamp(22px, 0.8vw + 16px, 28px); line-height: 1.15; font-weight: 650; letter-spacing: -0.025em; }
+main:not(.landing-main) h3 { font-size: 18px; font-weight: 650; letter-spacing: -0.015em; }
+main:not(.landing-main) .link-title { max-width: none; }
+
+/* ---- the page head: the page's first screen line; it enters once (a quiet rise), like the landing hero */
+.page-head { margin-bottom: 40px; max-width: 800px; }
+.page-head > p { font-size: 18px; line-height: 1.6; color: var(--text-muted); max-width: 60ch; margin-bottom: 0; }
+.page-head .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.page-head .head-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+@media (prefers-reduced-motion: no-preference) {
+  main:not(.landing-main) .page-head, main:not(.landing-main) .dash-head { animation: ph-in 0.6s var(--m-ease-enter) both; }
+}
+@keyframes ph-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* ---- sections inside a page: one gap */
+main:not(.landing-main) * + section { margin-top: 72px; }
+main:not(.landing-main) section > h2:first-child, .sec-head h2 { margin-bottom: 16px; }
+.sec-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.sec-head h2 { margin: 0; }
+
+/* ---- surfaces: one card, one radius; a card inside a card is flat (no box in a box) */
+main:not(.landing-main) .card { border-radius: var(--r-lg); padding: 28px; }
+main:not(.landing-main) .card .card { border-radius: var(--r-md); padding: 20px; background: var(--surface-3); border-color: transparent; }
+main:not(.landing-main) .card.flat { border-radius: var(--r-md); }
+main:not(.landing-main) .banner { border-radius: var(--r-md); padding: 16px 20px; }
+main:not(.landing-main) .table-wrap { border-radius: var(--r-lg); }
+main:not(.landing-main) th { background: var(--surface); font-size: 13px; padding: 14px 20px; }
+main:not(.landing-main) td { padding: 16px 20px; font-size: 15px; }
+main:not(.landing-main) .stat .label { font-size: 14px; font-weight: 600; }
+main:not(.landing-main) .stat .value { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+
+/* ---- one button pair: primary and secondary. Tonal draws as the secondary; ghost is a text action. */
+main:not(.landing-main) .btn { min-height: 48px; padding: 0 22px; font-size: 15px; }
+main:not(.landing-main) .btn-sm { min-height: 40px; padding: 0 16px; font-size: 14px; }
+main:not(.landing-main) .btn-lg { min-height: 52px; padding: 0 26px; font-size: 16px; }
+.btn-tonal { --btn-bd: var(--border-strong); --btn-bg: var(--surface); --btn-ink: var(--text); }
+.btn-tonal:hover:not([disabled]) { --btn-bg: var(--surface-3); --btn-bd: var(--green); }
+main:not(.landing-main) .btn-ghost { min-height: 40px; padding: 0 8px; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+main:not(.landing-main) .btn-ghost:hover:not([disabled]) { background: none; text-decoration-thickness: 2px; }
+@media (pointer: coarse) { main:not(.landing-main) .btn-sm, main:not(.landing-main) .btn-ghost { min-height: var(--tap-comfort); } }
+
+/* ---- fields: the kit's recipe (48px, 14px labels above, 16px text, errors under the field) */
+main:not(.landing-main) .field { gap: 8px; }
+main:not(.landing-main) .field label, main:not(.landing-main) .field > .label, .field-legend { font-size: 14px; font-weight: 700; }
+main:not(.landing-main) .input, main:not(.landing-main) select.input { min-height: 48px; font-size: 16px; border-radius: var(--r-sm); padding: 0 16px; }
+main:not(.landing-main) textarea.input { padding: 12px 16px; }
+main:not(.landing-main) .segmented { min-height: 48px; }
+main:not(.landing-main) .field .hint, main:not(.landing-main) .hint, main:not(.landing-main) .err { font-size: 14px; }
+main:not(.landing-main) .form-2 { gap: 20px; }
+main:not(.landing-main) .stack > * + * { margin-top: 20px; }
+
+/* ---- the step bar: three words on one rule */
+main:not(.landing-main) .stepbar { margin-bottom: 28px; }
+
+/* ---- the tool split: the work on the left (columns 1-7), what it makes on the right (8-12), top-aligned,
+   on the 12-column lines of the content box. Stacks, work first, under 1024. */
+.tool-split { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 32px; align-items: start; }
+.tool-split > .tool-main { grid-column: 1 / 8; min-width: 0; }
+.tool-split > .tool-side { grid-column: 8 / 13; min-width: 0; position: sticky; top: 112px; }
+@media (max-width: 1023px) {
+  .tool-split > .tool-main, .tool-split > .tool-side { grid-column: 1 / -1; position: static; }
+}
+.side-label { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 14px; font-weight: 700; color: var(--text-muted); }
+
+/* ---- the live preview: Notara's own pay / claim page, drawn from what is typed (product UI as live HTML) */
+.pv { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-pop); overflow: hidden; }
+.pv__bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface-3); font-size: 13px; color: var(--text-muted); min-width: 0; }
+.pv__bar .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv__body { padding: 24px 28px 28px; }
+.pv__for { font-size: 15px; color: var(--text-muted); overflow-wrap: anywhere; }
+.pv__for.is-empty { font-style: italic; }
+.pv__amount { font-size: 44px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; margin: 6px 0 2px; overflow-wrap: anywhere; }
+.pv__to { font-size: 15px; overflow-wrap: anywhere; }
+.pv__checks { list-style: none; margin: 20px 0 0; padding: 16px 0 0; border-top: 1px solid var(--border); display: grid; gap: 10px; }
+.pv__checks li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+.pv__checks svg { flex: none; margin-top: 3px; }
+.pv__checks .ok svg { color: var(--allow); }
+.pv__checks .wait svg { color: var(--text-muted); }
+.pv__checks .bad svg { color: var(--block); }
+.pv__acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.pv__fake { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: var(--r-pill); font-size: 15px; font-weight: 700; border: 1px solid var(--border-strong); background: var(--surface); }
+.pv__fake--primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.pv-note { margin: 12px 0 0; font-size: 14px; color: var(--text-muted); }
+
+/* ---- dashboard */
+.dash-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 40px; }
+.dash-head .acct { font-family: var(--font-mono); font-size: clamp(15px, 1vw + 10px, 19px); color: var(--text-muted); overflow-wrap: anywhere; margin: 12px 0 0; }
+.dash-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); }
+.dash-stats > div { padding: 24px 28px; min-width: 0; }
+.dash-stats > div + div { border-left: 1px solid var(--border); }
+.dash-stats .t-stat { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin: 6px 0 0; overflow-wrap: anywhere; }
+.dash-stats .label { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 0; }
+.dash-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+a.dash-tile { display: flex; flex-direction: column; gap: 14px; padding: 20px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); color: inherit; text-decoration: none; min-width: 0; }
+a.dash-tile:hover { border-color: var(--border-strong); }
+.dash-tile .ic { width: 48px; height: 48px; border-radius: var(--r-md); display: grid; place-items: center; background: var(--surface-sage); color: var(--text-green); }
+.dash-tile strong { font-size: 17px; letter-spacing: -0.01em; }
+.dash-tile span.d { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+.dash-tile.is-main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.dash-tile.is-main .ic { background: color-mix(in srgb, var(--accent-ink) 16%, transparent); color: var(--accent-ink); }
+.dash-tile.is-main span.d { color: color-mix(in srgb, var(--accent-ink) 82%, transparent); }
+.dash-rows { list-style: none; margin: 0; padding: 0; }
+.dash-rows li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.dash-rows li:last-child { border-bottom: 0; padding-bottom: 0; }
+.dash-rows li:first-child { padding-top: 0; }
+.dash-rows .t { font-weight: 650; color: inherit; text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-rows .t:hover { text-decoration: underline; }
+.dash-side > * + * { margin-top: 24px; }
+@media (max-width: 1023px) {
+  .dash-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-stats > div:nth-child(3) { border-left: 0; }
+  .dash-stats > div:nth-child(n + 3) { border-top: 1px solid var(--border); }
+  .dash-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+  main:not(.landing-main) { padding: 40px 0 96px; }
+  .page-head { margin-bottom: 32px; }
+  main:not(.landing-main) .card { padding: 20px; }
+  .dash-stats > div { padding: 18px 20px; }
+  .dash-stats .t-stat { font-size: 28px; }
+  .dash-tiles { grid-template-columns: 1fr; gap: 12px; }
+  a.dash-tile { flex-direction: row; align-items: center; }
+  .dash-rows li { grid-template-columns: minmax(0, 1fr) auto; }
+  .dash-rows li > :last-child { grid-column: 1 / -1; justify-self: start; }
+  .pv__body { padding: 20px; }
+  .pv__amount { font-size: 34px; }
+}
+
+/* ---- vault stats: one row of figures in a single panel (as the dashboard) */
+.vault-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); }
+.vault-stats > .card.stat { border: 0; border-radius: 0; background: none; padding: 24px 28px; margin: 0; }
+.vault-stats > .card.stat + .card.stat { border-left: 1px solid var(--border); }
+@media (max-width: 1023px) {
+  .vault-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vault-stats > .card.stat:nth-child(3) { border-left: 0; }
+  .vault-stats > .card.stat:nth-child(n + 3) { border-top: 1px solid var(--border); }
+}
+.tool-split > .tool-main:only-child { grid-column: 1 / -1; }

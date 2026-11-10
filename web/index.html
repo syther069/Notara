@@ -1,8 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-type="software" data-buttons="tonal" data-motion>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="page-type" content="software" />
+    <meta name="site-kind" content="software" />
     <meta name="description" content="Notara: payment links you can trust. Get paid in USDC from any chain, and your customer can see it is really you." />
     <title>Notara</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -14,6 +16,10 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <!-- design-taste-frontend motion layer (web/public/kit, MIT): hover, press, the hero's entrance -->
+    <link rel="stylesheet" href="/kit/motion/motion.css" />
+    <script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+    <script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
   </head>
   <body>
     <div id="root"></div>

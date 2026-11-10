@@ -191,7 +191,10 @@ export function StartPage() {
   return (
     <div style={{ maxWidth: 880 }}>
       <div className="page-head">
-        <h1>Try every flow on testnet</h1>
+        <div className="tags">
+          <span className="tag testnet">Testnet</span>
+        </div>
+        <h1>Every Notara flow, on testnet</h1>
         <p>
           About 10 minutes, free test money only. Paying from another chain is the one thing testnet can't do, because NEAR Intents runs only on mainnet.
         </p>

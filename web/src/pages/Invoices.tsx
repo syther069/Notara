@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Link } from "react-router-dom";
 import { Download, LoaderCircle, Plus, RefreshCw, Wallet } from "../components/icons";
 import { QrCode } from "../components/QrCode";
+import { PayPreview, type PreviewCheck } from "../components/PayPreview";
 import { api, type Invoice } from "../lib/api";
 import { ASSETS, asSentence, formatAsset, linkNetwork, USDC_MAINNET, USDC_TESTNET } from "../lib/format";
 import { Banner, CopyButton, MainnetBadge, Skeleton, StepBar, TxLink } from "../components/ui";
@@ -131,14 +132,32 @@ export function InvoicesPage() {
 
   const madeUrl = made ? `${location.origin}${linkNetwork(made.asset) ? "/pay" : "/invoices"}/${made.id}` : "";
   const walletOnNet = !!wallet.accountId && wallet.network === linkNet;
+  // The live preview: the customer's pay page, drawn from the form (or, once made, from the link itself).
+  const pv = made
+    ? { desc: made.description, amount: formatAsset(made.amount, made.asset), to: made.merchant, net: linkNetwork(made.asset), signed: made.signed, path: `/pay/${made.id}` }
+    : { desc: desc.trim(), amount: `${amount && !amountErr ? amount : "0"} ${ASSETS[asset].symbol}`, to: walletOnNet ? wallet.accountId : unsigned && merchant.trim() ? merchant.trim() : null, net: linkNet, signed: undefined, path: "/pay/…" };
+  const pvChecks: PreviewCheck[] = [
+    pv.signed === undefined
+      ? { state: "wait", text: "Signed by your wallet when you create it" }
+      : pv.signed
+        ? { state: "ok", text: "Signed by this account's wallet" }
+        : { state: "bad", text: "Not signed: the customer can't be sure it's you" },
+    { state: "wait", text: "Account check runs when your customer opens it" },
+    pv.net === "mainnet"
+      ? { state: "ok", text: "Payable from Ethereum, Base, Solana, Arbitrum and more" }
+      : { state: "ok", text: "Testnet USDC: free test money, nothing of value moves" },
+  ];
 
   return (
     <>
       <div className="page-head">
-        <h1>Get paid with a link</h1>
+        <div className="tags">{linkNet === "mainnet" ? <MainnetBadge /> : <span className="tag testnet">Testnet</span>}</div>
+        <h1>Payment links paid in USDC</h1>
         <p>Make a payment link, share it on WhatsApp, email or an invoice, and receive USDC on NEAR. Your customer sees it's really you before they pay.</p>
       </div>
 
+      <div className="tool-split">
+      <div className="tool-main">
       {!dep?.deployed && asset === "NEAR" ? (
         <NotDeployed />
       ) : made ? (
@@ -254,7 +273,7 @@ export function InvoicesPage() {
           {isLink ? (
             <div className="stack" style={{ marginTop: 20 }}>
               <div className="row">
-                <button type="button" className="btn btn-primary btn-lg" onClick={createSigned} disabled={signing} aria-busy={signing}>
+                <button type="button" className="btn btn-primary" onClick={createSigned} disabled={signing} aria-busy={signing}>
                   {signing ? <LoaderCircle size={18} /> : <Wallet size={18} aria-hidden />}{" "}
                   {signing ? "Waiting for your wallet" : walletOnNet ? "Sign and create link" : "Connect wallet, sign and create"}
                 </button>
@@ -330,10 +349,33 @@ export function InvoicesPage() {
           )}
         </form>
       )}
+      </div>
+      {isLink && (
+        <aside className="tool-side" aria-labelledby="pv-h">
+          <p className="side-label" id="pv-h">
+            What your customer sees
+          </p>
+          <PayPreview
+            path={pv.path}
+            forText={pv.desc}
+            emptyFor="What it's for appears here"
+            amount={pv.amount}
+            to={
+              <>
+                to <span className="mono">{pv.to ?? "your NEAR account"}</span>
+              </>
+            }
+            checks={pvChecks}
+            primary={`Pay ${pv.amount}`}
+            secondary={pv.net === "mainnet" ? "From another chain" : undefined}
+          />
+        </aside>
+      )}
+      </div>
 
       <section>
-        <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-          <h2 style={{ margin: 0 }}>{owner || dep?.public ? "Your links" : "All links on this server"}</h2>
+        <div className="sec-head">
+          <h2>{owner || dep?.public ? "Your payment links" : "All payment links on this server"}</h2>
           <div className="row">
             {wallet.accountId && !dep?.public && (
               <label className="row small" style={{ gap: 6 }}>

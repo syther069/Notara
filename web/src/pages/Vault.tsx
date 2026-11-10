@@ -163,16 +163,19 @@ export function VaultPage() {
   return (
     <>
       <div className="page-head">
-        <div className="row" style={{ justifyContent: "space-between" }}>
-          <h1>AI-agent vault</h1>
-          <button className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
-            <RefreshCw size={14} className={loading ? "spin" : ""} aria-hidden /> Refresh
-          </button>
+        <div className="tags">
+          <span className="tag testnet">Testnet</span>
         </div>
+        <h1>The AI-agent vault</h1>
         <p>
           The smart contract that holds the agent's money. It pays only with a valid Notara verdict, within these limits, and holds WARN payments for you.
         </p>
-        {summary && <AccountLink id={summary.vault} />}
+        <div className="head-actions" style={{ alignItems: "center" }}>
+          <button className="btn btn-secondary" onClick={load} disabled={loading}>
+            <RefreshCw size={16} className={loading ? "spin" : ""} aria-hidden /> Refresh
+          </button>
+          {summary && <AccountLink id={summary.vault} />}
+        </div>
       </div>
 
       {error && (
@@ -184,7 +187,7 @@ export function VaultPage() {
       {!summary ? (
         <Skeleton lines={4} />
       ) : (
-        <div className="grid-4">
+        <div className="vault-stats">
           <div className="card stat">
             <div className="label">Balance</div>
             <div className="value">{summary.balanceNear} NEAR</div>
@@ -209,7 +212,7 @@ export function VaultPage() {
       )}
       {summary &&
         (summary.usdc.enabled ? (
-          <div className="grid-4" style={{ marginTop: 16 }}>
+          <div className="vault-stats" style={{ marginTop: 24 }}>
             <div className="card stat">
               <div className="label">USDC balance</div>
               <div className="value">{summary.usdc.balance} USDC</div>

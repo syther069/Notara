@@ -1,0 +1,239 @@
+/* The landing page, built to design-taste-frontend (tasteskill 2.5.1): one section per screen, equal edges,
+   the h2 first and top-aligned, the hero alone on the first screen. Notara's palette and type tokens only.
+   Task pages (pay, send, vault...) don't use these rules: they're tools, not screens of a story. */
+
+/* React mounts into #root; it lays out no box of its own, so header, main and footer are the page's shell. */
+#root { display: contents; }
+main.landing-main { padding: 0; min-height: 0; }
+/* sections touch: each is one screen, so the app-wide gap between sections would push them off the screen grid */
+.landing-main > section { margin-top: 0; }
+/* On the landing page the header lies over the sections (each section's top padding clears it), so every
+   section, the hero included, is exactly one screen and starts on a whole screen. */
+body:has(main.landing-main) .site-header { position: fixed; top: 0; left: 0; right: 0; border-bottom: 1px solid var(--border); }
+.landing-main .wrap { width: min(100% - 2 * var(--gut), var(--wrap)); margin-inline: auto; position: relative; z-index: 1; }
+.landing-main { --ls-padt: 120px; --ls-padb: 72px; }
+@media (max-width: 639px) { .landing-main { --ls-padt: 96px; --ls-padb: 48px; } }
+
+/* ---- the section box: exactly one or two screens */
+.ls-sec {
+  box-sizing: border-box;
+  height: calc(var(--h, 1) * 100svh);
+  padding: var(--ls-padt) 0 var(--ls-padb);
+  overflow: hidden;
+}
+@media (max-width: 639px) { .ls-sec { height: auto; min-height: calc(var(--hm, 1) * 100lvh); } }
+@media (min-width: 640px) and (max-width: 1023px) { .ls-sec { height: auto; min-height: calc(var(--h, 1) * 100svh); } }
+.ls-sec h2 { font-size: clamp(30px, 2.2vw + 14px, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 600; margin: 0 0 16px; max-width: 24ch; text-wrap: balance; }
+.ls-sec h2 .muted { color: var(--text-muted); }
+.ls-lead { font-size: 18px; line-height: 1.6; color: var(--text-muted); max-width: 58ch; margin: 0 0 32px; }
+
+/* ---- hero: centred, the window rising out of a lit frame that fills the rest of the first screen */
+.ls-hero {
+  box-sizing: border-box;
+  height: 100svh;
+  min-height: 600px;
+  padding: calc(var(--hero-top, 112px) + 28px) 0 var(--ls-padb);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ls-hero > .wrap { flex: 1; min-height: 0; display: flex; }
+.ls-hero__in { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.ls-hero .hero__c { text-align: center; display: flex; flex-direction: column; align-items: center; }
+.ls-notice { margin: 0 0 16px; font-size: 14px; font-weight: 600; color: var(--text-green); padding: 6px 14px; border-radius: var(--r-pill); background: var(--surface-sage); }
+.ls-hero h1 { font-size: clamp(40px, 3.2vw + 12px, 64px); line-height: 1.02; letter-spacing: -0.04em; font-weight: 600; margin: 0; max-width: 16ch; text-wrap: balance; }
+.ls-hero .hero__lead { font-size: 19px; line-height: 1.5; color: var(--text-muted); max-width: 56ch; margin: 14px 0 24px; }
+.landing-main .btn, .closing-row .btn { min-height: 52px; padding: 0 26px; font-size: 16px; }
+.ls-hero .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.ls-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 24px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  /* the still ground: shown before the effect paints, under reduced motion and if WebGL fails */
+  background: radial-gradient(120% 90% at 50% 0%, var(--surface-sage), var(--bg) 70%);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 12px), transparent);
+  mask-image: linear-gradient(#000 calc(100% - 12px), transparent);
+}
+.ls-frame > canvas, .ls-frame > .fx-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+
+/* ---- the windows (the product's own UI as live HTML) */
+.ls-window { position: relative; z-index: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-pop); overflow: hidden; }
+.ls-hero .ls-window { width: min(100% - 32px, 880px); height: max-content; }
+.ls-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-muted); background: var(--surface-3); }
+.ls-pay { padding: 18px 28px 20px; }
+/* in the hero the pay page is laid out wide (amount left, the checks right), so the whole window fits the first screen */
+.hero__window .ls-pay { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 40px; align-items: start; }
+.hero__window .ls-pay__head { grid-column: 1 / 3; margin-bottom: 6px; }
+.hero__window .ls-checks { grid-column: 2; grid-row: 2 / 5; margin-top: 8px; align-self: center; }
+.hero__window .ls-pay__actions { grid-column: 1; }
+@media (max-width: 639px) { .hero__window .ls-pay { display: block; } }
+.ls-pay__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.ls-pay__for { font-size: 15px; color: var(--text-muted); }
+.ls-pay__amount { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; margin-top: 4px; }
+.ls-pay__to { font-size: 15px; margin-top: 2px; }
+.ls-checks { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.ls-checks li { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.ls-checks li svg { color: var(--allow); flex: none; }
+.ls-pay__actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.ls-fakebtn { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: var(--r-pill); border: 1px solid var(--border-strong); background: var(--surface); font-size: 14px; font-weight: 700; }
+.ls-fakebtn--primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.ls-status { position: relative; font-size: 13px; font-weight: 700; }
+.ls-status > span { padding: 4px 10px; border-radius: var(--r-pill); }
+.ls-status__unpaid { color: var(--text-muted); }
+.ls-status__paid { position: absolute; right: 0; top: 0; background: var(--allow); color: #fff; opacity: 0; }
+
+/* the hero window's one timed loop (motion.md: one cycle 2.5-4 s, the last part of each cycle holds the
+   finished picture; a pause button because it keeps moving): the checks arrive one by one, the status turns
+   Paid, it holds. All four parts share one cycle and no delays, so they restart together. At rest (no motion,
+   reduced motion, a phone) it shows the finished state. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 640px) {
+  [data-m-loop] .ls-pay .ls-step--1 { animation: ls-step1 var(--m-cycle) var(--m-ease-enter) infinite both; }
+  [data-m-loop] .ls-pay .ls-step--2 { animation: ls-step2 var(--m-cycle) var(--m-ease-enter) infinite both; }
+  [data-m-loop] .ls-pay .ls-step--3 { animation: ls-step3 var(--m-cycle) var(--m-ease-enter) infinite both; }
+  [data-m-loop] .ls-pay .ls-status__paid { animation: ls-paid var(--m-cycle) var(--m-ease) infinite both; }
+  [data-m-loop] .ls-pay .ls-status__unpaid { animation: ls-unpaid var(--m-cycle) var(--m-ease) infinite both; }
+}
+@keyframes ls-step1 { 0% { opacity: 0.25; transform: translateY(6px); } 8%, 100% { opacity: 1; transform: none; } }
+@keyframes ls-step2 { 0%, 12% { opacity: 0.25; transform: translateY(6px); } 22%, 100% { opacity: 1; transform: none; } }
+@keyframes ls-step3 { 0%, 26% { opacity: 0.25; transform: translateY(6px); } 36%, 100% { opacity: 1; transform: none; } }
+@keyframes ls-unpaid { 0%, 42% { opacity: 1; } 48%, 92% { opacity: 0; } 98%, 100% { opacity: 1; } }
+@keyframes ls-paid { 0%, 42% { opacity: 0; } 48%, 92% { opacity: 1; } 98%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce), (max-width: 639px) { .ls-status__paid { opacity: 1; } .ls-status__unpaid { opacity: 0; } }
+/* with the motion layer off the window shows its finished picture: Paid */
+.ls-status__unpaid { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) and (min-width: 640px) { .ls-status__unpaid { opacity: 1; } }
+/* the kit's loop pause button (motion.js adds it to the window), drawn as a small disc in the ink */
+.hero__window > .loop-pause { position: absolute; right: 12px; bottom: 12px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--text); color: var(--bg); display: grid; place-items: center; cursor: pointer; z-index: 2; padding: 0; }
+.hero__window > .loop-pause svg { width: 14px; height: 14px; fill: currentColor; }
+.hero__window > .loop-pause:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- product: the app frame across the wrap */
+.ls-app__body { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.ls-app__list { list-style: none; margin: 0; padding: 8px; border-right: 1px solid var(--border); }
+.ls-app__list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto; column-gap: 16px; padding: 14px 16px; border-radius: 10px; align-items: center; }
+.ls-app__list li.is-open { background: var(--surface-sage); }
+.ls-app__what { font-weight: 600; }
+.ls-app__list .mono { grid-row: 2; }
+.ls-app__amt { grid-row: 1 / 3; grid-column: 2; font-weight: 700; }
+.ls-pill { grid-row: 1 / 3; grid-column: 3; font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: var(--r-pill); }
+.ls-pill--ok { background: color-mix(in srgb, var(--allow) 16%, var(--surface)); color: var(--allow); }
+.ls-pill--wait { background: var(--surface-3); color: var(--text-muted); }
+.ls-pill--warn { background: color-mix(in srgb, var(--warn) 14%, var(--surface)); color: var(--warn); }
+.ls-app__open { padding: 24px 28px; }
+.ls-app__open .ls-pay__amount { font-size: 30px; }
+.ls-receipt { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px; }
+.ls-receipt span { color: var(--text-muted); }
+
+/* ---- split: text left, the visual right, top-aligned (one split pair for the page: 5 / 7) */
+.ls-split { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.ls-split > :first-child { grid-column: 1 / 6; padding-right: 40px; }
+.ls-split > :last-child { grid-column: 6 / 13; }
+.ls-sig__from { display: flex; gap: 10px; align-items: center; padding: 18px 28px 0; font-size: 15px; color: var(--text-muted); }
+.ls-sig__from svg { flex: none; color: var(--text-green); }
+.ls-sig__acts { display: flex; gap: 10px; justify-content: flex-end; padding: 18px 28px 22px; border-top: 1px solid var(--border); }
+.ls-sig__msg { margin: 0; padding: 20px 28px 24px; font-size: 17px; line-height: 1.7; background: var(--surface); white-space: pre-wrap; }
+.ls-sig__ok, .ls-sig__bad { display: flex; gap: 10px; align-items: flex-start; padding: 16px 28px; border-top: 1px solid var(--border); font-size: 15px; }
+.ls-sig__ok svg { color: var(--allow); flex: none; }
+.ls-sig__bad svg { color: var(--block); flex: none; }
+
+/* ---- 2x2 feature cards: each a link (the motion layer lifts it 2px) with a UI fragment on its panel */
+.ls-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 32px; }
+.ls-card { display: flex; flex-direction: column; gap: 10px; padding: 20px; color: inherit; text-decoration: none; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); }
+.ls-card__panel { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 20px; border-radius: var(--r-md); background: var(--surface-sage); min-height: 104px; }
+.ls-frag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; background: var(--surface); font-size: 14px; box-shadow: 0 1px 0 rgba(18, 55, 42, 0.06); }
+.ls-frag--ok svg { color: var(--allow); }
+.ls-frag--warn { color: var(--warn); font-weight: 700; }
+.ls-frag--bad { color: var(--block); font-weight: 600; }
+.ls-card--low .ls-card__panel { order: 2; margin-top: auto; }
+.ls-card h3 { display: flex; align-items: center; gap: 8px; font-size: 20px; margin: 6px 0 0; letter-spacing: -0.01em; }
+.ls-card p { margin: 0; font-size: 16px; line-height: 1.55; color: var(--text-muted); }
+
+/* ---- diagram card: a pulse runs each line (its own loop; stills under reduced motion) */
+.ls-diagram-card { border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--border); padding: 24px; }
+.ls-diagram { width: 100%; height: auto; max-height: 300px; display: block; }
+.ls-diagram__line { fill: none; stroke: var(--border-strong); stroke-width: 1.5; }
+.ls-diagram__node { fill: var(--surface-3); stroke: var(--border-strong); }
+.ls-diagram__node--end { fill: var(--surface-sage); stroke: var(--text-green); }
+.ls-diagram__hub { fill: var(--band); }
+.ls-diagram__label { font: 600 15px var(--font-body); fill: var(--text); }
+.ls-diagram__hublabel { font: 700 16px var(--font-body); fill: var(--pale); }
+.ls-diagram__sub { font: 500 13px var(--font-body); fill: var(--text-muted); }
+.ls-diagram__hub + .ls-diagram__hublabel + .ls-diagram__sub { fill: var(--sage); }
+.ls-diagram__pulse { fill: var(--text-green); offset-distance: 0%; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .ls-diagram__pulse { animation: ls-pulse var(--m-cycle) linear infinite; }
+}
+@keyframes ls-pulse { 0% { offset-distance: 0%; opacity: 0; } 8% { opacity: 1; } 70% { offset-distance: 100%; opacity: 1; } 78%, 100% { offset-distance: 100%; opacity: 0; } }
+.ls-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 40px; }
+.ls-figures .t-stat { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; margin: 0; line-height: 1.1; }
+.ls-figures .small { margin: 4px 0 0; max-width: 32ch; }
+
+/* ---- statement: the liquid-type moment's section */
+.ls-verdict { list-style: none; margin: 0; padding: 8px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; border-radius: var(--r-lg); background: var(--surface-sage); }
+.ls-verdict li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 20px 22px; border-radius: var(--r-md); background: var(--surface); font-size: 16px; }
+.ls-verdict svg { color: var(--allow); flex: none; }
+.ls-verdict span { color: var(--text-muted); }
+.ls-verdict strong { flex-basis: 100%; font-size: 22px; letter-spacing: -0.01em; }
+.ls-statement h2 { font-size: clamp(44px, 5vw + 12px, 112px); max-width: 14ch; line-height: 1; letter-spacing: -0.045em; margin-bottom: 24px; }
+
+/* ---- questions: answers open (no accordion) */
+.ls-faq { margin: 0; display: grid; gap: 24px; }
+.ls-faq dt { font-weight: 700; font-size: 18px; display: flex; gap: 10px; align-items: center; }
+.ls-faq dt svg { color: var(--text-green); flex: none; }
+
+.ls-faq dd { margin: 6px 0 0; font-size: 16px; line-height: 1.6; color: var(--text-muted); max-width: 62ch; }
+.ls-open { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; max-width: 420px; }
+.ls-open label { font-weight: 700; font-size: 15px; }
+
+/* ---- close (close-type) + footer: one screen, footer.closing (Layout renders it on the landing page). It stands
+   on the sage ground rather than the deep band, so the close is the page's own primary button at its one large size. */
+.site-footer.closing {
+  --band: var(--surface-sage);
+  --band-ink: var(--text);
+  box-sizing: border-box; height: 100svh; margin-top: 0; padding: 96px 0 72px; display: flex; flex-direction: column;
+}
+.site-footer.closing > .wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; }
+.closing-row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: end; }
+.closing-row > div { grid-column: 1 / 9; }
+.closing-row > .closing-btn { grid-column: 9 / 13; justify-self: end; margin-bottom: 28px; }
+.site-footer.closing .footer-fine { margin-top: 32px; }
+/* the footer's own link colour must not repaint the primary button's label */
+.site-footer .closing-btn { color: var(--btn-ink); }
+.site-footer.closing .footer-grid h4, .site-footer.closing .footer-brand .brand-mark { color: var(--text-green); }
+.site-footer.closing .footer-fine { border-top-color: var(--border-strong); }
+.closing-row h2 { color: var(--band-ink); font-size: clamp(36px, 3vw + 12px, 64px); line-height: 1.02; letter-spacing: -0.04em; font-weight: 600; max-width: 18ch; margin: 0 0 16px; }
+.closing-row p { font-size: 18px; color: var(--text-muted); margin: 0 0 28px; }
+.closing-row .closing-btn { min-height: 64px; min-width: 360px; padding: 0 32px; font-size: 20px; }
+@media (max-width: 639px) {
+  .site-footer.closing { height: auto; min-height: 100lvh; padding-top: 96px; }
+  .closing-row { grid-template-columns: 1fr; }
+  .closing-row > div, .closing-row > .closing-btn { grid-column: auto; justify-self: stretch; }
+  .closing-row .closing-btn { width: 100%; min-width: 0; }
+}
+
+/* ---- tablet and phone: splits stack text first, one column at 390 */
+@media (max-width: 1023px) {
+  .closing-row > div { grid-column: 1 / 13; }
+  .closing-row > .closing-btn { grid-column: 1 / 13; justify-self: start; }
+  .ls-split, .ls-app__body { grid-template-columns: 1fr; }
+  .ls-split > :first-child, .ls-split > :last-child { grid-column: auto; padding-right: 0; }
+  .ls-app__list { border-right: 0; border-bottom: 1px solid var(--border); }
+}
+@media (max-width: 639px) {
+  .ls-hero { height: auto; min-height: 100svh; padding-top: calc(var(--hero-top, 112px) + 24px); }
+  .ls-hero h1 { font-size: 38px; }
+  .ls-hero .hero__lead { font-size: 18px; }
+  .ls-hero .btn-row .btn { flex: 1 1 100%; }
+  .landing-main .btn { width: 100%; }
+  .ls-cards, .ls-figures, .ls-verdict { grid-template-columns: 1fr; }
+  .ls-figures .t-stat { font-size: 30px; }
+  .ls-card--low .ls-card__panel { order: 0; }
+  .ls-pay__amount { font-size: 34px; }
+  .ls-sec h2 { font-size: 30px; }
+}

@@ -40,11 +40,11 @@ export function MerchantPage() {
   }
 
   return (
-    <div className="stack" style={{ maxWidth: 720, margin: "0 auto" }}>
+    <div className="stack" style={{ maxWidth: 800 }}>
       <div className="page-head">
-        <p className="eyebrow row" style={{ gap: 8 }}>
-          Merchant Passport <NetworkTag network={netOfAccount(account)} />
-        </p>
+        <div className="tags">
+          <span className="tag">Merchant Passport</span> <NetworkTag network={netOfAccount(account)} />
+        </div>
         <h1 style={{ wordBreak: "break-all" }}>{account}</h1>
         <AccountLink id={account} explorer={EXPLORER[netOfAccount(account)]} />
       </div>

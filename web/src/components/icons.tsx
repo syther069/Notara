@@ -20,6 +20,7 @@ export const ChevronDown = icon(I.NavArrowDown);
 export const CircleAlert = icon(I.WarningCircle);
 export const CircleCheck = icon(I.CheckCircle);
 export const CircleX = icon(I.XmarkCircle);
+export const Clock = icon(I.Clock);
 export const CloudOff = icon(I.CloudXmark);
 export const Coins = icon(I.Coins);
 export const Copy = icon(I.Copy);

@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/app.css";
+import "./styles/pages.css";
+import "./styles/landing.css";
 import { Layout } from "./components/Layout";
 import { WalletProvider } from "./lib/wallet";
 import { Home } from "./pages/Home";
@@ -39,6 +41,8 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
+          {/* A static server (the design checks, some hosts) opens the build as /index.html: that is the home page. */}
+          <Route path="index.html" element={<Navigate to="/" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="start" element={<StartPage />} />
           <Route path="check" element={<CheckPage />} />
