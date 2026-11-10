@@ -14,6 +14,8 @@ export function InvoicePage() {
   const [inv, setInv] = useState<Invoice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+  // A failed agent payment stays next to its button (a toast alone would vanish with the reason).
+  const [payErr, setPayErr] = useState<string | null>(null);
   const [check, setCheck] = useState<CheckResponse | null>(null);
   const [log, setLog] = useState<string[]>([]);
 
@@ -30,6 +32,7 @@ export function InvoicePage() {
 
   async function pay() {
     setPaying(true);
+    setPayErr(null);
     setCheck(null);
     try {
       const r = await api.payInvoice(id);
@@ -45,7 +48,9 @@ export function InvoicePage() {
         r.invoice.status === "paid" || r.invoice.status === "pending_approval" ? "ok" : "error",
       );
     } catch (e: any) {
-      toast(e.message, "error");
+      setPayErr(e.message);
+      // The request may have reached the vault before failing: read the invoice again so its status is true.
+      load();
     } finally {
       setPaying(false);
     }
@@ -139,6 +144,13 @@ export function InvoicePage() {
                 <RefreshCw size={16} aria-hidden /> Refresh status
               </button>
             </div>
+            {payErr && (
+              <div style={{ marginTop: 16 }}>
+                <Banner kind="error" title="The agent's payment didn't complete">
+                  <p>{payErr}. The status above was read again after the failure, so it shows what really happened.</p>
+                </Banner>
+              </div>
+            )}
             <p className="muted small" style={{ marginTop: 12, marginBottom: 0 }}>
               The agent pays through Notara check and the testnet vault. It never holds a key that can send money directly.
             </p>

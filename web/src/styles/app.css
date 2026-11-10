@@ -558,3 +558,41 @@ ol.steps { padding: 0; margin: 0; }
   .site-footer li > a, .site-footer .footer-fine a { display: inline-flex; align-items: center; min-height: var(--tap-comfort); }
   .site-footer ul { gap: 0 !important; }
 }
+
+/* ---------------------------------------------------------------- touch and phone comfort
+   Field text at 16px on phones and touch screens, monospace and selects included (the design codex's readability
+   floor, and what keeps iOS Safari from zooming on focus; not a WCAG requirement). Primary touch controls about
+   44px tall (a usability starting point; WCAG 2.2 AA's own target-size minimum is 24px). */
+@media (pointer: coarse), (max-width: 640px) {
+  input, select, textarea, .input, .input.mono, select.input, textarea.input, .net-select { font-size: var(--fs-input-touch); }
+  .net-select, .header-tools .btn, .header-tools .icon-btn { min-height: var(--tap-comfort); }
+  .header-tools .icon-btn { width: var(--tap-comfort); }
+}
+/* Under 360px the bar can't hold four 44px controls: the theme switch lives in the menu there ("Dark theme"). */
+@media (max-width: 359px) {
+  .header-tools .theme-btn { display: none; }
+  .header-tools { gap: 4px; }
+  .brand { gap: 6px; font-size: 18px; }
+  .brand-mark { width: 26px; height: 26px; }
+  .net-select { max-width: 86px; padding: 0 22px 0 10px; background-position: calc(100% - 13px) 50%, calc(100% - 9px) 50%; }
+  .chip { min-height: var(--tap-comfort); font-size: 14px; padding: 0 14px; }
+  .mobile-nav a, .mobile-theme { min-height: var(--tap-comfort); }
+  .notice button { width: var(--tap-comfort); height: var(--tap-comfort); }
+}
+
+/* Focus rings are never clipped by a scrolling or rounded parent: they sit inside the control's own box there. */
+.table-wrap :focus-visible, .mobile-nav :focus-visible { outline-offset: -2px; }
+
+/* ---------------------------------------------------------------- copy fallback */
+.copy-wrap { display: inline-flex; flex-direction: column; gap: 8px; max-width: 100%; vertical-align: top; }
+.copy-wrap .btn.is-done { --btn-bd: var(--allow); --btn-ink: var(--allow); }
+.copy-fail { display: flex; flex-direction: column; gap: 6px; max-width: min(520px, 100%); color: var(--text-muted); }
+
+/* ---------------------------------------------------------------- tour step status: shown, not only read out */
+.proof { display: inline-flex; align-items: center; margin: 0 0 6px; padding: 2px 10px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 700; border: 1px solid var(--border); color: var(--text-muted); }
+.proof--seen { color: var(--allow); background: var(--allow-bg); border-color: transparent; }
+.proof--ticked { color: var(--text); background: var(--surface-3); border-style: solid; }
+.proof--unknown { border-style: dashed; }
+
+/* ---------------------------------------------------------------- illustrations that look like live UI say so */
+.example-tag { display: inline-flex; align-items: center; margin-left: auto; padding: 1px 8px; border-radius: var(--r-pill); font: 700 11.5px/1.6 var(--font-body); letter-spacing: 0.02em; color: var(--text-muted); border: 1px dashed var(--border-strong); white-space: nowrap; }

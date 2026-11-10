@@ -500,10 +500,13 @@ function WalletButton() {
         onClick={() => w.connect()}
         disabled={!w.ready || w.busy}
         aria-busy={w.busy || !w.ready}
+        // the visible label is hidden on a phone, so the name never depends on it
+        aria-label={!w.ready ? "Loading wallets" : w.busy ? "Waiting for your wallet" : `Connect a NEAR ${w.network} wallet`}
         title={w.error ?? `Connect a NEAR ${w.network} wallet`}
       >
         {w.busy || !w.ready ? <LoaderCircle size={14} /> : <Wallet size={15} aria-hidden />}
-        <span className="label">Connect wallet</span>
+        {/* while it can't be pressed, the button itself says why */}
+        <span className="label">{!w.ready ? "Loading wallets…" : w.busy ? "Waiting for wallet…" : "Connect wallet"}</span>
       </button>
     </span>
   );

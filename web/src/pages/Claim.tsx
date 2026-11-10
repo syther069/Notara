@@ -74,6 +74,9 @@ export function ClaimPage() {
       await fn();
     } catch (err: any) {
       setError(err.message);
+      // A claim can fail after the chain moved the money: read the link again, so the page shows the real balance
+      // (claimed or still waiting) before anyone tries again.
+      load();
     } finally {
       setBusy(false);
     }
@@ -227,8 +230,11 @@ export function ClaimPage() {
         </>
       )}
       {error && (
-        <Banner kind="error">
-          <p>{error}</p>
+        <Banner kind="error" title="That didn't go through">
+          <p>
+            {error}. The link was read again after this, so what you see above is its real state: if the money is still shown as waiting, it's still in the link
+            and you can try again.
+          </p>
         </Banner>
       )}
       <Banner kind="warn">

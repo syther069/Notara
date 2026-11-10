@@ -34,8 +34,9 @@ function HeroWindow() {
         <div className="ls-bar" aria-hidden>
           <Lock size={13} aria-hidden />
           <span className="mono">notara-sable.vercel.app/pay/INV-0042</span>
+          <span className="example-tag">Example</span>
         </div>
-        <div className="ls-pay" role="img" aria-label="The Notara page a customer opens: 50 USDC to design-studio.near, signed by its wallet, safety check passed, then paid">
+        <div className="ls-pay" role="img" aria-label="Example: the Notara page a customer opens: 50 USDC to design-studio.near, signed by its wallet, safety check passed, then paid">
           <div className="ls-pay__head">
             <span className="ls-pay__for">Logo design, 2 rounds</span>
             <span className="ls-status">
@@ -77,10 +78,11 @@ const LINKS = [
 
 function ProductWindow() {
   return (
-    <div className="ls-window ls-app" data-ui role="img" aria-label="Notara's dashboard: four payment links with their status, and the open link as its customer sees it">
+    <div className="ls-window ls-app" data-ui role="img" aria-label="Example of Notara's dashboard: four payment links with their status, and the open link as its customer sees it">
       <div className="ls-bar">
         <Lock size={13} aria-hidden />
         <span className="mono">notara-sable.vercel.app/dashboard</span>
+        <span className="example-tag">Example</span>
       </div>
       <div className="ls-app__body">
         <ul className="ls-app__list">
@@ -245,8 +247,8 @@ export function Home() {
                 <Link to="/invoices" className="btn btn-primary">
                   {MAIN_ACTION} <ArrowRight size={18} className="arrow" aria-hidden />
                 </Link>
-                <Link to="/start" className="btn btn-secondary">
-                  Try it on testnet
+                <Link to="/send" className="btn btn-secondary">
+                  Send money with a link
                 </Link>
               </div>
             </div>
@@ -276,10 +278,11 @@ export function Home() {
               Sign your first link
             </Link>
           </div>
-          <div className="ls-window ls-sig" data-ui role="img" aria-label="The message a merchant's wallet signs, and the page confirming the signature">
+          <div className="ls-window ls-sig" data-ui role="img" aria-label="Example: the message a merchant's wallet signs, and the page confirming the signature">
             <div className="ls-bar">
               <Lock size={13} aria-hidden />
               <span className="mono">Wallet: sign message</span>
+              <span className="example-tag">Example</span>
             </div>
             <div className="ls-sig__from">
               <Wallet size={18} aria-hidden /> <span>notara-sable.vercel.app asks design-studio.near to sign</span>
@@ -383,7 +386,10 @@ export function Home() {
             An account check before every payment
           </h2>
           <p className="ls-lead">Every Notara link opens on its account check: the signature, the account's age and activity, and any scam reports.</p>
-          <ul className="ls-verdict" data-ui aria-label="The account check for design-studio.near">
+          <p style={{ margin: "0 0 10px" }}>
+            <span className="example-tag" style={{ marginLeft: 0 }}>Example account</span>
+          </p>
+          <ul className="ls-verdict" data-ui aria-label="Example: the account check for design-studio.near">
             <li>
               <ShieldCheck size={20} aria-hidden /> <span>Signature</span> <strong>checks out</strong>
             </li>

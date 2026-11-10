@@ -142,7 +142,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(async (walletId?: string, net: Net = network) => {
     const c = connectorRef.current;
-    if (!c) return;
+    // Never a silent no-op: a press with no wallet support loaded says why.
+    if (!c) {
+      setError("Wallets couldn't load on this page. Reload the page to try again; an ad blocker can also stop the wallet list.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {

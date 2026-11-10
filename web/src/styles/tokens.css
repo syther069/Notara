@@ -181,3 +181,4 @@
 
 @media (max-width: 1023px) { :root { --gut: 48px; } }
 @media (max-width: 639px) { :root { --gut: 24px; } }
+@media (max-width: 359px) { :root { --gut: 16px; } }

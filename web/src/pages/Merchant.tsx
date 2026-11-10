@@ -17,6 +17,8 @@ export function MerchantPage() {
   const [check, setCheck] = useState<CheckResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [website, setWebsite] = useState("");
+  // The website check result and any failure stay under the form, not only in a toast.
+  const [siteErr, setSiteErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -28,12 +30,13 @@ export function MerchantPage() {
   async function verifySite(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setSiteErr(null);
     try {
       const p = await api.checkWebsite(account, website);
       setProfile(p);
-      toast(p.websiteVerified ? `${p.website} confirmed.` : `${p.website} doesn't list ${account} yet.`, p.websiteVerified ? "ok" : "error");
+      if (p.websiteVerified) toast(`${p.website} confirmed.`, "ok");
     } catch (err: any) {
-      toast(err.message, "error");
+      setSiteErr(err.message);
     } finally {
       setBusy(false);
     }
@@ -85,11 +88,29 @@ export function MerchantPage() {
           </li>
           <li>Enter your website below. We fetch the file and show the result to your customers.</li>
         </ol>
-        <div className="row" style={{ flexWrap: "nowrap" }}>
-          <input className="input" placeholder="yourshop.com" value={website} onChange={(e) => setWebsite(e.target.value)} aria-label="Your website" />
-          <button className="btn btn-primary" disabled={busy || !website.trim()}>
-            {busy && <LoaderCircle size={16} className="spin" aria-hidden />} Check
-          </button>
+        <div className="field">
+          <label htmlFor="site">Your website</label>
+          <div className="row" style={{ flexWrap: "nowrap" }}>
+            <input
+              id="site"
+              className="input"
+              placeholder="yourshop.com"
+              value={website}
+              onChange={(e) => (setWebsite(e.target.value), setSiteErr(null))}
+              aria-invalid={!!siteErr}
+              aria-describedby={siteErr ? "site-err" : undefined}
+              autoComplete="url"
+              inputMode="url"
+            />
+            <button className="btn btn-primary" disabled={busy || !website.trim()} aria-busy={busy}>
+              {busy && <LoaderCircle size={16} className="spin" aria-hidden />} Check my website
+            </button>
+          </div>
+          {siteErr && (
+            <span className="err" id="site-err" role="alert">
+              {siteErr}. Nothing was changed; check the address and try again.
+            </span>
+          )}
         </div>
         {profile?.websiteCheckedAt && (
           <p className="small muted" style={{ margin: 0 }}>

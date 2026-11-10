@@ -76,7 +76,10 @@ export function CheckPage() {
     <>
       <div className="page-head">
         <h1>Check a NEAR account</h1>
-        <p>See what Notara would decide before an agent pays this account, and exactly which evidence the decision is based on.</p>
+        <p>
+          See what Notara would decide before you or an agent pays this account, and exactly which evidence the decision is based on. It reads the account's
+          history and shared scam reports; it can't tell you whether someone will deliver what they promise.
+        </p>
       </div>
 
       <form className="card" onSubmit={submit} noValidate>

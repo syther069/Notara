@@ -34,6 +34,7 @@ export function PayPreview({
           {location.host}
           {path}
         </span>
+        <span className="example-tag">Preview</span>
       </div>
       <div className="pv__body" aria-hidden>
         <div className={`pv__for${forText ? "" : " is-empty"}`}>{forText || emptyFor}</div>

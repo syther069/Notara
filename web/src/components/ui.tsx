@@ -78,21 +78,39 @@ export function Banner({ kind = "info", title, children }: { kind?: "info" | "wa
   );
 }
 
+/**
+ * Copies text. Success shows on the button and is announced; a blocked clipboard (no permission, an
+ * insecure page) says so and shows the text selected, so it can still be copied by hand.
+ */
 export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
-  const [done, setDone] = useState(false);
+  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
   return (
-    <button
-      className="btn btn-secondary btn-sm"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          setDone(true);
-          setTimeout(() => setDone(false), 1500);
-        } catch {}
-      }}
-    >
-      {done ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />} {done ? "Copied" : label}
-    </button>
+    <span className="copy-wrap">
+      <button
+        type="button"
+        className={`btn btn-secondary btn-sm${state === "done" ? " is-done" : ""}`}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            setState("done");
+            setTimeout(() => setState((s) => (s === "done" ? "idle" : s)), 2000);
+          } catch {
+            setState("failed");
+          }
+        }}
+      >
+        {state === "done" ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />} {state === "done" ? "Copied" : label}
+      </button>
+      <span className="sr-only" role="status">
+        {state === "done" ? "Copied to the clipboard" : ""}
+      </span>
+      {state === "failed" && (
+        <span className="copy-fail" role="alert">
+          <span className="small">Your browser blocked copying. Select it and copy it yourself:</span>
+          <input className="input mono" readOnly value={text} onFocus={(e) => e.currentTarget.select()} aria-label="Text to copy" autoFocus />
+        </span>
+      )}
+    </span>
   );
 }
 

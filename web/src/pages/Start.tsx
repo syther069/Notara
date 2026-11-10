@@ -102,6 +102,14 @@ export function StartPage() {
               {w.busy ? "Waiting for your wallet…" : "Loading the list of wallets…"}
             </span>
           )}
+          {w.ready && !w.busy && w.error && (
+            <span className="small err" id="wallet-why" role="alert">
+              {w.error}{" "}
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => location.reload()}>
+                Reload
+              </button>
+            </span>
+          )}
         </>
       ),
     },
@@ -187,6 +195,8 @@ export function StartPage() {
 
   const done = steps.filter((s) => s.proof === "seen" || s.proof === "ticked").length;
   const tickedCount = steps.filter((s) => s.proof === "ticked").length;
+  const unknownCount = account ? steps.filter((s) => s.proof === "unknown").length : 0;
+  const PROOF_LABEL: Record<Proof, string> = { seen: "Done, seen on testnet", ticked: "Ticked by you", todo: "To do", unknown: "Not checked" };
 
   return (
     <div style={{ maxWidth: 880 }}>
@@ -198,13 +208,23 @@ export function StartPage() {
         <p>
           About 10 minutes, free test money only. Paying from another chain is the one thing testnet can't do, because NEAR Intents runs only on mainnet.
         </p>
-        <p className="small" style={{ fontWeight: 700, color: "var(--text)" }} aria-live="polite">
-          {done} of {steps.length} done
-          {tickedCount > 0 && <span className="muted" style={{ fontWeight: 500 }}> ({tickedCount} ticked by you)</span>}
-        </p>
-        <div className="progress" style={{ maxWidth: 320 }} role="progressbar" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={done} aria-label="Tour progress">
-          <span style={{ width: `${(done / steps.length) * 100}%` }} />
-        </div>
+        {/* Progress is only counted once we can check it: "0 of 6" before a wallet would read as checked. */}
+        {account ? (
+          <>
+            <p className="small" style={{ fontWeight: 700, color: "var(--text)", margin: "20px 0 0" }} aria-live="polite">
+              {done} of {steps.length} done
+              {tickedCount > 0 && <span className="muted" style={{ fontWeight: 500 }}> ({tickedCount} ticked by you)</span>}
+              {unknownCount > 0 && <span className="muted" style={{ fontWeight: 500 }}> · {unknownCount} not checked yet</span>}
+            </p>
+            <div className="progress" style={{ maxWidth: 320 }} role="progressbar" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={done} aria-label="Tour progress">
+              <span style={{ width: `${(done / steps.length) * 100}%` }} />
+            </div>
+          </>
+        ) : (
+          <p className="small" style={{ fontWeight: 700, color: "var(--text)", margin: "20px 0 0" }}>
+            Progress isn't checked yet
+          </p>
+        )}
         <p className="small muted" style={{ marginTop: 10 }}>
           {account
             ? "Steps tick themselves when we can see them on testnet or in your links. Ticks you add are kept in this browser only."
@@ -227,14 +247,13 @@ export function StartPage() {
             </span>
             <div>
               <h3>
-                {s.title}
-                <span className="sr-only">
-                  {s.proof === "seen" ? " (done)" : s.proof === "ticked" ? " (ticked by you)" : s.proof === "unknown" ? " (not checked)" : " (to do)"}
-                </span>
+                {s.title} <span className="sr-only">({PROOF_LABEL[s.proof]})</span>
               </h3>
+              <span className={`proof proof--${s.proof}`} aria-hidden>
+                {PROOF_LABEL[s.proof]}
+              </span>
               <p>{s.body}</p>
-              {s.proof === "ticked" && <p className="small muted">Ticked by you. We can't confirm this one.</p>}
-              {s.proof === "unknown" && account && <p className="small muted">Not checked yet.</p>}
+              {s.proof === "ticked" && <p className="small muted">We can't confirm this one: it's kept in this browser only.</p>}
             </div>
             <div className="acts">
               {s.actions}

@@ -72,7 +72,7 @@ export function AboutPage() {
           <li>✅ It can't carry a deposit, so it can't send NEAR or tokens directly. Token transfers need 1 yoctoNEAR attached, so the vault attaches it.</li>
           <li>✅ Gas comes from a fixed allowance. When it runs out, the key stops working until the owner adds a new one.</li>
           <li>❌ The key doesn't judge the recipient. The safety comes from the vault's rules, not from the key alone.</li>
-          <li>❌ Whoever holds the vault's full-access key can change or drain it. Delete that key (<code>npm run owner -- lock-vault</code>) for real use.</li>
+          <li>❌ Whoever holds the vault's full-access key can change or drain it. For real use, the owner deletes that key, so only the contract's rules remain.</li>
           <li>❌ Notara signing key is a local file in this prototype. Whoever holds it can sign any verdict. Moving it into a TEE is planned.</li>
         </ul>
       </section>
