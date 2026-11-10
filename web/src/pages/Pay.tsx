@@ -8,7 +8,7 @@ import { AccountLink, Banner, CopyButton, MainnetBadge, Skeleton, StepBar } from
 import { SafetyPanel } from "../components/SafetyPanel";
 import { TxFailedError, WalletTimeoutError, useWallet } from "../lib/wallet";
 import { useDeployment } from "../components/Layout";
-import { InvoiceStatus } from "./Invoices";
+import { InvoiceStatus } from "../components/ui";
 import { evmAccount, evmPay, hasEvmWallet } from "../lib/evm";
 import { QrCode } from "../components/QrCode";
 

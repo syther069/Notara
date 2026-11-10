@@ -38,9 +38,9 @@ function pct(spent: string | null | undefined, cap: string | null | undefined): 
 }
 
 /** How approvals get signed right now: the owner's own wallet (preferred) or the local demo owner key. */
-type Signer = { kind: "wallet"; accountId: string } | { kind: "local" } | { kind: "none"; why: string };
+export type Signer = { kind: "wallet"; accountId: string } | { kind: "local" } | { kind: "none"; why: string };
 
-function useSigner(summary: VaultSummary | null): Signer {
+export function useSigner(summary: VaultSummary | null): Signer {
   const w = useWallet();
   if (!summary) return { kind: "none", why: "Loading…" };
   if (w.accountId && w.accountId === summary.config.owner) return { kind: "wallet", accountId: w.accountId };
@@ -57,7 +57,7 @@ type Act =
   | { step: "sent"; kind: "approve" | "reject"; explorer: string; paid?: boolean }
   | { step: "failed"; kind: "approve" | "reject"; message: string };
 
-function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => void; signer: Signer; vault: string }) {
+export function PendingCard({ p, onDone, signer, vault }: { p: Payment; onDone: () => void; signer: Signer; vault: string }) {
   const w = useWallet();
   const [act, setAct] = useState<Act>({ step: "idle" });
 
@@ -603,7 +603,7 @@ function NotDeployedPage() {
 }
 
 /** Who approves payments, as the real setup steps: connect a wallet, hand the vault over, accept it. */
-function OwnerSteps({ summary, onChange }: { summary: VaultSummary; onChange: () => void }) {
+export function OwnerSteps({ summary, onChange }: { summary: VaultSummary; onChange: () => void }) {
   const w = useWallet();
   const [busy, setBusy] = useState<null | "propose" | "accept">(null);
   const [done, setDone] = useState<{ text: string; link?: string } | null>(null);

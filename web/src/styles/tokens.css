@@ -1,7 +1,5 @@
-/* Notary Seal theme. Palette: #12372A deep green, #436850 green, #ADBC9F sage, #FBFADA pale cream,
-   plus #F3EEE3 cream and #111111 near-black. Balance: ~60% cream surfaces, ~30% greens and sage,
-   ~10% deep green / near-black emphasis. Decision colors are kept apart from the brand greens and
-   always come with an icon and a word. */
+/* Aliases for the older class-based pages. Every colour here points at theme.css, the one place the
+   palette is defined, so these pages follow the same light and dark themes as the rest of the product. */
 
 @font-face {
   font-family: "Manrope";
@@ -23,43 +21,45 @@
 
 :root {
   /* brand */
-  --deep: #12372a;
-  --green: #436850;
-  /* Green for text and icons: the brand green on light surfaces, sage on dark ones (keeps 4.5:1). */
-  --text-green: var(--green);
-  --sage: #adbc9f;
-  --pale: #fbfada;
-  --cream: #f3eee3;
-  --ink-black: #111111;
+  --deep: var(--color-canopy);
+  --green: var(--color-moss);
+  --text-green: var(--info);
+  --sage: var(--color-mint);
+  --pale: var(--color-cream);
+  --cream: var(--color-cream);
+  --ink-black: var(--color-ink);
 
-  /* surfaces (light, the default) */
-  --bg: var(--cream);
-  --surface: #fbf9ee;
-  --surface-2: #e8e3d2;
-  --surface-3: #efe9da;
-  --surface-sage: #dfe5d2;
-  --band: var(--deep);
-  --band-ink: var(--pale);
-  --border: #d6d0bd;
-  --border-strong: #b8b29c;
+  /* surfaces */
+  --bg: var(--background);
+  --surface-2: var(--surface-tertiary);
+  --surface-3: var(--surface-secondary);
+  --surface-sage: var(--accent-soft);
+  --band: var(--color-canopy);
+  --band-ink: var(--color-cream);
+  --band-line: color-mix(in srgb, var(--color-cream) 16%, transparent);
+  --border-strong: var(--separator-tertiary);
 
   /* text */
-  --text: var(--ink-black);
-  --text-muted: #3f5a48;
-  --accent: var(--deep);
-  --accent-hover: #0b2a1f;
-  --accent-ink: var(--pale);
-  --link: #1f5a3f;
+  --text: var(--foreground);
+  --text-muted: var(--muted);
+  --accent-hover: color-mix(in oklab, var(--accent) 88%, var(--foreground) 12%);
+  --accent-ink: var(--accent-foreground);
+  --on-status: var(--color-cream);
 
   /* decisions and status */
-  --allow: #146b4a;
-  --warn: #8a5a00;
-  --block: #a8321e;
-  --fixture: #6b4fb0;
-  --allow-bg: rgba(20, 107, 74, 0.1);
-  --warn-bg: rgba(138, 90, 0, 0.1);
-  --block-bg: rgba(168, 50, 30, 0.09);
-  --fixture-bg: rgba(107, 79, 176, 0.1);
+  --allow: var(--success);
+  --warn: var(--warning);
+  --block: var(--danger);
+  --allow-bg: var(--success-soft);
+  --warn-bg: var(--warning-soft);
+  --block-bg: var(--danger-soft);
+  --fixture-bg: color-mix(in srgb, var(--fixture) 12%, transparent);
+
+  /* the log console is always dark, in both themes */
+  --console-bg: var(--color-canopy);
+  --console-ink: var(--color-cream);
+  --console-line: var(--color-moss);
+  --console-muted: var(--color-mint);
 
   /* type */
   --font-body: "Manrope", "Manrope Fallback", ui-sans-serif, system-ui, sans-serif;
@@ -81,18 +81,14 @@
   --r-card: var(--r-md);
   --r-ctl: var(--r-sm);
 
-  --shadow: 0 1px 0 rgba(18, 55, 42, 0.04), 0 12px 32px -12px rgba(18, 55, 42, 0.18);
-  --shadow-pop: 0 18px 48px -16px rgba(18, 55, 42, 0.32);
+  --shadow: var(--card-shadow);
+  --shadow-pop: var(--pop-shadow);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --max: 1200px;
-  /* One content box for the header, every page and the footer (design-taste-frontend's .wrap):
-     1280 wide, the same side margin left and right: 80 on desktop, 48 on tablet, 24 on a phone. */
   --wrap: 1280px;
-  --gut: 80px;
-  color-scheme: light;
+  --gut: 72px;
 
-  /* Bridge to the design-taste-frontend motion layer (web/public/kit, MIT). The kit reads its own role
-     names; these map them onto Notara's palette, so the palette stays as it is in both themes. */
+  /* Role names and motion timings the older stylesheets still read. */
   --ink: var(--text);
   --action: var(--accent);
   --action-ink: var(--accent-ink);
@@ -100,85 +96,17 @@
   --card: var(--surface);
   --s-2: 8px;
   --r-btn: var(--r-pill);
-  /* Motion timings and curves, as the kit's motion.md sets them. */
   --m-in: 150ms;
   --m-out: 120ms;
   --m-press: 90ms;
   --m-panel: 200ms;
   --m-close: 120ms;
   --m-slide: 240ms;
-  --m-image: 600ms;
-  --m-image-out: 400ms;
-  --m-cycle: 3.2s;
   --m-lift: -2px;
   --m-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --m-ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --m-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* Dark: deep green surfaces with pale cream text. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0c261d;
-    --surface: #12372a;
-    --surface-2: #1d4636;
-    --surface-3: #0f2e23;
-    --surface-sage: #1a3f31;
-    --band: #081c15;
-    --band-ink: var(--pale);
-    --border: #2b5443;
-    --border-strong: #436850;
-    --text: var(--pale);
-    --text-muted: #c3cdb4;
-    --text-green: var(--sage);
-    --accent: var(--sage);
-    --accent-hover: #c2cfb5;
-    --accent-ink: #0c261d;
-    --link: #cfe0b8;
-    --allow: #6fd3a5;
-    --warn: #eab654;
-    --block: #f08068;
-    --fixture: #c2aeea;
-    --allow-bg: rgba(111, 211, 165, 0.13);
-    --warn-bg: rgba(234, 182, 84, 0.13);
-    --block-bg: rgba(240, 128, 104, 0.13);
-    --fixture-bg: rgba(194, 174, 234, 0.14);
-    --shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.5);
-    --shadow-pop: 0 18px 48px -16px rgba(0, 0, 0, 0.6);
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0c261d;
-  --surface: #12372a;
-  --surface-2: #1d4636;
-  --surface-3: #0f2e23;
-  --surface-sage: #1a3f31;
-  --band: #081c15;
-  --band-ink: var(--pale);
-  --border: #2b5443;
-  --border-strong: #436850;
-  --text: var(--pale);
-  --text-muted: #c3cdb4;
-  --text-green: var(--sage);
-  --accent: var(--sage);
-  --accent-hover: #c2cfb5;
-  --accent-ink: #0c261d;
-  --link: #cfe0b8;
-  --allow: #6fd3a5;
-  --warn: #eab654;
-  --block: #f08068;
-  --fixture: #c2aeea;
-  --allow-bg: rgba(111, 211, 165, 0.13);
-  --warn-bg: rgba(234, 182, 84, 0.13);
-  --block-bg: rgba(240, 128, 104, 0.13);
-  --fixture-bg: rgba(194, 174, 234, 0.14);
-  --shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.5);
-  --shadow-pop: 0 18px 48px -16px rgba(0, 0, 0, 0.6);
-  color-scheme: dark;
-}
-
-@media (max-width: 1023px) { :root { --gut: 48px; } }
-@media (max-width: 639px) { :root { --gut: 24px; } }
-@media (max-width: 359px) { :root { --gut: 16px; } }
+@media (max-width: 1023px) { :root { --gut: 40px; } }
+@media (max-width: 639px) { :root { --gut: 16px; } }

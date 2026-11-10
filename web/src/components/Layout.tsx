@@ -1,12 +1,14 @@
-import { MainnetBadge } from "./ui";
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { ArrowRight, Bot, ChevronDown, FileCode as Code, Link2, ShieldCheck, LoaderCircle, LogOut, Menu, Moon, Search, Send, Sun, TriangleAlert, Wallet, X } from "./icons";
-import { useWallet } from "../lib/wallet";
+// What every shell shares: the server's deployment answer, toasts, the theme, and the wallet's balances.
+// The shells themselves live in components/shell (marketing, app, public pay pages).
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
+import { LoaderCircle, TriangleAlert } from "./icons";
+import { ftBalance, nearBalance, useWallet } from "../lib/wallet";
 import { api, type Deployment } from "../lib/api";
-import { kitRefresh } from "../lib/kit";
+import { usdcFor } from "../lib/format";
 
-// ---------------------------------------------------------------- deployment context
+// ---------------------------------------------------------------- deployment
 
 const DeploymentCtx = createContext<{ dep: Deployment | null; error: string | null; reload: () => void }>({ dep: null, error: null, reload: () => {} });
 export const useDeployment = () => useContext(DeploymentCtx);
@@ -19,149 +21,53 @@ export const useToast = () => useContext(ToastCtx);
 
 // ---------------------------------------------------------------- theme
 
-function storedTheme(): "light" | "dark" | null {
+export type ThemeChoice = "light" | "dark" | "system";
+const ThemeCtx = createContext<{ choice: ThemeChoice; resolved: "light" | "dark"; setChoice: (c: ThemeChoice) => void }>({ choice: "system", resolved: "light", setChoice: () => {} });
+export const useTheme = () => useContext(ThemeCtx);
+
+function storedTheme(): ThemeChoice {
   try {
     const t = localStorage.getItem("theme");
-    return t === "light" || t === "dark" ? t : null;
+    return t === "light" || t === "dark" ? t : "system";
   } catch {
-    return null;
+    return "system";
   }
 }
+const systemDark = () => !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+
+// ---------------------------------------------------------------- balances
+
+type Balances = {
+  /** USDC in its smallest unit. undefined: still loading. null: couldn't be read. */
+  usdc: bigint | null | undefined;
+  /** NEAR in yoctoNEAR. Same meaning for undefined and null. */
+  near: bigint | null | undefined;
+  refresh: () => void;
+};
+const BalanceCtx = createContext<Balances>({ usdc: undefined, near: undefined, refresh: () => {} });
+/** The connected wallet's balances, read live from NEAR. */
+export const useBalances = () => useContext(BalanceCtx);
 
 /** Notara's mark: a notary seal, a notched ring around a check. */
-export function SealMark({ className = "brand-mark" }: { className?: string }) {
+export function SealMark({ className = "size-7", tick = "var(--background)" }: { className?: string; tick?: string }) {
   return (
     <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden>
       <path
         d="M16 2.5l2.6 1.9 3.2-.3 1.3 2.9 2.9 1.3-.3 3.2 1.9 2.6-1.9 2.6.3 3.2-2.9 1.3-1.3 2.9-3.2-.3L16 26.5l-2.6-1.9-3.2.3-1.3-2.9-2.9-1.3.3-3.2L4.4 15l1.9-2.6-.3-3.2 2.9-1.3 1.3-2.9 3.2.3z"
         fill="currentColor"
       />
-      <path d="M11 15.2l3.3 3.3 6.6-6.8" stroke="var(--bg)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 15.2l3.3 3.3 6.6-6.8" stroke={tick} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M11.5 26.5l-1.8 4 3.1-.9 1.6 2.4.9-4M20.5 26.5l1.8 4-3.1-.9-1.6 2.4-.9-4" fill="currentColor" opacity=".55" />
     </svg>
   );
 }
 
-const PRODUCT = [
-  { to: "/invoices", label: "Get paid", desc: "Signed payment links. USDC from any chain.", icon: <Link2 size={18} /> },
-  { to: "/send", label: "Send by link", desc: "Send USDC to anyone, no wallet needed yet.", icon: <Send size={18} /> },
-  { to: "/check", label: "Check an account", desc: "Look up a NEAR account before you pay it.", icon: <Search size={18} /> },
-  { to: "/security", label: "AI-agent vault", desc: "Watch a hacked agent fail to move money.", icon: <Bot size={18} /> },
-] as const;
-
-/** The AI-agent side of the product, for agent owners and developers. */
-const AGENTS = [
-  { to: "/security", label: "Attack demo and your vault", desc: "Run an AI agent against a vault you own, on testnet.", icon: <Bot size={18} /> },
-  { to: "/check", label: "Check an account", desc: "What Notara answers before an agent pays someone.", icon: <Search size={18} /> },
-  { to: "/vault", label: "Vault console", desc: "Limits, payments, and approvals waiting for you.", icon: <ShieldCheck size={18} /> },
-  { to: "/agents", label: "For developers", desc: "Call the same check from your own agent.", icon: <Code size={18} /> },
-] as const;
-
-const LINKS = [
-  ["/invoices", "Get paid"],
-  ["/send", "Send"],
-  ["/security", "AI agents"],
-  ["/about", "How it works"],
-  ["/start", "Try it on testnet"],
-] as const;
-
-/** AI-agents panel: opens on click, hover (with a short close delay) or keyboard; Escape closes and returns focus. */
-function ProductMenu() {
-  const [open, setOpen] = useState(false);
-  const timer = useRef<number | undefined>(undefined);
-  const btn = useRef<HTMLButtonElement>(null);
-  // Opened by a click (or keyboard): stays open until clicked again, Escape, focus leaving or navigation.
-  const pinned = useRef(false);
-  const loc = useLocation();
-  const close = () => {
-    pinned.current = false;
-    setOpen(false);
-  };
-  useEffect(close, [loc.pathname]);
-  const root = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const outside = (e: PointerEvent) => !root.current?.contains(e.target as Node) && close();
-    document.addEventListener("pointerdown", outside);
-    return () => document.removeEventListener("pointerdown", outside);
-  }, [open]);
-  const enter = (e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse") return;
-    clearTimeout(timer.current);
-    // 300 ms of intent before opening on hover, so a pointer passing over the nav doesn't flicker it open.
-    // Click and keyboard open it at once.
-    timer.current = window.setTimeout(() => setOpen(true), 300);
-  };
-  const leave = (e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse" || pinned.current) return;
-    clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setOpen(false), 320);
-  };
-  return (
-    <div
-      ref={root}
-      className="nav-menu"
-      onPointerEnter={enter}
-      onPointerLeave={leave}
-      onKeyDown={(e) => {
-        if (e.key === "Escape" && open) {
-          close();
-          btn.current?.focus();
-        }
-      }}
-      onBlur={(e) => {
-        if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget as Node)) close();
-      }}
-    >
-      <button ref={btn} className="nav-trigger" aria-expanded={open} aria-controls="product-menu" onClick={() => {
-          clearTimeout(timer.current);
-          pinned.current = !pinned.current || !open;
-          setOpen(pinned.current);
-        }}>
-        AI agents <ChevronDown size={14} aria-hidden />
-      </button>
-      {open && (
-        <div className="mega" id="product-menu">
-          {AGENTS.map((p) => (
-            <Link key={p.label} to={p.to} className="mega-link">
-              <span className="ic" aria-hidden>
-                {p.icon}
-              </span>
-              <span>
-                <strong>{p.label}</strong>
-                <span className="d">{p.desc}</span>
-              </span>
-            </Link>
-          ))}
-          <Link to="/security" className="mega-feature" style={{ gridColumn: 3, gridRow: "1 / span 2" }}>
-            <div>
-              <h4>Try your own vault on testnet</h4>
-              <p>Connect any NEAR testnet wallet. An AI agent tries to pay four invoices from a vault you own. Free test NEAR only.</p>
-            </div>
-            <span className="go">
-              Open the demo <ArrowRight size={14} aria-hidden />
-            </span>
-          </Link>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function Layout() {
+export function AppProviders({ children }: { children: ReactNode }) {
   const [dep, setDep] = useState<Deployment | null>(null);
   const [depErr, setDepErr] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [menu, setMenu] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark" | null>(storedTheme());
-  const [notice, setNotice] = useState(() => {
-    try {
-      return sessionStorage.getItem("notice") !== "hidden";
-    } catch {
-      return true;
-    }
-  });
-  const loc = useLocation();
+  const [choice, setChoiceState] = useState<ThemeChoice>(storedTheme);
+  const [sysDark, setSysDark] = useState(systemDark);
   const w = useWallet();
 
   const reload = useCallback(() => {
@@ -175,37 +81,25 @@ export function Layout() {
       .catch((e) => setDepErr(e.message));
   }, []);
   useEffect(reload, [reload]);
+
   useEffect(() => {
-    setMenu(false);
-    window.scrollTo(0, 0);
-  }, [loc.pathname]);
-  // The design-taste-frontend kit (motion layer, moments, the one effect) learns about each rendered page:
-  // once right after the route renders, and once more when async content (lists, checks) has arrived.
-  const mainRef = useRef<HTMLElement>(null);
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!mq) return;
+    const on = () => setSysDark(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  const resolved: "light" | "dark" = choice === "system" ? (sysDark ? "dark" : "light") : choice;
   useEffect(() => {
-    const a = requestAnimationFrame(() => mainRef.current && kitRefresh(mainRef.current, true));
-    const b = setTimeout(() => mainRef.current && kitRefresh(mainRef.current, false), 1500);
-    return () => {
-      cancelAnimationFrame(a);
-      clearTimeout(b);
-    };
-  }, [loc.pathname]);
-  // Escape closes the mobile menu and puts focus back on the button that opened it.
-  const menuBtn = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!menu) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      setMenu(false);
-      menuBtn.current?.focus();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [menu]);
-  useEffect(() => {
-    if (theme) document.documentElement.dataset.theme = theme;
-    else delete document.documentElement.dataset.theme;
-  }, [theme]);
+    document.documentElement.dataset.theme = resolved;
+  }, [resolved]);
+  const setChoice = useCallback((c: ThemeChoice) => {
+    setChoiceState(c);
+    try {
+      if (c === "system") localStorage.removeItem("theme");
+      else localStorage.setItem("theme", c);
+    } catch {}
+  }, []);
 
   const toast = useCallback((text: ReactNode, kind: "ok" | "error" = "ok") => {
     const id = Date.now() + Math.random();
@@ -213,197 +107,50 @@ export function Layout() {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 5000);
   }, []);
 
-  const isDark = theme ? theme === "dark" : !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  const toggleTheme = () => {
-    const next = isDark ? "light" : "dark";
-    setTheme(next);
-    try {
-      localStorage.setItem("theme", next);
-    } catch {}
-  };
-  const moneyPage = /^\/(pay|m|send|claim)(\/|$)/.test(loc.pathname);
-  const links: (readonly [string, string])[] = w.accountId ? [["/dashboard", "Dashboard"], ...LINKS] : [...LINKS];
+  // Balances: read when the wallet connects or changes network, and again on demand (after a send).
+  const [bal, setBal] = useState<{ usdc: bigint | null | undefined; near: bigint | null | undefined }>({ usdc: undefined, near: undefined });
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!w.accountId) return setBal({ usdc: undefined, near: undefined });
+    let live = true;
+    setBal({ usdc: undefined, near: undefined });
+    const acct = w.accountId;
+    const net = w.network;
+    Promise.all([ftBalance(net, usdcFor(net), acct), nearBalance(net, acct)]).then(([usdc, near]) => live && setBal({ usdc, near }));
+    return () => {
+      live = false;
+    };
+  }, [w.accountId, w.network, tick]);
+  const balances = useMemo(() => ({ ...bal, refresh: () => setTick((t) => t + 1) }), [bal]);
+
+  const theme = useMemo(() => ({ choice, resolved, setChoice }), [choice, resolved, setChoice]);
+  const deployment = useMemo(() => ({ dep, error: depErr, reload }), [dep, depErr, reload]);
 
   return (
-    <DeploymentCtx.Provider value={{ dep, error: depErr, reload }}>
-      <ToastCtx.Provider value={toast}>
-        <a href="#main" className="sr-only">
-          Skip to content
-        </a>
-        <header className="site-header nav">
-          {notice && (
-            <div className="notice">
-              <div className="container wrap">
-                <TriangleAlert size={15} aria-hidden />
-                <span>
-                  {moneyPage
-                    ? "Prototype, not audited. Mainnet links move real money; testnet links use free test money."
-                    : "Testnet prototype, not audited. Every flow here runs on free test money."}
-                </span>
-                <button
-                  aria-label="Dismiss notice"
-                  onClick={() => {
-                    setNotice(false);
-                    try {
-                      sessionStorage.setItem("notice", "hidden");
-                    } catch {}
-                  }}
-                >
-                  <X size={16} />
-                </button>
-              </div>
+    <DeploymentCtx.Provider value={deployment}>
+      <ThemeCtx.Provider value={theme}>
+        <BalanceCtx.Provider value={balances}>
+          <ToastCtx.Provider value={toast}>
+            {children}
+            <div className="nt pointer-events-none fixed inset-x-0 bottom-4 z-[90] flex flex-col items-center gap-2 px-4" aria-live="polite">
+              <AnimatePresence>
+                {toasts.map((t) => (
+                  <motion.div
+                    key={t.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className={`pointer-events-auto max-w-md rounded-xl px-4 py-3 text-[14px] font-semibold shadow-pop ${t.kind === "error" ? "bg-danger text-danger-foreground" : "bg-canopy text-cream"}`}
+                  >
+                    {t.text}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
-          )}
-          <div className="container wrap">
-            <NavLink to="/" className="brand" aria-label="Notara home">
-              <SealMark /> Notara
-            </NavLink>
-            <nav className="nav-links" aria-label="Main">
-              {w.accountId && <NavLink to="/dashboard">Dashboard</NavLink>}
-              <NavLink to="/invoices">Get paid</NavLink>
-              <NavLink to="/send">Send</NavLink>
-              <ProductMenu />
-              <NavLink to="/about">How it works</NavLink>
-            </nav>
-            <div className="header-tools">
-              <Link to="/start" className="btn btn-secondary btn-sm try-btn">
-                Try it free
-              </Link>
-              <WalletButton />
-              <button className="icon-btn theme-btn" onClick={toggleTheme} aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}>
-                {isDark ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-              <button ref={menuBtn} className="icon-btn menu-btn" onClick={() => setMenu((m) => !m)} aria-expanded={menu} aria-controls="mobile-nav" aria-label="Menu">
-                {menu ? <X size={20} /> : <Menu size={20} />}
-              </button>
-            </div>
-          </div>
-          <nav id="mobile-nav" className={`mobile-nav ${menu ? "open" : ""}`} aria-label="Mobile">
-            {links.map(([to, label]) => (
-              <NavLink key={to} to={to}>
-                {label} <ArrowRight size={16} aria-hidden />
-              </NavLink>
-            ))}
-            <button type="button" className="mobile-theme" onClick={toggleTheme}>
-              {isDark ? "Light theme" : "Dark theme"} {isDark ? <Sun size={18} aria-hidden /> : <Moon size={18} aria-hidden />}
-            </button>
-          </nav>
-          {/* A wallet problem sits under the bar, on every page, so the landing page's main holds only its sections. */}
-          {w.error && (
-            <div className="container wrap">
-              <div className="banner warn wallet-notice" role="status">
-                <TriangleAlert size={18} aria-hidden />
-                <div style={{ flex: 1 }}>
-                  <p>{w.error}</p>
-                </div>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={w.clearError}>
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
-        </header>
-        {/* The landing page's sections are main's own children (one section per screen); task pages sit in the content box. */}
-        <main id="main" ref={mainRef} className={loc.pathname === "/" ? "landing-main" : undefined}>
-          {loc.pathname === "/" ? (
-            <Outlet />
-          ) : (
-            <div className="container">
-              <Outlet />
-            </div>
-          )}
-        </main>
-        <footer className={`site-footer${loc.pathname === "/" ? " closing" : ""}`} id="contact">
-          <div className="container wrap">
-            {/* On the landing page the close and the footer are one screen (design-taste-frontend, close-type). */}
-            {loc.pathname === "/" && (
-              <div className="closing-row">
-                <div>
-                  <h2>Get paid in USDC from your next client</h2>
-                  <p>Make the link in a minute. Signing is free and moves no money.</p>
-                </div>
-                <Link to="/invoices" className="btn btn-primary closing-btn">
-                  Create a payment link <ArrowRight size={22} className="arrow" aria-hidden />
-                </Link>
-              </div>
-            )}
-            {/* The footer's links and its fine print: one block, so the closing screen is the call, then this. */}
-            <div className="footer-legal">
-            <div className="footer-grid">
-              <div>
-                <div className="footer-brand">
-                  <SealMark /> Notara
-                </div>
-                <p style={{ marginTop: 12, maxWidth: "34ch", color: "color-mix(in srgb, var(--band-ink) 78%, transparent)" }}>
-                  Payment links people can trust, on NEAR. Built for the NEAR Hackathon.
-                </p>
-              </div>
-              <div>
-                <h4>Product</h4>
-                <ul>
-                  {PRODUCT.map((p) => (
-                    <li key={p.to}>
-                      <Link className="ulink" to={p.to}>
-                        {p.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h4>Learn</h4>
-                <ul>
-                  <li>
-                    <Link className="ulink" to="/about">
-                      How it works and limits
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="ulink" to="/agents">
-                      For AI agents
-                    </Link>
-                  </li>
-                  <li>
-                    <a className="ulink" href="/llms.txt">
-                      llms.txt
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4>Data</h4>
-                <ul>
-                  <li>NEAR RPC and FastNear, read live</li>
-                  <li>Contracts on NEAR testnet</li>
-                  <li>Cross-chain by NEAR Intents</li>
-                </ul>
-              </div>
-            </div>
-            <div className="footer-fine">
-              <span>Prototype, not audited. Tracks: AI Security & Defense, Real-World Money.</span>
-              <span>
-                Some interface ideas adapted from{" "}
-                <a className="ulink always" href="https://skiper-ui.com" target="_blank" rel="noreferrer">
-                  Skiper UI
-                </a>
-                . Icons by{" "}
-                <a className="ulink always" href="https://iconoir.com" target="_blank" rel="noreferrer">
-                  Iconoir
-                </a>
-                .
-              </span>
-            </div>
-            </div>
-          </div>
-        </footer>
-        <div className="toasts" aria-live="polite">
-          {toasts.map((t) => (
-            <div key={t.id} className={`toast ${t.kind}`}>
-              {t.text}
-            </div>
-          ))}
-        </div>
-      </ToastCtx.Provider>
+          </ToastCtx.Provider>
+        </BalanceCtx.Provider>
+      </ThemeCtx.Provider>
     </DeploymentCtx.Provider>
   );
 }
@@ -452,7 +199,7 @@ export function NotDeployed() {
       <div>
         <p style={{ fontWeight: 700 }}>This copy of Notara has no testnet demo</p>
         <p>
-          The demo vault and AI agent need testnet accounts that haven't been set up here. You can still <Link to="/check">check any NEAR account</Link>.
+          The demo vault and AI agent need testnet accounts that haven't been set up here. You can still <Link to="/agents/check">check any NEAR account</Link>.
         </p>
         {isLocalDev() && (
           <details>
@@ -466,50 +213,3 @@ export function NotDeployed() {
     </div>
   );
 }
-
-function WalletButton() {
-  const w = useWallet();
-  if (w.accountId)
-    return (
-      <span className="wallet-chip" title={`Connected: ${w.accountId}`}>
-        <Wallet size={15} aria-hidden />
-        <Link to="/dashboard" className="mono wallet-id" style={{ color: "inherit", textDecoration: "none" }}>
-          {w.accountId}
-        </Link>
-        {w.network === "mainnet" ? <MainnetBadge /> : <span className="tag testnet">testnet</span>}
-        <button onClick={w.disconnect} aria-label="Disconnect wallet" title="Disconnect wallet">
-          <LogOut size={15} />
-        </button>
-      </span>
-    );
-  // Pick the network first: the wallet list depends on it (HOT, NEAR Mobile, MyNearWallet are mainnet-only).
-  return (
-    <span className="row" style={{ gap: 6, flexWrap: "nowrap" }}>
-      <select
-        className="net-select"
-        aria-label="Network to connect on"
-        value={w.network}
-        onChange={(e) => w.connect(undefined, e.target.value as "mainnet" | "testnet")}
-        disabled={!w.ready || w.busy}
-      >
-        <option value="testnet">Testnet</option>
-        <option value="mainnet">Mainnet</option>
-      </select>
-      <button
-        className="btn btn-primary btn-sm wallet-btn"
-        onClick={() => w.connect()}
-        disabled={!w.ready || w.busy}
-        aria-busy={w.busy || !w.ready}
-        // the visible label is hidden on a phone, so the name never depends on it
-        aria-label={!w.ready ? "Loading wallets" : w.busy ? "Waiting for your wallet" : `Connect a NEAR ${w.network} wallet`}
-        title={w.error ?? `Connect a NEAR ${w.network} wallet`}
-      >
-        {w.busy || !w.ready ? <LoaderCircle size={14} /> : <Wallet size={15} aria-hidden />}
-        {/* while it can't be pressed, the button itself says why */}
-        <span className="label">{!w.ready ? "Loading wallets…" : w.busy ? "Waiting for wallet…" : "Connect wallet"}</span>
-      </button>
-    </span>
-  );
-}
-
-

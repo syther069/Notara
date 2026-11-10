@@ -93,7 +93,8 @@ function InjectedInvoice({ text }: { text: string }) {
   );
 }
 
-export function DemoPage() {
+/** `embedded`: inside the Vault Console, which has its own heading and its own vault widget. */
+export function DemoPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { dep } = useDeployment();
   const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
@@ -176,6 +177,7 @@ export function DemoPage() {
 
   return (
     <>
+      {!embedded && (
       <div className="page-head">
         <div className="tags">
           <span className="tag testnet">Testnet</span>
@@ -198,7 +200,9 @@ export function DemoPage() {
         </div>
       </div>
 
-      {dep?.deployed && <MyVault />}
+      )}
+
+      {!embedded && dep?.deployed && <MyVault />}
 
       {!dep?.deployed ? (
         <NotDeployed />

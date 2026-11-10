@@ -1,36 +1,46 @@
-import { StrictMode, Suspense, lazy } from "react";
+import { StrictMode, Suspense, lazy, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import "./styles/tokens.css";
-import "./styles/app.css";
-import "./styles/pages.css";
-import "./styles/vault.css";
-import "./styles/landing.css";
-import { Layout } from "./components/Layout";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import "./styles/theme.css";
+import { AppProviders } from "./components/Layout";
 import { WalletProvider } from "./lib/wallet";
-import { Home } from "./pages/Home";
-import { CheckPage } from "./pages/Check";
-import { DemoPage } from "./pages/Demo";
-import { VaultPage } from "./pages/Vault";
-import { InvoicesPage } from "./pages/Invoices";
-import { InvoicePage } from "./pages/Invoice";
-import { AboutPage } from "./pages/About";
-import { AgentsPage } from "./pages/Agents";
-import { PayPage } from "./pages/Pay";
-import { MerchantPage } from "./pages/Merchant";
-import { DashboardPage } from "./pages/Dashboard";
-import { StartPage } from "./pages/Start";
-// near-api-js is large: load the send and claim pages only when opened.
+import { MarketingShell } from "./components/shell/MarketingShell";
+import { LandingPage } from "./pages/Landing";
+
+// The landing page loads on its own; the app and the customer pages arrive when they're opened.
+const AppShell = lazy(() => import("./components/shell/AppShell").then((m) => ({ default: m.AppShell })));
+const PublicShell = lazy(() => import("./components/shell/PublicShell").then((m) => ({ default: m.PublicShell })));
+const DashboardPage = lazy(() => import("./pages/Dashboard").then((m) => ({ default: m.DashboardPage })));
+const TransactionsPage = lazy(() => import("./pages/Dashboard").then((m) => ({ default: m.TransactionsPage })));
+const GetPaidPage = lazy(() => import("./pages/GetPaid").then((m) => ({ default: m.GetPaidPage })));
 const SendPage = lazy(() => import("./pages/Send").then((m) => ({ default: m.SendPage })));
+const VaultConsolePage = lazy(() => import("./pages/VaultConsole").then((m) => ({ default: m.VaultConsolePage })));
+const CheckPage = lazy(() => import("./pages/Check").then((m) => ({ default: m.CheckPage })));
+const ProfilePage = lazy(() => import("./pages/Profile").then((m) => ({ default: m.ProfilePage })));
+const SettingsPage = lazy(() => import("./pages/Profile").then((m) => ({ default: m.SettingsPage })));
+const InvoicePage = lazy(() => import("./pages/Invoice").then((m) => ({ default: m.InvoicePage })));
+const PayPage = lazy(() => import("./pages/Pay").then((m) => ({ default: m.PayPage })));
+const MerchantPage = lazy(() => import("./pages/Merchant").then((m) => ({ default: m.MerchantPage })));
 const ClaimPage = lazy(() => import("./pages/Claim").then((m) => ({ default: m.ClaimPage })));
+
+/** An old address moves to its new home, keeping any ?query and #fragment it carried. */
+function Moved({ to }: { to: string }) {
+  const loc = useLocation();
+  const [pathname, hash] = to.split("#");
+  return <Navigate to={{ pathname, search: loc.search, hash: hash ? `#${hash}` : loc.hash }} replace />;
+}
+
+const wait = (el: ReactNode) => <Suspense fallback={<div className="min-h-dvh bg-background" />}>{el}</Suspense>;
+const page = (el: ReactNode) => <Suspense fallback={null}>{el}</Suspense>;
 
 function NotFound() {
   return (
-    <div className="page-head">
-      <h1>Page not found</h1>
-      <p>
-        <a className="btn btn-primary" href="/">Go to the home page</a>
-      </p>
+    <div className="nt flex min-h-dvh flex-col items-center justify-center gap-4 bg-background px-6 text-center font-sans text-foreground">
+      <h1 className="text-[40px] font-extrabold tracking-[-0.04em]">Page not found</h1>
+      <p className="text-muted">That address doesn't lead anywhere on Notara.</p>
+      <a href="/" className="inline-flex h-11 items-center rounded-full bg-accent px-5 font-semibold text-accent-foreground">
+        Go to the home page
+      </a>
     </div>
   );
 }
@@ -38,30 +48,47 @@ function NotFound() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <WalletProvider>
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Home />} />
-          {/* A static server (the design checks, some hosts) opens the build as /index.html: that is the home page. */}
-          <Route path="index.html" element={<Navigate to="/" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="start" element={<StartPage />} />
-          <Route path="check" element={<CheckPage />} />
-          <Route path="security" element={<DemoPage />} />
-          <Route path="demo" element={<Navigate to="/security" replace />} />
-          <Route path="vault" element={<VaultPage />} />
-          <Route path="invoices" element={<InvoicesPage />} />
-          <Route path="invoices/:id" element={<InvoicePage />} />
-          <Route path="pay/:id" element={<PayPage />} />
-          <Route path="m/:account" element={<MerchantPage />} />
-          <Route path="send" element={<Suspense fallback={null}><SendPage /></Suspense>} />
-          <Route path="claim/:id" element={<Suspense fallback={null}><ClaimPage /></Suspense>} />
-          <Route path="about" element={<AboutPage />} />
-          <Route path="agents" element={<AgentsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+      <AppProviders>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<MarketingShell />}>
+              <Route index element={<LandingPage />} />
+            </Route>
+            {/* A static server opens the build as /index.html: that is the home page. */}
+            <Route path="index.html" element={<Navigate to="/" replace />} />
+
+            <Route element={wait(<AppShell />)}>
+              <Route path="dashboard" element={page(<DashboardPage />)} />
+              <Route path="get-paid" element={page(<GetPaidPage />)} />
+              <Route path="send" element={page(<SendPage />)} />
+              <Route path="agents/vault" element={page(<VaultConsolePage />)} />
+              <Route path="agents/check" element={page(<CheckPage />)} />
+              <Route path="transactions" element={page(<TransactionsPage />)} />
+              <Route path="profile" element={page(<ProfilePage />)} />
+              <Route path="settings" element={page(<SettingsPage />)} />
+            </Route>
+
+            <Route element={wait(<PublicShell />)}>
+              <Route path="pay/:id" element={page(<PayPage />)} />
+              <Route path="claim/:id" element={page(<ClaimPage />)} />
+              <Route path="m/:account" element={page(<MerchantPage />)} />
+              <Route path="invoices/:id" element={page(<InvoicePage />)} />
+            </Route>
+
+            {/* Addresses from before the redesign. The Agents area is two pages; everything else moved. */}
+            <Route path="invoices" element={<Moved to="/get-paid" />} />
+            <Route path="check" element={<Moved to="/agents/check" />} />
+            <Route path="vault" element={<Moved to="/agents/vault" />} />
+            <Route path="agents" element={<Moved to="/agents/vault" />} />
+            <Route path="agents/*" element={<Moved to="/agents/vault" />} />
+            <Route path="security" element={<Moved to="/agents/vault" />} />
+            <Route path="demo" element={<Moved to="/agents/vault" />} />
+            <Route path="start" element={<Moved to="/agents/vault" />} />
+            <Route path="about" element={<Moved to="/#faq" />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AppProviders>
     </WalletProvider>
   </StrictMode>,
 );

@@ -1,7 +1,7 @@
 # Notara: Website Design
 
-Status: v1 · 2026-11-04. Companion to `PRD.md` (what), `Architecture.md` (how) and `rules.md` (rules).
-Scope: the website in `web/`. Pages: Home, Check, Attack demo, Vault, Invoices (merchant), About.
+Status: v2 · 2026-11-10 (redesign: two shells, Tailwind tokens, motion language). v1 · 2026-11-04. Companion to `PRD.md` (what), `Architecture.md` (how) and `rules.md` (rules).
+Scope: the website in `web/`. Pages: Landing, Dashboard, Get Paid, Send, Agents (Vault Console, Check an Account), Transactions, Profile, Settings, and the public pay / claim / merchant pages.
 
 ---
 
@@ -28,20 +28,27 @@ Scope: the website in `web/`. Pages: Home, Check, Attack demo, Vault, Invoices (
 
 ## 3. Visual language
 
-### 3.0 Theme: "Notary Seal" (redesign, 2026-11-09)
+### 3.0 Theme: premium fintech, forest and cream (redesign, 2026-11-10)
 
-A calm, paper-and-ink look: cream surfaces like a signed document, evergreen ink, and a notary-seal mark. Light theme first, with a deep-green dark theme. Tokens live in `web/src/styles/tokens.css`.
+Calm, web2-feeling money. The marketing page is always the dark "canopy"; the app follows the visitor's theme (cream in light, canopy in dark). Never neon, never "crypto". Every colour is a token in `web/src/styles/theme.css` (the Tailwind v4 config); nothing else holds a hex value. The older class-based pages read the same tokens through aliases in `tokens.css`.
 
-| Hex | Name | Role |
+| Token | Hex | Role |
 |---|---|---|
-| `#F3EEE3` | Cream | page background (about 60% of the screen) |
-| `#FBFADA` | Pale cream | text on dark bands; cards use a near-white tint of it |
-| `#ADBC9F` | Sage | supporting fills, selection, dark-theme primary |
-| `#436850` | Green | secondary text on cream, icons, progress |
-| `#12372A` | Deep green | primary buttons, the top strip, the trust band, the footer (about 10%) |
-| `#111111` | Near-black | body text |
+| `canopy` | `#0A1F17` | dark background, primary action on light |
+| `moss` | `#2A4A3A` | surface accent, focus ring on light |
+| `mint` | `#B8D8C8` | highlight, primary action on dark |
+| `cream` | `#F2EFE6` | light background |
+| `ink` | `#0E0E0C` | text on light |
+| `gold` | `#C8A96A` | reserved for "paid", "verified" and one success flourish; never a primary |
 
-Decision colors stay apart from the brand greens and always come with an icon and a word: ALLOW `#146B4A`, WARN `#8A5A00`, BLOCK `#A8321E`, demo fixture purple `#6B4FB0` (lighter versions in dark mode). Mainnet tags are solid deep green, testnet tags dashed.
+Semantic roles (`background`, `surface`, `overlay`, `muted`, `default`, `accent`, `border`, `focus`, `success`, `warning`, `danger`) are defined for light and dark. The check verdicts keep their own colours and always come with an icon and words: green "No rule broken", amber "Take a second look", red "Don't pay". Demo fixtures stay purple and always visible.
+
+**Radius:** 12 / 16 / 24 / 32; cards are 24. **Shadows:** two layers, a long soft ambient shadow and a tight contact shadow (`shadow-card`, `shadow-lift`, `shadow-pop`). **Grid:** 72px side gutter on desktop, 16px on a phone.
+
+**Motion:** expo-out `cubic-bezier(0.22, 1, 0.36, 1)` for entrances, `cubic-bezier(0.4, 0, 0.2, 1)` for exits. 300 to 500ms for interface changes, 700 to 1200ms for hero flourishes, about 2s for the preloader. Buttons scale 1.02 on hover and 0.98 on press. Sections rise 24px with a 60ms stagger as they scroll in. Route changes use fade-up-mask (fade plus a 16px rise, 420ms). A successful write gets one mint pulse and a 400ms drawn check, nothing louder. Under `prefers-reduced-motion` everything falls back to opacity.
+
+**Components and where they come from** (each adapted file records its changes): glass dock, morph text, animated number, stats counter, share sheet, social flip button, perspective carousel, verse cards and line-hover link from Vengeance UI; combobox, checkbox group and field from SmoothUI; tooltip, accordion, modal and table from HeroUI. Every dropdown is the SmoothUI combobox; there is no native `<select>`.
+
 
 ### 3.2 Typography
 
@@ -60,7 +67,7 @@ Iconoir, one stroke weight (1.7), imported only through `web/src/components/icon
 
 ### 3.5 Motion
 
-Subtle and purposeful only.
+See 3.0 for the motion language. For results and logs specifically:
 - Decision reveal: fade + 8px rise, 200ms.
 - BLOCK in the attack demo: one 300ms red pulse on the card border. No shaking.
 - Log lines: append with a 120ms fade.
@@ -292,7 +299,8 @@ Long-form reading page (720px wide):
 
 ## 10. Implementation notes
 
-- Vite + React + TypeScript, plain CSS with the tokens above in `web/src/styles/tokens.css`. No UI framework. Theme: Notary Seal (section 3.0). Motion (`motion`) only for the landing list and the expanding questions.
+- Vite + React + TypeScript. Tailwind v4 with the tokens in `web/src/styles/theme.css`; new surfaces carry the `nt` class, and the older class-based pages (pay, claim, merchant, check results, vault approvals) sit in a `.legacy` wrapper and read the same tokens. Motion (`motion`) for all animation.
+- Three shells in `web/src/components/shell/`: `MarketingShell` (landing), `AppShell` (left rail, top bar, Guide, profile sheet), `PublicShell` (customer pages).
 - Fonts: Manrope (self-hosted) and JetBrains Mono (Google Fonts). Icons: `iconoir-react` through `components/icons.tsx`.
 - One shared component per section 4 item in `web/src/components/`.
 - Theme follows the system setting, with a manual toggle (stored in `localStorage`).

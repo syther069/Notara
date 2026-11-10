@@ -55,6 +55,22 @@ writeFileSync(
     {
       version: 3,
       routes: [
+        // Security headers on every response. This project deploys with the Build Output API, so they live
+        // here (a `headers` block in vercel.json is not read for prebuilt output).
+        // The CSP limits what it safely can: no plugins, no <base> tricks, no form posts elsewhere, and no
+        // framing by other sites. Scripts and connections stay open because NEAR wallets load their own
+        // sandboxed code and talk to their own servers, which Notara can't list in advance.
+        {
+          src: "/(.*)",
+          headers: {
+            "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+            "Content-Security-Policy": "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+            "X-Content-Type-Options": "nosniff",
+          },
+          continue: true,
+        },
         { handle: "filesystem" }, // real files first: assets, embed.js, llms.txt
         { src: "^/(api|v1)/(.*)$", dest: "/api" },
         { src: "^/(.*)$", dest: "/index.html" }, // client-side routes like /pay/INV-0001

@@ -81,3 +81,23 @@ export const netOfAccount = (id: string): "mainnet" | "testnet" => (id.endsWith(
 
 /** Ends a message with exactly one full stop, whether or not the server already added one. */
 export const asSentence = (s: string) => s.replace(/[.\s]+$/, "") + ".";
+
+/** USDC units (6 decimals) as a grouped figure with two decimals: 1250500000 -> "1,250.50". */
+export function usdcFigure(units: bigint | string | null | undefined): string {
+  if (units === null || units === undefined) return "";
+  const n = typeof units === "bigint" ? units : /^\d+$/.test(units) ? BigInt(units) : 0n;
+  const cents = (n + 5000n) / 10000n; // round to cents
+  const whole = (cents / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${whole}.${(cents % 100n).toString().padStart(2, "0")}`;
+}
+
+/** A decimal amount typed by a person ("12.5") as USDC units, or null if it isn't a valid amount. */
+export function usdcUnits(decimal: string): bigint | null {
+  if (!/^\d+(\.\d{1,6})?$/.test(decimal)) return null;
+  const [w, f = ""] = decimal.split(".");
+  return BigInt(w) * 1_000_000n + BigInt(f.padEnd(6, "0"));
+}
+
+/** NEAR account ids: lowercase letters, digits, - _ and dots; or a 64-character implicit account. */
+export const ACCOUNT_RE = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
+export const validAccount = (id: string) => id.length >= 2 && id.length <= 64 && ACCOUNT_RE.test(id);

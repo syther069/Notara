@@ -1,0 +1,254 @@
+/* Notara design system. This file is the Tailwind v4 config: every colour, radius, shadow and easing
+   the product uses is defined here and nowhere else. The older class-based pages (pay, claim, check
+   results, vault tables) read the same values through the aliases in tokens.css.
+
+   Layer order: the legacy stylesheets sit below the scoped reset, so new surfaces (.nt) start clean
+   and Tailwind utilities always win. */
+@layer theme, legacy, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "@heroui/styles/themes/shared/theme.css";
+@import "@heroui/styles/utilities";
+@import "@heroui/styles/base/overlay-motion.css" layer(base);
+@import "@heroui/styles/components/tooltip.css" layer(components);
+@import "@heroui/styles/components/accordion.css" layer(components);
+@import "@heroui/styles/components/modal.css" layer(components);
+@import "@heroui/styles/components/close-button.css" layer(components);
+@import "@heroui/styles/components/tabs.css" layer(components);
+@import "@heroui/styles/components/table.css" layer(components);
+@import "./tokens.css" layer(legacy);
+@import "./app.css" layer(legacy);
+@import "./pages.css" layer(legacy);
+@import "./vault.css" layer(legacy);
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  /* Brand palette (section 5 of the redesign brief). */
+  --color-canopy: #0a1f17;
+  --color-moss: #2a4a3a;
+  --color-mint: #b8d8c8;
+  --color-cream: #f2efe6;
+  --color-ink: #0e0e0c;
+  --color-gold: #c8a96a;
+  --color-gold-ink: var(--gold-ink);
+  --color-info: var(--info);
+  --color-success-soft: var(--success-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-accent-soft: var(--accent-soft);
+  --color-fixture: var(--fixture);
+
+  --font-sans: "Manrope", "Manrope Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", "Manrope Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+
+  /* Two layers each: a long soft ambient shadow and a tight contact shadow. */
+  --shadow-card: var(--card-shadow);
+  --shadow-lift: var(--lift-shadow);
+  --shadow-pop: var(--pop-shadow);
+
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-wipe: cubic-bezier(0.7, 0, 0.2, 1);
+
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-mint: pulse-mint 700ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+  --animate-outline-run: outline-run 1.4s linear infinite;
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes pulse-mint {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-mint) 80%, transparent); }
+    100% { box-shadow: 0 0 0 14px transparent; }
+  }
+  @keyframes outline-run {
+    to { background-position: 200% 0; }
+  }
+}
+
+/* Light: warm cream surfaces, ink text, canopy actions. */
+:root,
+[data-theme="light"] {
+  --background: #f2efe6;
+  --background-secondary: #ebe7db;
+  --background-tertiary: #e3decf;
+  --foreground: #0e0e0c;
+  --surface: #fbf9f3;
+  --surface-foreground: var(--foreground);
+  --surface-secondary: #efebe0;
+  --surface-secondary-foreground: var(--foreground);
+  --surface-tertiary: #e6e1d3;
+  --surface-tertiary-foreground: var(--foreground);
+  --surface-hover: color-mix(in oklab, var(--surface) 92%, var(--foreground) 8%);
+  --overlay: #fdfcf8;
+  --overlay-foreground: var(--foreground);
+  --muted: #4f5d54;
+  --default: #e8e4d8;
+  --default-foreground: var(--foreground);
+  --accent: #0a1f17;
+  --accent-foreground: #f2efe6;
+  --accent-soft: #d9e8de;
+  --segment: #fbf9f3;
+  --segment-foreground: var(--foreground);
+  --border: #d8d3c3;
+  --separator: #d8d3c3;
+  --separator-tertiary: #c9c3b1;
+  --focus: #2a4a3a;
+  --link: #1c5a40;
+  --success: #1c6a4a;
+  --success-foreground: #f2efe6;
+  --success-soft: #d6e9dd;
+  --warning: #8a5a00;
+  --warning-foreground: #f2efe6;
+  --warning-soft: #f1e4c4;
+  --danger: #a8321e;
+  --danger-foreground: #f2efe6;
+  --danger-soft: #f3d9d2;
+  --info: #2a4a3a;
+  --gold-ink: #75591c;
+  --fixture: #6b4fb0;
+  --backdrop: rgb(10 31 23 / 0.45);
+  --radius: 0.5rem;
+  --border-width: 1px;
+  --disabled-opacity: 0.5;
+  --cursor-interactive: pointer;
+  --cursor-disabled: not-allowed;
+  --card-shadow: 0 24px 48px -28px rgb(10 31 23 / 0.22), 0 1px 2px rgb(10 31 23 / 0.06);
+  --lift-shadow: 0 32px 64px -28px rgb(10 31 23 / 0.3), 0 2px 4px rgb(10 31 23 / 0.08);
+  --pop-shadow: 0 40px 80px -32px rgb(10 31 23 / 0.4), 0 2px 6px rgb(10 31 23 / 0.1);
+  --surface-shadow: var(--card-shadow);
+  --overlay-shadow: var(--pop-shadow);
+  --field-shadow: 0 0 0 0 transparent;
+  color-scheme: light;
+}
+
+/* Dark: the canopy. Mint carries actions and highlights. */
+[data-theme="dark"] {
+  --background: #0a1f17;
+  --background-secondary: #0d251c;
+  --background-tertiary: #112c22;
+  --foreground: #f2efe6;
+  --surface: #10291f;
+  --surface-secondary: #163428;
+  --surface-tertiary: #1d4033;
+  --overlay: #133024;
+  --muted: #a8bcb0;
+  --default: #1a3a2d;
+  --accent: #b8d8c8;
+  --accent-foreground: #0a1f17;
+  --accent-soft: #1e4335;
+  --segment: #1d4033;
+  --border: #254536;
+  --separator: #254536;
+  --separator-tertiary: #2f5644;
+  --focus: #b8d8c8;
+  --link: #c9e4d6;
+  --success: #7fd4aa;
+  --success-foreground: #0a1f17;
+  --success-soft: #173f2f;
+  --warning: #e7b75a;
+  --warning-foreground: #0a1f17;
+  --warning-soft: #3d3418;
+  --danger: #f08a72;
+  --danger-foreground: #0a1f17;
+  --danger-soft: #43241c;
+  --info: #b8d8c8;
+  --gold-ink: #c8a96a;
+  --fixture: #c2aeea;
+  --backdrop: rgb(4 12 9 / 0.62);
+  --card-shadow: 0 24px 48px -28px rgb(0 0 0 / 0.6), 0 1px 2px rgb(0 0 0 / 0.3);
+  --lift-shadow: 0 32px 64px -28px rgb(0 0 0 / 0.7), 0 2px 4px rgb(0 0 0 / 0.35);
+  --pop-shadow: 0 40px 80px -32px rgb(0 0 0 / 0.8), 0 2px 6px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}
+
+@layer base {
+  /* New surfaces carry .nt and start from a clean slate; anything inside .legacy keeps the older rules. */
+  :where(.nt) :where(h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote, pre, section):not(:where(.legacy, .legacy *)) {
+    margin: 0;
+    padding: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+  }
+  :where(.nt) :where(ul, ol):not(:where(.legacy, .legacy *)) { list-style: none; }
+  :where(.nt) :where(fieldset):not(:where(.legacy, .legacy *)) { border: 0; margin: 0; padding: 0; min-width: 0; }
+  :where(.nt) :where(legend):not(:where(.legacy, .legacy *)) { padding: 0; }
+  :where(.nt) :where(a):not(:where(.legacy, .legacy *)) { color: inherit; text-decoration: none; }
+  :where(.nt) :where(button, input, textarea, select):not(:where(.legacy, .legacy *)) {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0 solid;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    letter-spacing: inherit;
+  }
+  :where(.nt) :where(button):not(:where(.legacy, .legacy *)) { cursor: pointer; }
+  :where(.nt) :where(button:disabled):not(:where(.legacy, .legacy *)) { cursor: not-allowed; }
+  :where(.nt) :where(img, svg, video, canvas):not(:where(.legacy, .legacy *)) { display: block; max-width: 100%; }
+  :where(.nt) :where(*, ::before, ::after):not(:where(.legacy, .legacy *)) { border-color: var(--border); }
+  /* One focus ring everywhere: never the browser default outline. */
+  :where(.nt) :where(a, button, input, textarea, select, summary, [tabindex], [role="button"]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  :where(.nt) ::selection { background: var(--color-mint); color: var(--color-canopy); }
+}
+
+@layer components {
+  /* Amounts, balances and counters never jiggle as digits change. */
+  .nt .num, .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Loading placeholder: a real figure replaces it, never a zero. */
+  .shimmer {
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--default) 25%, var(--surface-hover) 50%, var(--default) 75%);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  /* The confirm button while the wallet is open: a light runs around its outline. No spinner. */
+  .outline-run { position: relative; }
+  .outline-run::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--color-mint) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: var(--animate-outline-run);
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+
+  /* HeroUI tooltip, tuned to the system: soft shadow, 8px radius. */
+  .tooltip {
+    border-radius: 8px;
+    background: var(--color-canopy);
+    color: var(--color-cream);
+    padding: 8px 10px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    font-weight: 550;
+    word-break: normal;
+    box-shadow: var(--pop-shadow);
+    border: 1px solid color-mix(in srgb, var(--color-mint) 22%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer, .outline-run::after { animation: none; }
+}

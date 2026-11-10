@@ -26,7 +26,12 @@ const EXCLUDED = ["wallet-connect"];
 /** near-connect manifest id of the EVM option: MetaMask / WalletConnect sign NEAR transactions via evm-on-near.dev. */
 export const EVM_WALLET_ID = "ethereum-wallets";
 
+/** One wallet the visitor can connect with, as the NEAR Connect manifest describes it. */
+export type WalletInfo = { id: string; name: string; icon: string; description: string; website: string };
+
 type WalletState = {
+  /** The wallets that can connect on that network, from the live manifest (empty until it has loaded). */
+  walletsFor: (network: Net) => WalletInfo[];
   accountId: string | null;
   /** Which network the connected wallet is on. Payment links use mainnet; the vault demo uses testnet. */
   network: "mainnet" | "testnet";
@@ -59,6 +64,7 @@ const Ctx = createContext<WalletState>({
   ready: false,
   busy: false,
   error: null,
+  walletsFor: () => [],
   connect: async () => {},
   disconnect: async () => {},
   clearError: () => {},
@@ -85,6 +91,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [network, setNetwork] = useState<Net>(savedNetwork);
+  const [manifest, setManifest] = useState<(WalletInfo & { testnet: boolean; sends: boolean })[]>([]);
   const switchTo = useCallback(async (c: NearConnector, n: "mainnet" | "testnet") => {
     const switched = await ensureNetwork(c, n);
     if (switched) {
@@ -114,6 +121,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           connector.whenManifestLoaded,
           new Promise((_, reject) => setTimeout(() => reject(new Error("the list of wallets didn't load (network or ad blocker?)")), 15_000)),
         ]);
+        if (!cancelled)
+          setManifest(
+            connector.wallets.map((w) => {
+              const m = w.manifest;
+              return { id: m.id, name: m.name, icon: m.icon, description: m.description, website: m.website, testnet: !!m.features?.testnet, sends: !!m.features?.signAndSendTransaction };
+            }),
+          );
         // Restore a previous session, if any.
         const existing = await connector.getConnectedWallet().catch(() => null);
         const restored = existing?.accounts?.[0]?.accountId;
@@ -268,9 +282,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 
   const clearError = useCallback(() => setError(null), []);
+  const walletsFor = useCallback(
+    (net: Net): WalletInfo[] => manifest.filter((w) => !EXCLUDED.includes(w.id) && w.sends && (net === "mainnet" || w.testnet)).map(({ testnet: _t, sends: _s, ...w }) => w),
+    [manifest],
+  );
   const value = useMemo(
-    () => ({ accountId, network, ready, busy, error, connect, disconnect, clearError, signLink, call, payUsdc, sendNear }),
-    [accountId, network, ready, busy, error, connect, disconnect, clearError, signLink, call, payUsdc, sendNear],
+    () => ({ accountId, network, ready, busy, error, walletsFor, connect, disconnect, clearError, signLink, call, payUsdc, sendNear }),
+    [accountId, network, ready, busy, error, walletsFor, connect, disconnect, clearError, signLink, call, payUsdc, sendNear],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -349,4 +367,18 @@ async function ensureNetwork(c: NearConnector, network: "mainnet" | "testnet"): 
   c.features = FEATURES;
   c.network = network;
   return true;
+}
+
+/** The account's NEAR balance in yoctoNEAR, or null if it can't be read. */
+export async function nearBalance(net: Net, account: string): Promise<bigint | null> {
+  try {
+    const r = await fetch(RPC[net], {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "view_account", finality: "optimistic", account_id: account } }),
+    }).then((x) => x.json());
+    return r.result?.amount ? BigInt(r.result.amount) : null;
+  } catch {
+    return null;
+  }
 }

@@ -15,7 +15,7 @@ import {
   TriangleAlert,
   CircleCheck,
 } from "./icons";
-import type { Decision, SourceKind } from "../lib/api";
+import type { Decision, Invoice, SourceKind } from "../lib/api";
 import { shortHash } from "../lib/format";
 
 export function DecisionIcon({ d, size = 16 }: { d: Decision; size?: number }) {
@@ -177,4 +177,19 @@ export function StepBar({ steps, current }: { steps: string[]; current: number }
       ))}
     </ol>
   );
+}
+
+export const INVOICE_STATUS: Record<Invoice["status"], { text: string; cls: string }> = {
+  unpaid: { text: "Unpaid", cls: "NEUTRAL" },
+  pending_approval: { text: "Waiting for approval", cls: "WARN" },
+  processing: { text: "Processing", cls: "WARN" },
+  refunded: { text: "Refunded", cls: "NEUTRAL" },
+  paid: { text: "Paid", cls: "ALLOW" },
+  refused: { text: "Refused", cls: "BLOCK" },
+  failed: { text: "Failed", cls: "BLOCK" },
+};
+
+export function InvoiceStatus({ s }: { s: Invoice["status"] }) {
+  const x = INVOICE_STATUS[s];
+  return <span className={`badge ${x.cls}`}>{x.text}</span>;
 }

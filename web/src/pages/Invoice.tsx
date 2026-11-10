@@ -6,7 +6,7 @@ import { formatAsset, linkNetwork } from "../lib/format";
 import { AccountLink, Banner, Skeleton, TxLink } from "../components/ui";
 import { CheckResult } from "../components/CheckResult";
 import { useToast } from "../components/Layout";
-import { InvoiceStatus } from "./Invoices";
+import { InvoiceStatus } from "../components/ui";
 
 export function InvoicePage() {
   const { id = "" } = useParams();
