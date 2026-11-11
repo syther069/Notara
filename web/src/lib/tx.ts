@@ -104,7 +104,11 @@ export function monthTotal(txs: Tx[], direction: "in" | "out", monthsAgo: number
 }
 
 export function toCsv(txs: Tx[], timeZone: string): string {
-  const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  // A cell starting with = + - @ (or a tab/return) would run as a formula in a spreadsheet: prefix an apostrophe.
+  const esc = (raw: string) => {
+    const v = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+    return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  };
   const fmt = new Intl.DateTimeFormat("en-CA", { timeZone, dateStyle: "short", timeStyle: "medium", hour12: false });
   const rows = txs.map((t) => [fmt.format(new Date(t.at)), t.direction === "in" ? "In" : "Out", t.kind, t.counterparty ?? "", isUsdc(t.asset) ? (Number(t.amount) / 1e6).toFixed(2) : t.amount, isUsdc(t.asset) ? "USDC" : t.asset, t.memo, t.status, t.network, t.txHash ?? "", t.id]);
   return [["Date", "Direction", "Type", "Counterparty", "Amount", "Asset", "Memo", "Status", "Network", "Transaction", "Id"], ...rows].map((r) => r.map((c) => esc(String(c))).join(",")).join("\n");

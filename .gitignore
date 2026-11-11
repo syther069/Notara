@@ -11,3 +11,9 @@ graphify-out/cache/
 
 .vercel
 .env*
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Headless Chrome profile used for screenshots: holds cookies, login data and history. Never commit.
+.taste-skill/chrome-shoot/

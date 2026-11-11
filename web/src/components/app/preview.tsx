@@ -28,7 +28,7 @@ export function DeviceStage({ children, label }: { children: ReactNode; label: s
   const ry = useSpring(useMotionValue(0), { stiffness: 140, damping: 18 });
   const ref = useRef<HTMLDivElement>(null);
   return (
-    <div data-theme="dark" className="rounded-3xl bg-canopy p-5 text-cream shadow-card sm:p-6">
+    <div data-theme="dark" className="stage-dark rounded-3xl bg-canopy p-5 text-cream shadow-card sm:p-6">
       <div className="mb-5 flex items-center justify-between gap-3">
         <p className="text-[13.5px] font-semibold text-mint">{label}</p>
         <Segmented
@@ -67,8 +67,10 @@ export function DeviceStage({ children, label }: { children: ReactNode; label: s
 }
 
 /** Notara's public payment (or claim) page, at preview size. */
-export function PagePreview({ path, who, website, forText, emptyFor, amount, unit, checks, primary, secondary }: {
+export function PagePreview({ path, host, who, website, forText, emptyFor, amount, unit, checks, primary, secondary }: {
   path: string;
+  /** Shown in the address bar; the app shows the real host, the landing page a fixed one. */
+  host?: string;
   who: ReactNode;
   website?: string | null;
   forText: string;
@@ -86,13 +88,13 @@ export function PagePreview({ path, who, website, forText, emptyFor, amount, uni
         <div className="flex items-center gap-1.5 border-b border-border bg-surface-secondary px-3 py-2 text-[10.5px] text-muted">
           <Lock size={10} />
           <span className="truncate font-mono">
-            {location.host}
+            {host ?? location.host}
             {path}
           </span>
         </div>
         <div className="flex flex-col gap-3.5 px-5 pb-6 pt-5">
           <div className="flex items-center gap-2 text-[12px] font-extrabold tracking-[-0.03em]">
-            <SealMark className="size-4 text-accent" /> Notara
+            <SealMark className="size-4 text-accent" /> notara
           </div>
           <div>
             <p className="text-[11px] font-semibold text-muted">Pay</p>

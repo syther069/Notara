@@ -7,7 +7,6 @@ import { EMPTY_PROFILE, profileKey, useLocal, type Profile } from "@/lib/local";
 import { nearAmount, usdcFigure } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, ChevronRight, Wallet } from "@/components/icons";
-import { LineHoverLink } from "@/components/vengeance/line-hover-link";
 import { Button, Hint, Segmented, Shimmer } from "./ui";
 
 /** The profile saved on this device for an account (display name, avatar, About, links). */
@@ -95,12 +94,15 @@ export function WalletChip({ onOpenProfile, onConnect, compact }: { onOpenProfil
   );
 }
 
-/** The four wallets people ask for first, when the live wallet list has them. */
+/** The wallets people ask for first, when the live wallet list has them. */
 const FIRST = ["mynearwallet", "my-near-wallet", "meteor", "meteor-wallet", "here", "hot", "hot-wallet", "ledger", "intear"];
+const matches = (w: WalletInfo, k: string) => w.id.toLowerCase().includes(k) || w.name.toLowerCase().replace(/\s/g, "").includes(k);
 const order = (w: WalletInfo) => {
-  const i = FIRST.findIndex((k) => w.id.toLowerCase().includes(k) || w.name.toLowerCase().replace(/\s/g, "").includes(k));
+  const i = FIRST.findIndex((k) => matches(w, k));
   return i < 0 ? FIRST.length : i;
 };
+/** The one wallet suggested per network; it goes to the top with a badge. */
+const RECOMMENDED = { testnet: { key: "intear", label: "Recommended for testnet" }, mainnet: { key: "hot", label: "Recommended" } } as const;
 
 /**
  * The wallet picker (HeroUI Modal; a bottom sheet on a phone). It lists the wallets NEAR Connect offers
@@ -110,7 +112,12 @@ export function WalletModal({ open, onClose }: { open: boolean; onClose: () => v
   const w = useWallet();
   const [net, setNet] = useState<"mainnet" | "testnet">(w.network);
   const [waiting, setWaiting] = useState<WalletInfo | null>(null);
-  const list = useMemo(() => [...w.walletsFor(net)].sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name)), [w, net]);
+  const rec = RECOMMENDED[net];
+  const isRec = (x: WalletInfo) => matches(x, rec.key);
+  const list = useMemo(() => {
+    const top = (x: WalletInfo) => Number(matches(x, RECOMMENDED[net].key));
+    return [...w.walletsFor(net)].sort((a, b) => top(b) - top(a) || order(a) - order(b) || a.name.localeCompare(b.name));
+  }, [w, net]);
 
   async function pick(info: WalletInfo) {
     setWaiting(info);
@@ -122,7 +129,9 @@ export function WalletModal({ open, onClose }: { open: boolean; onClose: () => v
 
   return (
     <Modal>
-      <Modal.Backdrop isOpen={open} onOpenChange={(o) => !o && onClose()} className="nt" variant="blur">
+      {/* Hidden while the wallet's own sign-in is up: an open modal makes the rest of the page inert,
+          which would block a wallet that shows its popup inside this page (Intear does). */}
+      <Modal.Backdrop isOpen={open && !waiting} onOpenChange={(o) => !o && onClose()} className="nt z-[80]" variant="blur">
         <Modal.Container placement="auto" size="md">
           <Modal.Dialog className="nt rounded-3xl border border-border bg-background p-0 text-foreground shadow-pop" aria-label="Connect a NEAR wallet">
             <div className="flex flex-col gap-5 p-6">
@@ -172,28 +181,41 @@ export function WalletModal({ open, onClose }: { open: boolean; onClose: () => v
                       The list of wallets didn't load. An ad blocker can stop it. Reload the page to try again.
                     </p>
                   ) : (
-                    <ul className="-mx-1 flex max-h-[46vh] flex-col gap-1 overflow-y-auto px-1 pb-1">
+                    <ul className="-mx-1 flex max-h-[46vh] flex-col gap-1 overflow-y-auto px-1 pb-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
                       {list.map((info) => (
                         <li key={info.id} className="group relative">
                           <button
                             type="button"
                             onClick={() => pick(info)}
                             disabled={w.busy}
-                            className="flex w-full items-center gap-3.5 rounded-2xl border border-transparent p-3 text-left transition-colors duration-200 hover:border-border hover:bg-surface"
+                            className={cn(
+                              "flex w-full items-center gap-3.5 rounded-2xl border p-3 text-left transition-colors duration-200 hover:border-border hover:bg-surface",
+                              isRec(info) ? "border-border/70 bg-surface" : "border-transparent",
+                            )}
                           >
                             <img src={info.icon} alt="" width={44} height={44} className="size-11 shrink-0 rounded-xl bg-surface-secondary" />
-                            <span className="min-w-0 flex-1">
-                              <span className="block text-[15.5px] font-bold">{info.name}</span>
-                              <span className="block truncate text-[13px] text-muted">{info.description}</span>
+                            <span className={cn("min-w-0 flex-1", info.website && "pr-9")}>
+                              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                <span className="truncate text-[15.5px] font-bold leading-tight">{info.name}</span>
+                                {isRec(info) && (
+                                  <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-accent-soft px-2 text-[11px] font-bold leading-none text-foreground">{rec.label}</span>
+                                )}
+                              </span>
+                              <span className="mt-0.5 block truncate text-[13px] leading-snug text-muted">{info.description}</span>
                             </span>
                             <ChevronRight size={18} className="shrink-0 text-muted transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
                           </button>
                           {info.website && (
-                            <span className="pointer-events-none absolute bottom-1.5 right-12 text-[12px] font-semibold text-muted opacity-0 transition-opacity duration-200 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
-                              <LineHoverLink href={info.website} target="_blank" rel="noreferrer">
-                                Website <ArrowUpRight size={11} aria-hidden />
-                              </LineHoverLink>
-                            </span>
+                            <a
+                              href={info.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`${info.name} website (opens a new tab)`}
+                              title={`${info.name} website`}
+                              className="absolute right-10 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted opacity-0 transition-[opacity,background-color] duration-200 hover:bg-default hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                            >
+                              <ArrowUpRight size={15} aria-hidden />
+                            </a>
                           )}
                         </li>
                       ))}

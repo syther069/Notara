@@ -225,7 +225,7 @@ export function Reveal({ children, className, as = "div", delay = 0 }: { childre
     </M>
   );
 }
-export function RevealItem({ children, className, as = "div" }: { children: ReactNode; className?: string; as?: "div" | "li" | "p" | "h2" }) {
+export function RevealItem({ children, className, as = "div" }: { children: ReactNode; className?: string; as?: "div" | "li" | "p" | "h2" | "h3" }) {
   const reduce = useReducedMotion();
   const M = motion[as] as typeof motion.div;
   return (

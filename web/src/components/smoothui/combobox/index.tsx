@@ -92,7 +92,7 @@ const PopoverContent = ({
     <PopoverPrimitive.Content
       align={align}
       className={cn(
-        "nt z-50 w-72 origin-(--radix-popover-content-transform-origin) overflow-hidden rounded-xl border border-border bg-overlay text-foreground shadow-pop outline-hidden",
+        "nt z-[85] w-72 origin-(--radix-popover-content-transform-origin) overflow-hidden rounded-xl border border-border bg-overlay text-foreground shadow-pop outline-hidden",
         className
       )}
       data-slot="popover-content"

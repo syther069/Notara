@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { LineHoverLink } from "./line-hover-link";
 
 /**
  * Glass Dock, adapted from Vengeance UI (https://www.vengenceui.com/components/glass-dock).
@@ -8,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Kept from the source: the frosted dock, the spring lift on the hovered item and the label that
  * slides between items with a directional blur.
  * Changed for Notara: colours come from the design tokens; items are real links or buttons (the source
- * used div role="button"); a "labels" variant shows words instead of icons for the marketing nav; the
+ * used div role="button"); a "labels" variant shows words (each a Line Hover Link) for the marketing nav; the
  * GSAP morphing icons for a fixed set of titles were dropped, since none of Notara's items use them;
  * the label position is measured from the item instead of assumed; reduced motion is honoured.
  */
@@ -114,16 +115,7 @@ export const GlassDock = React.forwardRef<HTMLDivElement, GlassDockProps>(
             };
             if (variant === "labels")
               return (
-                <Tag
-                  key={el.title}
-                  {...(shared as object)}
-                  {...(el.href ? { href: el.href } : { type: "button" as const })}
-                  className={cn(
-                    "relative rounded-full font-semibold text-foreground/80 transition-colors duration-200 hover:text-foreground",
-                    compact ? "px-3 py-1.5 text-[13.5px]" : "px-4 py-2 text-[14.5px]",
-                    el.active && "text-foreground",
-                  )}
-                >
+                <span key={el.title} className="relative" onMouseEnter={() => enter(index)}>
                   {isHovered && (
                     <motion.span
                       layoutId="dock-highlight"
@@ -131,8 +123,23 @@ export const GlassDock = React.forwardRef<HTMLDivElement, GlassDockProps>(
                       transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
                     />
                   )}
-                  <span className="relative">{el.title}</span>
-                </Tag>
+                  <span className={cn("relative block font-semibold text-foreground/85 transition-colors duration-200 hover:text-foreground", compact ? "px-2.5 py-1.5 text-[13.5px]" : "px-3.5 py-2 text-[14.5px]", el.active && "text-foreground")}>
+                    <LineHoverLink
+                      href={el.href ?? "#"}
+                      aria-current={el.active ? "location" : undefined}
+                      onFocus={() => enter(index)}
+                      onBlur={leave}
+                      onClick={(e) => {
+                        if (el.onClick) {
+                          e.preventDefault();
+                          el.onClick();
+                        }
+                      }}
+                    >
+                      {el.title}
+                    </LineHoverLink>
+                  </span>
+                </span>
               );
             return (
               <Tag

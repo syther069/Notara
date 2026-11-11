@@ -77,7 +77,7 @@ const smoothButtonVariants = cva(
           "text-[var(--btn-text,var(--btn,var(--color-foreground)))] hover:bg-[color-mix(in_oklab,var(--btn,var(--color-foreground))_10%,transparent)]",
         link: "text-[var(--btn-text,var(--btn,var(--color-foreground)))] underline-offset-4 hover:underline",
         outline:
-          "border border-transparent bg-background text-[var(--btn-text,var(--btn,var(--color-foreground)))] shadow-black/15 shadow-sm ring-1 ring-foreground/10 hover:bg-accent dark:ring-foreground/15",
+          "border border-transparent bg-background text-[var(--btn-text,var(--btn,var(--color-foreground)))] shadow-black/15 shadow-sm ring-1 ring-foreground/10 hover:bg-surface-secondary dark:ring-foreground/15",
         secondary:
           "bg-default text-foreground hover:bg-default/80",
         soft: "bg-[color-mix(in_oklab,var(--btn,var(--color-foreground))_12%,transparent)] text-[var(--btn-text,var(--btn,var(--color-foreground)))] hover:bg-[color-mix(in_oklab,var(--btn,var(--color-foreground))_18%,transparent)]",

@@ -27,6 +27,7 @@ export const Copy = icon(I.Copy);
 export const Download = icon(I.Download);
 export const ExternalLink = icon(I.OpenNewWindow);
 export const FileCode = icon(I.Code);
+export const Edit = icon(I.EditPencil);
 export const Flag = icon(I.TriangleFlag);
 export const FlaskConical = icon(I.Flask);
 export const Globe = icon(I.Globe);

@@ -12,9 +12,10 @@ import { useLocal } from "@/lib/local";
 import { formatAsset, timeAgo, validAccount } from "@/lib/format";
 import { SealMark } from "@/components/Layout";
 import Combobox, { type ComboboxOption } from "@/components/smoothui/combobox";
-import { Bell, Book, Bot, ChevronDown, ChevronRight, Dashboard, Link2, Menu, Page, Search, Send, Settings2, ShieldCheck, TriangleAlert, User, Wallet, X } from "@/components/icons";
+import { Bell, Book, Bot, ChevronDown, ChevronRight, Dashboard, Link2, LogOut, Menu, Page, Search, Send, Settings2, ShieldCheck, TriangleAlert, User, Wallet, X } from "@/components/icons";
 import { Button, EASE, Hint, IconButton, Sheet } from "@/components/app/ui";
 import { WalletChip, WalletModal } from "@/components/app/wallet";
+import { SpinThemeToggle } from "@/components/app/SpinThemeToggle";
 import { ProfileEditor } from "@/components/app/profile";
 
 type Item = { to: string; label: string; icon: typeof Bell; children?: { to: string; label: string; icon: typeof Bell }[] };
@@ -97,6 +98,13 @@ function Rail({ onNavigate, pinned }: { onNavigate?: () => void; pinned?: boolea
           </NavLink>
         ),
       )}
+      {/* Pinned to the bottom of the rail: the docs, in the same row style as the pages above. */}
+      <div className="mt-auto border-t border-border/70 pt-2">
+        <NavLink to="/docs" onClick={onNavigate} className={row} aria-label="Docs">
+          <Book size={20} className="shrink-0" aria-hidden />
+          <span className={label}>Docs</span>
+        </NavLink>
+      </div>
     </nav>
   );
 }
@@ -196,7 +204,16 @@ function GuideSheet({ open, onClose, page }: { open: boolean; onClose: () => voi
   const openAt = last[page] ?? 0;
   const reduce = useReducedMotion();
   return (
-    <Sheet open={open} onClose={onClose} title={`Guide: ${guide.name}`}>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={`Guide: ${guide.name}`}
+      footer={
+        <Link to="/docs" onClick={onClose} className="inline-flex items-center gap-1.5 text-[14px] font-semibold underline underline-offset-4">
+          <Book size={15} aria-hidden /> Read the full documentation
+        </Link>
+      }
+    >
       <ol className="flex flex-col gap-2">
         {guide.entries.map((e, i) => {
           const on = openAt === i;
@@ -290,16 +307,16 @@ function Frame({ children }: { children: ReactNode }) {
 
   return (
     <ShellCtx.Provider value={shell}>
-      <div className="nt min-h-dvh bg-background font-sans text-[15px] leading-normal text-foreground antialiased">
+      <div className="nt app-shell min-h-dvh bg-background font-sans text-[15px] leading-[1.6] text-foreground antialiased">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-foreground">
           Skip to content
         </a>
 
         {/* Left rail: icons at rest, labels on hover or keyboard focus. */}
-        <aside className="group/rail fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col border-r border-border/70 bg-background transition-[width,box-shadow] duration-300 ease-enter hover:w-[236px] hover:shadow-pop focus-within:w-[236px] focus-within:shadow-pop lg:flex">
+        <aside className="app-rail group/rail fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col border-r border-border/70 bg-background text-foreground transition-[width,box-shadow] duration-300 ease-enter hover:w-[236px] hover:shadow-pop focus-within:w-[236px] focus-within:shadow-pop lg:flex">
           <Link to="/dashboard" aria-label="Notara, to your dashboard" className="flex h-[68px] shrink-0 items-center gap-3 overflow-hidden border-b border-border/70 px-[22px]">
             <SealMark className="size-7 shrink-0 text-accent" />
-            <span className="text-[19px] font-extrabold tracking-[-0.04em] opacity-0 transition-opacity duration-200 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">Notara</span>
+            <span className="text-[19px] font-extrabold tracking-[-0.04em] opacity-0 transition-opacity duration-200 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">notara</span>
           </Link>
           <Rail />
         </aside>
@@ -310,7 +327,7 @@ function Frame({ children }: { children: ReactNode }) {
             <div className="fixed inset-0 z-50 lg:hidden">
               <motion.div className="absolute inset-0 bg-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeDrawer} />
               <motion.aside
-                className="group/rail absolute inset-y-0 left-0 flex w-[264px] flex-col border-r border-border bg-background shadow-pop"
+                className="app-rail group/rail absolute inset-y-0 left-0 flex w-[264px] flex-col border-r border-border bg-background text-foreground shadow-pop"
                 initial={reduce ? { opacity: 0 } : { x: "-100%" }}
                 animate={reduce ? { opacity: 1 } : { x: 0 }}
                 exit={reduce ? { opacity: 0 } : { x: "-100%" }}
@@ -318,7 +335,7 @@ function Frame({ children }: { children: ReactNode }) {
               >
                 <div className="flex h-[68px] items-center justify-between border-b border-border/70 px-5">
                   <span className="flex items-center gap-2.5 text-[19px] font-extrabold tracking-[-0.04em]">
-                    <SealMark className="size-7 text-accent" /> Notara
+                    <SealMark className="size-7 text-accent" /> notara
                   </span>
                   <button type="button" aria-label="Close menu" onClick={closeDrawer} className="inline-flex size-10 items-center justify-center rounded-full hover:bg-default">
                     <X size={19} />
@@ -351,12 +368,28 @@ function Frame({ children }: { children: ReactNode }) {
                   <GlobalSearch open={search} setOpen={setSearch} />
                 </div>
                 <Notifications />
+                <SpinThemeToggle />
                 <Hint text="Tips for this page (press ?)">
                   <button type="button" onClick={() => setGuide(true)} aria-label="Guide: tips for this page" className="inline-flex h-10 items-center gap-2 rounded-full px-2.5 text-[14px] font-semibold transition-colors duration-200 hover:bg-default xl:px-3.5">
                     <Book size={18} aria-hidden /> <span className="hidden xl:inline">Guide</span>
                   </button>
                 </Hint>
                 <WalletChip compact onConnect={() => setConnect(true)} onOpenProfile={() => setProfile(true)} />
+                {w.accountId && (
+                  <Hint text="Disconnect wallet. Your money and links stay where they are.">
+                    <button
+                      type="button"
+                      aria-label="Disconnect wallet"
+                      onClick={() => {
+                        setProfile(false);
+                        void w.disconnect();
+                      }}
+                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200 hover:bg-default"
+                    >
+                      <LogOut size={19} aria-hidden />
+                    </button>
+                  </Hint>
+                )}
               </div>
             </div>
           </header>

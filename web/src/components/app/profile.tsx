@@ -1,12 +1,11 @@
 // Your profile: who you are on payment pages, what the wallet holds, and how Notara behaves for you.
 // Shown in the side sheet (from the wallet chip) and on /profile. Saved on this device only.
 import { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/lib/wallet";
 import { useBalances, useTheme, useToast, type ThemeChoice } from "@/components/Layout";
 import { ABOUT_MAX, LINK_KINDS, LINK_LABEL, PREFS_KEY, defaultPrefs, linkHref, profileKey, removeLocal, sendsKey, useLocal, type LinkKind, type Prefs } from "@/lib/local";
 import { usdcFigure } from "@/lib/format";
-import { Building, Github, Globe, Linkedin, LogOut, Mail, Moon, Sun, Laptop, Telegram, Trash, Upload, XBrand } from "@/components/icons";
+import { Building, Edit, Github, Globe, Linkedin, Mail, Moon, Sun, Laptop, Telegram, Trash, Upload, XBrand } from "@/components/icons";
 import { Avatar, handle, nearFigure, useProfile } from "./wallet";
 import { Button, CharCount, Chip, CopyChip, FormField, Hint, Notice, Segmented, Select, Shimmer, TextArea, TextInput } from "./ui";
 
@@ -106,14 +105,13 @@ export function FundsPanel() {
 }
 
 /** Everything on the profile. `compact` is the side sheet (one column); the page uses two. */
-export function ProfileEditor({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void }) {
+export function ProfileEditor({ compact = false }: { compact?: boolean; onNavigate?: () => void }) {
   const w = useWallet();
   const account = w.accountId!;
   const [profile, setProfile] = useProfile(account);
   const [prefs, setPrefs] = usePrefs();
   const theme = useTheme();
   const toast = useToast();
-  const nav = useNavigate();
   const file = useRef<HTMLInputElement>(null);
   const [imgErr, setImgErr] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -125,6 +123,34 @@ export function ProfileEditor({ compact = false, onNavigate }: { compact?: boole
     return [...new Set([prefs.timezone, ...all])].map((z) => ({ value: z, label: z.replace(/_/g, " ") }));
   }, [prefs.timezone]);
   const shownLinks = LINK_KINDS.filter((k) => linkHref(k, profile.links[k] ?? ""));
+
+  // Name, About and links are edited as a draft and saved together; the picture saves as soon as it's chosen.
+  const [draft, setDraft] = useState<typeof profile | null>(null);
+  const editing = draft !== null;
+  const d = draft ?? profile;
+  const edit = (patch: Partial<typeof profile>) => setDraft((x) => ({ ...(x ?? profile), ...patch }));
+  const invalid = LINK_KINDS.some((k) => (d.links[k] ?? "").trim() && !linkHref(k, d.links[k] ?? ""));
+  const saveDraft = () => {
+    if (!draft || invalid) return;
+    save({ displayName: draft.displayName, about: draft.about, links: draft.links });
+    setDraft(null);
+    toast("Profile saved.");
+  };
+  const actions = editing ? (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {invalid && <span className="mr-auto text-[13px] font-semibold text-danger">Fix the highlighted link first.</span>}
+      <Button variant="secondary" size="sm" onClick={() => setDraft(null)}>
+        Cancel
+      </Button>
+      <Button size="sm" disabled={invalid} onClick={saveDraft}>
+        Save changes
+      </Button>
+    </div>
+  ) : (
+    <Button variant="secondary" size="sm" onClick={() => setDraft(profile)}>
+      <Edit size={14} aria-hidden /> Edit details
+    </Button>
+  );
 
   const identity = (
     <section>
@@ -160,7 +186,10 @@ export function ProfileEditor({ compact = false, onNavigate }: { compact?: boole
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[20px] font-extrabold tracking-[-0.03em]">{profile.displayName.trim() || handle(account)}</p>
+          <div className="flex items-start justify-between gap-3">
+          <p className="min-w-0 truncate text-[20px] font-extrabold tracking-[-0.03em]">{profile.displayName.trim() || handle(account)}</p>
+          {!editing && <span className="shrink-0">{actions}</span>}
+          </div>
           <p className="truncate font-mono text-[12.5px] text-muted">{account}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             <Chip tone={w.network === "mainnet" ? "gold" : "outline"} hint={w.network === "mainnet" ? "Connected on NEAR mainnet: real money." : "Connected on NEAR testnet: free test money, nothing of value."}>
@@ -176,7 +205,7 @@ export function ProfileEditor({ compact = false, onNavigate }: { compact?: boole
       </div>
       {imgErr && <p role="alert" className="mt-2 text-[13px] font-semibold text-danger">{imgErr}</p>}
       <FormField label="Display name" className="mt-5" note="The name people see. Leave it empty to show your account.">
-        <TextInput value={profile.displayName} maxLength={48} placeholder={handle(account)} onChange={(e) => save({ displayName: (e.target as HTMLInputElement).value })} />
+        <TextInput value={d.displayName} disabled={!editing} maxLength={48} placeholder={handle(account)} onChange={(e) => edit({ displayName: (e.target as HTMLInputElement).value })} />
       </FormField>
     </section>
   );
@@ -186,9 +215,9 @@ export function ProfileEditor({ compact = false, onNavigate }: { compact?: boole
       <FormField
         label="About"
         note="Add a short description of what you do — it appears on your public payment pages so customers know who they're paying."
-        counter={<CharCount value={profile.about} max={ABOUT_MAX} />}
+        counter={<CharCount value={d.about} max={ABOUT_MAX} />}
       >
-        <TextArea value={profile.about} maxLength={ABOUT_MAX} placeholder="Brand and product designer. Invoices in USDC." onChange={(e) => save({ about: e.target.value })} />
+        <TextArea value={d.about} disabled={!editing} maxLength={ABOUT_MAX} placeholder="Brand and product designer. Invoices in USDC." onChange={(e) => edit({ about: e.target.value })} />
       </FormField>
     </section>
   );
@@ -205,15 +234,16 @@ export function ProfileEditor({ compact = false, onNavigate }: { compact?: boole
       )}
       <div className={compact ? "grid gap-3" : "grid gap-3 sm:grid-cols-2"}>
         {LINK_KINDS.map((k) => {
-          const v = profile.links[k] ?? "";
+          const v = d.links[k] ?? "";
           const bad = v.trim() && !linkHref(k, v);
           return (
             <FormField key={k} label={LINK_LABEL[k]} error={bad ? (k === "email" ? "That doesn't look like an email address." : "That doesn't look like a valid link or handle.") : undefined}>
-              <TextInput value={v} placeholder={LINK_PLACEHOLDER[k]} autoComplete="off" spellCheck={false} aria-invalid={!!bad || undefined} onChange={(e) => save({ links: { ...profile.links, [k]: (e.target as HTMLInputElement).value } })} />
+              <TextInput value={v} disabled={!editing} placeholder={LINK_PLACEHOLDER[k]} autoComplete="off" spellCheck={false} aria-invalid={!!bad || undefined} onChange={(e) => edit({ links: { ...d.links, [k]: (e.target as HTMLInputElement).value } })} />
             </FormField>
           );
         })}
       </div>
+      {editing && <div className="mt-5 border-t border-border/70 pt-4">{actions}</div>}
     </section>
   );
 
@@ -278,20 +308,6 @@ export function ProfileEditor({ compact = false, onNavigate }: { compact?: boole
       <SectionTitle>Danger zone</SectionTitle>
       <div className="flex flex-col gap-3 rounded-2xl border border-danger/25 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-[30ch] text-[13.5px] text-muted">Disconnecting signs this browser out. Your money and links stay where they are.</p>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={async () => {
-              await w.disconnect();
-              onNavigate?.();
-              nav("/");
-            }}
-          >
-            <LogOut size={14} aria-hidden /> Disconnect wallet
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-3">
           <p className="max-w-[30ch] text-[13.5px] text-muted">Deletes your name, picture, About, links and the list of sends kept on this device. It can't be undone.</p>
           {confirmDelete ? (
             <span className="flex gap-2">

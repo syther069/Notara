@@ -16,7 +16,7 @@ const SHORTCUTS: GuideEntry = {
 };
 const HELP: GuideEntry = {
   title: "Need help?",
-  body: ["The API notes are at /llms.txt, written for people and for AI agents.", "Found a problem? Open an issue on the project's GitHub page, linked in the footer of the home page."],
+  body: ["The full documentation is at /docs, including the on-chain proofs.", "The API notes are at /llms.txt, written for people and for AI agents.", "Found a problem? Open an issue on the project's GitHub page, linked in the footer of the home page."],
 };
 
 export const GUIDES: Record<string, GuidePage> = {
@@ -89,7 +89,7 @@ export const GUIDES: Record<string, GuidePage> = {
     name: "Profile",
     entries: [
       { title: "What this page does", body: ["It sets how you appear: your name, picture, a short About, and your links. It also shows what your wallet holds."] },
-      { title: "How to edit", body: ["Type in any field; it saves as you go.", "Your profile is kept on this device. Clearing your browser data removes it."] },
+      { title: "How to edit", body: ["Click Edit details, change what you need, then Save changes. Your picture saves as soon as you choose it.", "Your profile is kept on this device. Clearing your browser data removes it."] },
       { title: "When to prove your website", body: ["Proving a website ties your domain to your account, and that one does show to every customer. Open your public page from the Dashboard to do it."] },
       SHORTCUTS,
       HELP,

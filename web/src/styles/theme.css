@@ -75,6 +75,29 @@
   }
 }
 
+/* Tokens that follow the theme. Inline, so a utility reads the variable on the element that uses it and a
+   section that forces its own theme (data-theme on any element) gets that theme's value. */
+@theme inline {
+  --color-gold-ink: var(--gold-ink);
+  --color-info: var(--info);
+  --color-highlight: var(--highlight);
+  --color-success-soft: var(--success-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-accent-soft: var(--accent-soft);
+  --color-fixture: var(--fixture);
+
+  /* Two layers each: a long soft ambient shadow and a tight contact shadow. */
+  --shadow-card: var(--card-shadow);
+  --shadow-lift: var(--lift-shadow);
+  --shadow-pop: var(--pop-shadow);
+}
+
+/* Values derived from the theme's own colours, restated on every themed scope so they resolve there. */
+:root,
+[data-theme] {
+}
+
 /* Light: warm cream surfaces, ink text, canopy actions. */
 :root,
 [data-theme="light"] {
@@ -114,6 +137,8 @@
   --danger-foreground: #f2efe6;
   --danger-soft: #f3d9d2;
   --info: #2a4a3a;
+  /* The emphasis colour for words and small marks: moss on cream, mint on canopy. */
+  --highlight: #2a4a3a;
   --gold-ink: #75591c;
   --fixture: #6b4fb0;
   --backdrop: rgb(10 31 23 / 0.45);
@@ -162,6 +187,7 @@
   --danger-foreground: #0a1f17;
   --danger-soft: #43241c;
   --info: #b8d8c8;
+  --highlight: #b8d8c8;
   --gold-ink: #c8a96a;
   --fixture: #c2aeea;
   --backdrop: rgb(4 12 9 / 0.62);
@@ -181,6 +207,8 @@
     letter-spacing: inherit;
     line-height: inherit;
   }
+  /* Headings take the colour of where they sit (the older rule pinned them to the root theme's text colour). */
+  :where(.nt) :where(h1, h2, h3, h4):not(:where(.legacy, .legacy *)) { color: inherit; }
   :where(.nt) :where(ul, ol):not(:where(.legacy, .legacy *)) { list-style: none; }
   :where(.nt) :where(fieldset):not(:where(.legacy, .legacy *)) { border: 0; margin: 0; padding: 0; min-width: 0; }
   :where(.nt) :where(legend):not(:where(.legacy, .legacy *)) { padding: 0; }
@@ -247,7 +275,69 @@
     box-shadow: var(--pop-shadow);
     border: 1px solid color-mix(in srgb, var(--color-mint) 22%, transparent);
   }
+
+  /* Pinned card stack (CardStack in components/skiper/scroll.tsx). Without [data-pinned], cards sit in a normal column. */
+  .stack-stage {
+    position: relative;
+    width: 100%;
+  }
+  .stack-frame {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    max-width: 1136px;
+    margin-inline: auto;
+  }
+  .stack-stage[data-pinned="true"] {
+    height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding-block: 76px 24px;
+  }
+  .stack-stage[data-pinned="true"] .stack-frame {
+    display: block;
+    height: min(560px, calc(100svh - 116px));
+  }
+  .stack-stage[data-pinned="true"] .stack-card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+  }
+  .stack-stage[data-pinned="true"] .stack-shot {
+    flex: 1;
+    min-height: 0;
+  }
 }
+
+/* Light theme only: the app pages take the landing page's colour combination. Canopy stages (a canopy-to-moss
+   ground with the faint mint grid) carry mint actions and cream cards; on cream, the primary button is a deep
+   moss-to-canopy fill instead of a flat near-black. Dark theme is untouched: every rule is scoped to
+   html[data-theme="light"], and the rail's data-theme="dark" resolves to the same values the dark theme uses. */
+html[data-theme="light"] .stage-dark {
+  background-color: var(--color-canopy);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-mint) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-mint) 5%, transparent) 1px, transparent 1px),
+    radial-gradient(120% 70% at 100% 0%, color-mix(in srgb, var(--color-mint) 14%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--color-canopy) 0%, var(--color-canopy) 50%, var(--color-moss) 140%);
+  background-size: 72px 72px, 72px 72px, 100% 100%, 100% 100%;
+  border-color: color-mix(in srgb, var(--color-mint) 14%, transparent);
+}
+html[data-theme="light"] .app-shell :is(button, a).bg-accent:not(:where(.stage-dark *, [data-theme="dark"] *)) {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--color-moss) 70%, var(--color-canopy)) 0%, var(--color-canopy) 100%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-mint) 22%, transparent), 0 10px 24px -14px rgb(10 31 23 / 0.55);
+}
+html[data-theme="light"] .app-shell :is(button, a).bg-accent:not(:where(.stage-dark *, [data-theme="dark"] *)):hover {
+  background-image: linear-gradient(180deg, var(--color-moss) 0%, color-mix(in srgb, var(--color-moss) 45%, var(--color-canopy)) 100%);
+}
+/* The spin theme toggle: the product's expo-out easing on every moving part. */
+.spin-toggle svg * { --tw-ease: cubic-bezier(0.22, 1, 0.36, 1); }
 
 @media (prefers-reduced-motion: reduce) {
   .shimmer, .outline-run::after { animation: none; }

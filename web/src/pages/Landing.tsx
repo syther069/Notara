@@ -1,535 +1,831 @@
-// The landing page. One idea per fold, a lot of room, one headline, one supporting line, one action.
-// Every claim on it is something the product does today; the figures are product facts, not usage numbers.
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Accordion, Modal } from "@heroui/react";
+// The Notara landing page. Light (cream) throughout, with three canopy stages for contrast: the hero, the
+// agent vault and the close. Every visual is Notara's own UI; every illustration that could pass for live data
+// carries an "Example" tag. Every figure below is read from the code (passport/policy.json, the vault contract,
+// the send-link limits), never a usage number: Notara is a prototype and publishes no volume.
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { cn } from "@/lib/utils";
-import { SIGNAL_LABELS } from "@/lib/format";
-import { ArrowRight, Bot, Check, Copy, Link2, Pencil, Play, Send, ShieldCheck, Shop, Suitcase, Terminal, Users } from "@/components/icons";
-import { AnimatedNumber } from "@/components/vengeance/animated-number";
-import { LineHoverLink } from "@/components/vengeance/line-hover-link";
-import { MorphText } from "@/components/vengeance/morph-text";
-import { PerspectiveCarousel } from "@/components/vengeance/perspective-carousel";
-import StatsCounter from "@/components/vengeance/stats-counter";
-import { VerseCards } from "@/components/vengeance/verse-cards";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Bot,
+  Check,
+  CircleCheck,
+  CircleX,
+  Clock,
+  Coins,
+  Download,
+  Globe,
+  Link2,
+  Lock,
+  Search,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldX,
+  Wallet,
+} from "@/components/icons";
 import { Preloader } from "@/components/landing/Preloader";
 import { useGo } from "@/components/shell/MarketingShell";
+import { SmoothScroll } from "@/components/skiper/scroll";
+import { ExpandGroup } from "@/components/skiper/expand";
 import { PagePreview } from "@/components/app/preview";
 import { Button, EASE, Reveal, RevealItem } from "@/components/app/ui";
+import { SealMark } from "@/components/Layout";
 
 const WRAP = "mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-[72px]";
-const H2 = "text-[clamp(30px,3.2vw+12px,56px)] font-extrabold leading-[1.05] tracking-[-0.04em] [text-wrap:balance]";
-const LEAD = "text-[17px] leading-relaxed text-muted [text-wrap:pretty] sm:text-[18px]";
+const H2 = "text-[clamp(30px,2.4vw+18px,52px)] font-extrabold leading-[1.05] tracking-[-0.04em] [text-wrap:balance]";
+const LEAD = "text-[17px] leading-[1.6] text-muted [text-wrap:pretty]";
+const EYEBROW = "font-mono text-[12px] font-medium uppercase tracking-[0.14em] text-highlight";
 
-// ------------------------------------------------------------------ tour
+// ------------------------------------------------------------------ small parts
 
-const TOUR = [
-  { caption: "Type an amount and what it's for.", amount: "0.00", text: "", signed: false, paid: false },
-  { caption: "The customer's page fills in as you type.", amount: "480.00", text: "Brand refresh, final invoice", signed: false, paid: false },
-  { caption: "Your wallet signs the link. It's free, and no money moves.", amount: "480.00", text: "Brand refresh, final invoice", signed: true, paid: false },
-  { caption: "Share it. Your customer pays; USDC lands in your account.", amount: "480.00", text: "Brand refresh, final invoice", signed: true, paid: true },
-];
-
-/** A silent walk-through built from the product's own screens. It loops, about five seconds a step. */
-function Tour({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [i, setI] = useState(0);
-  const reduce = useReducedMotion();
-  useEffect(() => {
-    if (!open) return setI(0);
-    if (reduce) return; // under reduced motion the visitor steps through it themselves
-    const t = setInterval(() => setI((x) => (x + 1) % TOUR.length), 5000);
-    return () => clearInterval(t);
-  }, [open, reduce]);
-  const s = TOUR[i];
+/** Marks a card that shows Notara's UI with made-up values, so nobody reads it as live data. */
+function Example({ className, children = "Example" }: { className?: string; children?: ReactNode }) {
   return (
-    <Modal>
-      <Modal.Backdrop isOpen={open} onOpenChange={(o) => !o && onClose()} className="nt" variant="blur">
-        <Modal.Container size="lg">
-          <Modal.Dialog aria-label="A short tour of Notara" data-theme="dark" className="nt rounded-3xl border border-border bg-background p-6 text-foreground shadow-pop">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[13px] font-semibold text-mint">Tour · step {i + 1} of {TOUR.length}</p>
-                <p className="mt-1 min-h-[3.2em] text-[19px] font-bold leading-snug tracking-[-0.02em]" aria-live="polite">{s.caption}</p>
-              </div>
-              <Modal.CloseTrigger aria-label="Close the tour" />
-            </div>
-            <div className="mx-auto mt-4 max-w-[300px] overflow-hidden rounded-[32px] border-[6px] border-moss" data-theme="light">
-              <div className="bg-background text-foreground">
-                <PagePreview
-                  path="/pay/…"
-                  who="studio.near"
-                  forText={s.text}
-                  emptyFor="What it's for appears here"
-                  amount={s.amount}
-                  unit="USDC"
-                  checks={[
-                    s.signed ? { state: "ok", text: "Signed by this account's wallet" } : { state: "wait", text: "Signed by your wallet when you create it" },
-                    s.paid ? { state: "ok", text: "Paid. USDC is in the account." } : { state: "wait", text: "Account check runs when your customer opens it" },
-                  ]}
-                  primary={s.paid ? "Paid" : `Pay ${s.amount} USDC`}
-                />
-              </div>
-            </div>
-            <p className="mt-3 text-center text-[12.5px] text-muted">An illustration with example values, drawn with the product's real payment page.</p>
-            <div className="mt-4 flex items-center justify-between">
-              <div className="flex gap-1.5" role="tablist" aria-label="Tour steps">
-                {TOUR.map((_, n) => (
-                  <button key={n} type="button" role="tab" aria-selected={n === i} aria-label={`Step ${n + 1}`} onClick={() => setI(n)} className={cn("h-2 rounded-full transition-[width,background-color] duration-300", n === i ? "w-7 bg-mint" : "w-2 bg-foreground/25")} />
-                ))}
-              </div>
-              <Button size="sm" variant="secondary" onClick={() => setI((x) => (x + 1) % TOUR.length)}>
-                Next <ArrowRight size={14} aria-hidden />
-              </Button>
-            </div>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <span className={cn("inline-flex h-5 shrink-0 items-center rounded-full border border-dashed border-current/40 px-2 font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted", className)}>
+      {children}
+    </span>
   );
 }
 
-// ------------------------------------------------------------------ sections
+/** A card in the product's own style, used for every floating fragment on the page. */
+function Panel({ className, children }: { className?: string; children: ReactNode }) {
+  return <div className={cn("rounded-2xl border border-border/80 bg-surface text-foreground shadow-lift", className)}>{children}</div>;
+}
 
-function Hero({ ready, onTour }: { ready: boolean; onTour: () => void }) {
+/** The faint square grid behind a canopy stage (it reads as the reference's tiled ground, in Notara's own mint). */
+function GridGround() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 opacity-[0.55] [background-image:linear-gradient(color-mix(in_srgb,var(--color-mint)_9%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_srgb,var(--color-mint)_9%,transparent)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:radial-gradient(90%_70%_at_30%_0%,#000_30%,transparent_80%)]"
+    />
+  );
+}
+
+function SectionHead({ eyebrow, title, lead, id, center, className }: { eyebrow: string; title: ReactNode; lead?: ReactNode; id: string; center?: boolean; className?: string }) {
+  return (
+    <Reveal className={cn(center && "mx-auto text-center", "max-w-[720px]", className)}>
+      <RevealItem as="p" className={EYEBROW}>
+        {eyebrow}
+      </RevealItem>
+      <RevealItem as="h2" className={cn(H2, "mt-4")}>
+        <span id={id}>{title}</span>
+      </RevealItem>
+      {lead && (
+        <RevealItem as="p" className={cn(LEAD, "mt-5", center && "mx-auto max-w-[60ch]")}>
+          {lead}
+        </RevealItem>
+      )}
+    </Reveal>
+  );
+}
+
+function Tick({ children }: { children: ReactNode }) {
+  return (
+    <li className="flex items-start gap-3 text-[15.5px] leading-[1.55]">
+      <span className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-highlight">
+        <Check size={14} aria-hidden />
+      </span>
+      <span>{children}</span>
+    </li>
+  );
+}
+
+// ------------------------------------------------------------------ 1. hero
+
+function HeroVisual() {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  // The three cards part a little as the page scrolls: depth, not a show. Still under reduced motion.
+  const yBack = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -40]);
+  const yFront = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 60]);
+  const rise = (delay: number) => ({ initial: { opacity: 0, y: reduce ? 0 : 28 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.9, delay, ease: EASE } });
+
+  return (
+    // The product cards stay light (cream) on the canopy stage, like a printed card on a dark desk.
+    <div ref={ref} data-theme="light" className="relative mx-auto h-[500px] w-full max-w-[520px] text-foreground sm:h-[540px]">
+      {/* back: the merchant's list of links */}
+      <motion.div style={{ y: yBack }} className="absolute left-[-6%] top-10 w-[56%] max-sm:hidden">
+        <motion.div {...rise(0.25)}>
+          <Panel className="rotate-[-4deg] p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[12px] font-bold text-muted">Your payment links</p>
+              <Example />
+            </div>
+            <ul className="mt-3 flex flex-col gap-2 text-[12.5px]">
+              {[
+                ["Logo design, 2 rounds", "50", "Paid"],
+                ["Website copy, 3 pages", "120", "Waiting"],
+                ["October retainer", "400", "Paid"],
+              ].map(([what, amt, st]) => (
+                <li key={what} className="flex items-center justify-between gap-2 rounded-xl bg-surface-secondary px-3 py-2">
+                  <span className="truncate font-semibold">{what}</span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="tnum font-bold">{amt} USDC</span>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-bold", st === "Paid" ? "bg-gold/25 text-gold-ink" : "bg-default text-muted")}>{st}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        </motion.div>
+      </motion.div>
+
+      {/* main: the page a customer opens */}
+      <motion.div {...rise(0.1)} className="absolute right-0 top-0 w-full sm:w-[64%]">
+        <Panel className="overflow-hidden !shadow-pop">
+          <PagePreview
+            host="notara.xyz"
+            path="/pay/INV-0042"
+            who="design-studio.near"
+            website="design-studio.example"
+            forText="Logo design, 2 rounds"
+            emptyFor=""
+            amount="50.00"
+            unit="USDC"
+            checks={[
+              { state: "ok", text: "Signed by this account's wallet" },
+              { state: "ok", text: "No rule broken in the account check" },
+              { state: "wait", text: "Pay from NEAR, or from another chain" },
+            ]}
+            primary="Pay 50 USDC"
+            secondary="Pay from another chain"
+          />
+        </Panel>
+        <Example className="absolute right-3 top-2.5 bg-surface" />
+      </motion.div>
+
+      {/* front: what the signature and the check established */}
+      <motion.div style={{ y: yFront }} className="absolute -bottom-2 left-2 w-[78%] sm:bottom-4 sm:left-[-4%] sm:w-[58%]">
+        <motion.div {...rise(0.45)}>
+          <Panel className="p-4">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-success-soft text-success">
+                <ShieldCheck size={18} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[13.5px] font-bold leading-snug">Signature checks out</p>
+                <p className="mt-0.5 text-[12px] leading-snug text-muted">The amount, recipient and description were signed by design-studio.near's own key (NEP-413).</p>
+              </div>
+            </div>
+          </Panel>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+function Hero({ ready }: { ready: boolean }) {
   const go = useGo();
   const reduce = useReducedMotion();
-  const rise = (delay: number) => ({ initial: { opacity: 0, y: reduce ? 0 : 28 }, animate: ready ? { opacity: 1, y: 0 } : undefined, transition: { duration: 0.9, ease: EASE, delay } });
+  const enter = (d: number) => ({ initial: { opacity: 0, y: reduce ? 0 : 18 }, animate: ready ? { opacity: 1, y: 0 } : undefined, transition: { duration: 0.8, delay: d, ease: EASE } });
   return (
-    <section aria-labelledby="hero-h" className="relative flex min-h-dvh items-center overflow-hidden pb-20 pt-32">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[70%] bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_srgb,var(--color-moss)_55%,transparent),transparent)]" />
-      <div className={cn(WRAP, "relative flex flex-col items-center text-center")}>
-        <motion.p {...rise(0)} className="mb-7 inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-4 py-1.5 text-[13px] font-semibold text-mint">
-          <span className="size-1.5 rounded-full bg-gold" aria-hidden /> Testnet prototype · not audited
-        </motion.p>
-        <motion.h1 id="hero-h" {...rise(0.06)} className="max-w-[14ch] text-[clamp(44px,7vw+8px,104px)] font-extrabold leading-[1.02] tracking-[-0.05em] [text-wrap:balance]">
-          Payment links for people who invoice.
-        </motion.h1>
-        <motion.p {...rise(0.12)} className={cn(LEAD, "mt-7 max-w-[46ch]")}>
-          Invoice anyone, get paid in seconds, let safe AI agents handle the rest. Built on NEAR.
-        </motion.p>
-        <motion.div {...rise(0.18)} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Button size="lg" variant="mint" onClick={() => go("/get-paid")}>
-            Get started <ArrowRight size={18} aria-hidden />
-          </Button>
-          <Button size="lg" variant="secondary" onClick={onTour}>
-            <Play size={16} aria-hidden /> See the demo
-          </Button>
-        </motion.div>
-        <motion.div {...rise(0.26)} className="mt-16 flex flex-col items-center gap-1 text-muted" aria-label="One place to get paid, pay a contractor, run an AI payout, and verify an account">
-          <span className="text-[13.5px] font-semibold" aria-hidden>One place to</span>
-          <span aria-hidden className="text-mint">
-            {reduce ? (
-              <span className="text-[clamp(28px,4vw,48px)] font-bold tracking-[-0.03em]">get paid</span>
-            ) : (
-              <MorphText words={["get paid", "pay a contractor", "run an AI payout", "verify an account"]} interval={2800} fontSize="clamp(28px, 4vw, 48px)" textClassName="tracking-[-0.03em]" />
-            )}
-          </span>
-        </motion.div>
+    <section aria-labelledby="hero-h" className="px-3 pt-3 sm:px-4 sm:pt-4">
+      <div data-theme="dark" className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,var(--color-canopy)_0%,var(--color-canopy)_48%,var(--color-moss)_100%)] text-foreground sm:rounded-[36px]">
+        <GridGround />
+        <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 size-[640px] rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-mint)_16%,transparent),transparent)]" />
+        <div className={cn(WRAP, "relative grid items-center gap-14 pb-16 pt-32 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pb-24 lg:pt-40")}>
+          <div>
+            <motion.p {...enter(0)} className="inline-flex items-center gap-2 rounded-full border border-mint/25 bg-canopy/40 px-3.5 py-1.5 text-[13px] font-semibold text-cream/90">
+              <span className="size-1.5 rounded-full bg-gold" aria-hidden /> Built on NEAR · prototype, not audited
+            </motion.p>
+            <motion.h1 {...enter(0.08)} id="hero-h" className="mt-6 text-[clamp(42px,4.6vw+12px,80px)] font-extrabold leading-[0.98] tracking-[-0.045em] [text-wrap:balance]">
+              Payment links for people who invoice.
+            </motion.h1>
+            <motion.p {...enter(0.16)} className="mt-6 max-w-[52ch] text-[18px] leading-[1.6] text-cream/80 [text-wrap:pretty]">
+              Your NEAR wallet signs the link, so your client can see it's really you. They pay from the chain they already use, and exact USDC arrives in your
+              account. Notara never holds the money.
+            </motion.p>
+            <motion.div {...enter(0.24)} className="mt-9 flex flex-wrap items-center gap-3">
+              <Button size="lg" variant="mint" onClick={() => go("/get-paid")}>
+                Create a payment link <ArrowRight size={18} aria-hidden />
+              </Button>
+              <Button size="lg" variant="secondary" className="!border-mint/30 !bg-transparent !text-cream hover:!bg-mint/10" onClick={() => go("/send")}>
+                <Send size={17} aria-hidden /> Send money with a link
+              </Button>
+            </motion.div>
+            <motion.ul {...enter(0.32)} className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[13.5px] font-medium text-cream/70">
+              <li className="flex items-center gap-2">
+                <Lock size={14} aria-hidden className="text-mint" /> Wallet-signed (NEP-413)
+              </li>
+              <li className="flex items-center gap-2">
+                <Globe size={14} aria-hidden className="text-mint" /> Other chains through NEAR Intents
+              </li>
+              <li className="flex items-center gap-2">
+                <Coins size={14} aria-hidden className="text-mint" /> Settles in USDC
+              </li>
+            </motion.ul>
+          </div>
+          <HeroVisual />
+        </div>
       </div>
     </section>
   );
 }
 
-function TrustStrip() {
+// ------------------------------------------------------------------ 2. facts (product facts, not usage figures)
+
+const FACTS = [
+  { n: "6", label: "live signals read in every account check" },
+  { n: "5 min", label: "a signed verdict stays valid before it must be asked again" },
+  { n: "10", label: "attack cases the agent vault is built to refuse" },
+  { n: "0", label: "customer funds Notara holds: a payment goes straight to you" },
+];
+
+function Facts() {
   return (
-    <section aria-label="What Notara runs on" className="border-y border-border/70">
-      <Reveal className={cn(WRAP, "flex flex-col items-center gap-5 py-9 text-center")}>
-        <RevealItem as="p" className="text-[14px] font-semibold text-muted">Built on NEAR · USDC settlement · Human-in-the-loop AI</RevealItem>
-        <RevealItem className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[17px] font-extrabold tracking-[-0.03em] text-foreground/55">
-          {["NEAR", "USDC", "NEAR Intents", "FastNear"].map((n) => (
-            <span key={n}>{n}</span>
-          ))}
-        </RevealItem>
-        <RevealItem as="p" className="text-[12.5px] text-muted">The networks and services Notara runs on. Their names belong to their owners.</RevealItem>
+    <section aria-label="Product facts" className={cn(WRAP, "py-16 lg:py-24")}>
+      <Reveal as="ul" className="grid grid-cols-2 gap-y-10 lg:grid-cols-4">
+        {FACTS.map((f, i) => (
+          <RevealItem as="li" key={f.label} className={cn("px-2 sm:px-6", i > 0 && "lg:border-l lg:border-border", i % 2 === 1 && "max-lg:border-l max-lg:border-border")}>
+            <p className="tnum text-[clamp(40px,3vw+20px,64px)] font-extrabold leading-none tracking-[-0.045em]">{f.n}</p>
+            <p className="mt-3 max-w-[24ch] text-[14.5px] leading-[1.5] text-muted">{f.label}</p>
+          </RevealItem>
+        ))}
       </Reveal>
+      <p className="mt-10 text-[13px] text-muted">Facts about how the product is built, read from its code. Notara is a prototype and doesn't publish usage figures.</p>
     </section>
   );
 }
+
+// ------------------------------------------------------------------ 3. get paid
+
+function GetPaidSection() {
+  const go = useGo();
+  return (
+    <section id="get-paid" aria-labelledby="getpaid-h" className="scroll-mt-24 border-t border-border/70 py-20 lg:py-32">
+      <div className={cn(WRAP, "grid items-center gap-16 lg:grid-cols-2")}>
+        <div>
+          <SectionHead
+            id="getpaid-h"
+            eyebrow="01 · Get paid"
+            title="Ask for money in a way your client can trust."
+            lead="Write what it's for and how much. Your wallet signs it; nothing moves and there's no fee for signing. The link opens on a page that shows who is asking before anyone pays."
+          />
+          <Reveal as="ul" className="mt-8 flex flex-col gap-3.5">
+            <RevealItem as="li">
+              <Tick>
+                <strong>Signed by your wallet.</strong> Change one character of the amount or recipient and the page says the signature no longer checks out.
+              </Tick>
+            </RevealItem>
+            <RevealItem as="li">
+              <Tick>
+                <strong>Paid from where they are.</strong> A NEAR wallet pays directly; on mainnet, other chains pay through NEAR Intents and you receive exact USDC.
+              </Tick>
+            </RevealItem>
+            <RevealItem as="li">
+              <Tick>
+                <strong>Proof of your website.</strong> Put one text file on your site and customers see "Website proven" next to your name.
+              </Tick>
+            </RevealItem>
+            <RevealItem as="li">
+              <Tick>
+                <strong>Books that add up.</strong> Every link has a status and its transaction, and the list exports as a CSV your accountant can read.
+              </Tick>
+            </RevealItem>
+          </Reveal>
+          <div className="mt-9">
+            <Button size="lg" onClick={() => go("/get-paid")}>
+              Create a payment link <ArrowRight size={18} aria-hidden />
+            </Button>
+          </div>
+        </div>
+
+        {/* layered cards: the signed message, and the money arriving */}
+        <Reveal className="relative mx-auto h-[460px] w-full max-w-[520px]">
+          <RevealItem className="absolute right-0 top-0 w-[86%]">
+            <Panel className="overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-border bg-surface-secondary px-4 py-2.5 text-[12px] text-muted">
+                <Wallet size={13} aria-hidden /> <span className="font-mono">Wallet · sign message</span>
+                <Example className="ml-auto" />
+              </div>
+              <pre className="px-5 py-5 font-mono text-[13px] leading-[1.8] text-foreground">{"Notara payment link\nPay to:  design-studio.near\nAmount:  50 USDC\nFor:     Logo design, 2 rounds"}</pre>
+              <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3.5">
+                <span className="text-[12.5px] text-muted">Short message, no transaction, no fee</span>
+                <span className="rounded-full bg-accent px-4 py-1.5 text-[12.5px] font-bold text-accent-foreground">Sign</span>
+              </div>
+            </Panel>
+          </RevealItem>
+          <RevealItem className="absolute bottom-0 left-0 w-[74%]">
+            <Panel className="p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-[12px] font-bold text-muted">INV-0042 · paid</p>
+                <Example />
+              </div>
+              <p className="tnum mt-3 text-[38px] font-extrabold leading-none tracking-[-0.04em]">
+                50.00 <span className="text-[15px] font-bold tracking-normal text-muted">USDC</span>
+              </p>
+              <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-[12.5px]">
+                <div>
+                  <dt className="text-muted">Client paid with</dt>
+                  <dd className="font-semibold">ETH on Arbitrum</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">You received</dt>
+                  <dd className="font-semibold">USDC on NEAR</dd>
+                </div>
+              </dl>
+              <div className="mt-4 flex items-center gap-2 text-[12px] font-semibold text-highlight">
+                <Download size={13} aria-hidden /> In your CSV export
+              </div>
+            </Panel>
+          </RevealItem>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ------------------------------------------------------------------ 4. three steps
 
 const STEPS = [
-  { icon: Pencil, title: "Write the invoice", body: "An amount and a line about what it's for. That's the whole form." },
-  { icon: ShieldCheck, title: "Your wallet signs it", body: "A short, free message that proves the link is yours. No money moves." },
-  { icon: Send, title: "They pay, you're paid", body: "Your customer pays from the chain they already use. USDC lands in your account." },
+  { n: "1", title: "Write the link", body: "What it's for and how much, in USDC. Your client reads exactly this.", icon: <Link2 size={20} aria-hidden /> },
+  { n: "2", title: "Your wallet signs it", body: "One short message from your NEAR wallet. No transaction, nothing spent.", icon: <Wallet size={20} aria-hidden /> },
+  { n: "3", title: "They pay, you're paid", body: "Your client sees who is asking, pays, and the USDC lands in your account.", icon: <CircleCheck size={20} aria-hidden /> },
 ];
 
-function HowItWorks() {
-  const [dealt, setDealt] = useState(0);
+function StepsSection() {
   return (
-    <section id="how-it-works" aria-labelledby="how-h" className="scroll-mt-24 py-28 lg:py-40">
-      <div className={cn(WRAP, "grid items-center gap-14 lg:grid-cols-2")}>
-        <Reveal>
-          <RevealItem as="h2" className={H2}><span id="how-h">Three steps, about a minute.</span></RevealItem>
-          <RevealItem as="p" className={cn(LEAD, "mt-5 max-w-[44ch]")}>No crypto words on the way. Your customer sees who is asking before they pay.</RevealItem>
-          <ol className="mt-10 flex flex-col gap-2">
-            {STEPS.map((s, i) => (
-              <RevealItem as="li" key={s.title} className={cn("flex gap-4 rounded-2xl border p-4 transition-colors duration-300", i === dealt % STEPS.length ? "border-border bg-surface" : "border-transparent")}>
-                <span className="tnum inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[14px] font-bold text-mint">{i + 1}</span>
-                <span>
-                  <span className="block text-[17px] font-bold tracking-[-0.02em]">{s.title}</span>
-                  <span className="mt-0.5 block text-[15px] leading-relaxed text-muted">{s.body}</span>
-                </span>
-              </RevealItem>
-            ))}
-          </ol>
-        </Reveal>
-        <div className="relative h-[440px]" aria-hidden>
-          <VerseCards
-            defaultOpen
-            loop
-            navItems={[]}
-            footerText="Click the card for the next step."
-            onDeal={(i) => setDealt(i + 1)}
-            className="rounded-3xl [&_[data-verse-close]]:hidden"
-            cards={STEPS.map((s, i) => ({
-              label: s.title,
-              className: "!h-[320px] !w-[240px] !rounded-3xl !items-stretch !justify-stretch border border-border !bg-surface",
-              content: (
-                <span className="flex h-full w-full flex-col justify-between p-6 text-left">
-                  <span className="inline-flex size-14 items-center justify-center rounded-2xl bg-accent-soft text-mint">
-                    <s.icon size={28} />
-                  </span>
-                  <span>
-                    <span className="tnum block text-[13px] font-semibold text-muted">Step {i + 1}</span>
-                    <span className="mt-1 block text-[22px] font-extrabold leading-tight tracking-[-0.03em]">{s.title}</span>
-                  </span>
-                </span>
-              ),
-            }))}
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const SCRIPT = [
-  { who: "hosting-co.near", amount: "42.00", verdict: "Paid", tone: "text-success", spent: "42.00", held: "0" },
-  { who: "new-supplier.near", amount: "310.00", verdict: "Held for you", tone: "text-warning", spent: "42.00", held: "1" },
-  { who: "urgent-refund.near", amount: "900.00", verdict: "Refused", tone: "text-danger", spent: "42.00", held: "1" },
-];
-
-function SafetyPanel() {
-  const reduce = useReducedMotion();
-  const [n, setN] = useState(reduce ? SCRIPT.length : 1);
-  useEffect(() => {
-    if (reduce) return;
-    const t = setInterval(() => setN((x) => (x >= SCRIPT.length ? 1 : x + 1)), 2600);
-    return () => clearInterval(t);
-  }, [reduce]);
-  const now = SCRIPT[n - 1];
-  return (
-    <section aria-labelledby="safe-h" className="bg-background-secondary py-28 lg:py-40">
-      <div className={cn(WRAP, "grid items-center gap-14 lg:grid-cols-2")}>
-        <Reveal className="order-2 lg:order-1">
-          <RevealItem className="rounded-3xl border border-border bg-surface p-6 shadow-pop">
-            <div className="flex items-center justify-between">
-              <p className="flex items-center gap-2 text-[15px] font-bold"><ShieldCheck size={18} className="text-mint" aria-hidden /> Vault Console</p>
-              <span className="rounded-full border border-border px-2.5 py-0.5 text-[11.5px] font-semibold text-muted">Illustration · example values</span>
-            </div>
-            <div className="mt-5 grid grid-cols-3 gap-4">
-              {[["Spent today", now.spent, "$"], ["Daily limit", "500.00", "$"], ["Held for you", now.held, ""]].map(([l, v, p]) => (
-                <div key={l}>
-                  <p className="text-[12px] font-semibold text-muted">{l}</p>
-                  <p className="tnum mt-1 flex text-[24px] font-extrabold tracking-[-0.03em]">{p}<AnimatedNumber value={v} /></p>
-                </div>
-              ))}
-            </div>
-            <ul className="mt-5 flex min-h-[168px] flex-col gap-2 border-t border-border pt-4" aria-hidden>
-              <AnimatePresence initial={false}>
-                {SCRIPT.slice(0, n).map((e) => (
-                  <motion.li key={e.who} layout={!reduce} initial={{ opacity: 0, y: reduce ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: EASE }} className="flex items-center justify-between gap-3 rounded-xl bg-surface-secondary px-3.5 py-2.5 text-[13.5px]">
-                    <span className="min-w-0">
-                      <span className="block truncate font-mono text-[12.5px] font-semibold">{e.who}</span>
-                      <span className="tnum text-muted">Agent asked to pay ${e.amount}</span>
-                    </span>
-                    <span className={cn("shrink-0 font-bold", e.tone)}>{e.verdict}</span>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-            <p className="sr-only">Example: an agent asks a vault to make three payments. One is paid, one is held for the owner, one is refused.</p>
-          </RevealItem>
-        </Reveal>
-        <Reveal className="order-1 lg:order-2">
-          <RevealItem as="h2" className={H2}><span id="safe-h">Let an agent pay, without handing it the keys.</span></RevealItem>
-          <RevealItem as="p" className={cn(LEAD, "mt-5 max-w-[46ch]")}>
-            The agent can only ask a vault to pay. The vault pays within the limits you set, holds anything unusual for your approval, and refuses an account with a verified scam report. Those rules are enforced on NEAR, so a tricked agent still can't get past them.
-          </RevealItem>
-          <ul className="mt-8 flex flex-col gap-3 text-[15.5px]">
-            {["Limits per payment and per day", "A person approves anything Notara flags", "One button pauses every payment"].map((t) => (
-              <RevealItem as="li" key={t} className="flex items-center gap-3 font-semibold">
-                <span className="inline-flex size-6 items-center justify-center rounded-full bg-accent-soft text-mint"><Check size={14} aria-hidden /></span> {t}
-              </RevealItem>
-            ))}
-          </ul>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-const PERSONAS: { icon: typeof Bot; who: string; job: string; where: string }[] = [
-  { icon: Pencil, who: "Freelance designer or developer", job: "Invoice a client in another country and get paid in USDC.", where: "Get Paid" },
-  { icon: Users, who: "Small agency or studio", job: "Send contractor payouts, and keep an agent inside a vault with limits.", where: "Send · Vault Console" },
-  { icon: Link2, who: "Creator or newsletter writer", job: "Put one payment link in your bio for tips and paid work.", where: "Get Paid" },
-  { icon: Terminal, who: "SaaS founder", job: "Let an AI agent pay infrastructure bills up to a cap you choose.", where: "Vault Console" },
-  { icon: Suitcase, who: "Finance at a small team", job: "Check a counterparty before paying, and keep a person in the loop.", where: "Check an Account" },
-  { icon: Shop, who: "Shop or small business owner", job: "Take a one-off payment with a link. No wallet words for your customer.", where: "Get Paid" },
-];
-
-function UseCases() {
-  const [w, setW] = useState(300);
-  useEffect(() => {
-    const on = () => setW(window.innerWidth < 640 ? 250 : 300);
-    on();
-    window.addEventListener("resize", on);
-    return () => window.removeEventListener("resize", on);
-  }, []);
-  return (
-    <section aria-labelledby="who-h" className="overflow-hidden py-28 lg:py-40">
-      <Reveal className={cn(WRAP, "text-center")}>
-        <RevealItem as="h2" className={cn(H2, "mx-auto max-w-[16ch]")}><span id="who-h">Made for the people who send the invoice.</span></RevealItem>
-        <RevealItem as="p" className={cn(LEAD, "mx-auto mt-5 max-w-[44ch]")}>Use the arrow keys, the dots, or click a card.</RevealItem>
-      </Reveal>
-      <div className="mt-12 h-[520px]">
-        <PerspectiveCarousel
-          aria-label="Who Notara is for"
-          slideWidth={w + 24}
-          defaultActiveIndex={1}
-          labelClassName="hidden"
-          items={PERSONAS.map((p) => ({
-            title: p.who,
-            content: (
-              <span className="flex h-full w-full flex-col justify-between rounded-3xl border border-border bg-surface p-6 shadow-pop">
-                <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-accent-soft text-mint"><p.icon size={24} /></span>
-                <span>
-                  <span className="block text-[21px] font-extrabold leading-tight tracking-[-0.03em]">{p.who}</span>
-                  <span className="mt-2 block text-[15px] leading-relaxed text-muted">{p.job}</span>
-                  <span className="mt-4 inline-block rounded-full bg-surface-secondary px-3 py-1 text-[12.5px] font-semibold">{p.where}</span>
-                </span>
-              </span>
-            ),
-          }))}
-        />
-      </div>
-    </section>
-  );
-}
-
-function Stats() {
-  const facts: { value: number; suffix?: string; label: string }[] = [
-    { value: Object.keys(SIGNAL_LABELS).length, label: "live signals read for every account check" },
-    { value: 5, suffix: " min", label: "is how long a verdict stays valid, then it must be asked again" },
-    { value: 10, label: "attack cases the vault is built to refuse, each one runnable" },
-    { value: 0, label: "keys or customer funds held by Notara" },
-  ];
-  return (
-    <section aria-labelledby="facts-h" className="border-y border-border/70 bg-background-secondary py-20">
+    <section aria-labelledby="steps-h" className="bg-background-secondary py-20 lg:py-28">
       <div className={WRAP}>
-        <h2 id="facts-h" className="sr-only">Notara in numbers</h2>
-        <Reveal as="ul" className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {facts.map((f) => (
-            <RevealItem as="li" key={f.label}>
-              <p className="text-[clamp(44px,4vw+16px,72px)] font-extrabold leading-none tracking-[-0.05em] text-mint">
-                <StatsCounter value={f.value} suffix={f.suffix} duration={1.4} />
-              </p>
-              <p className="mt-3 max-w-[24ch] text-[14.5px] leading-relaxed text-muted">{f.label}</p>
+        <SectionHead id="steps-h" center eyebrow="How a link works" title="Three steps, about a minute." lead="No crypto words for your client to learn. The page they open tells them who you are and what they're paying for." />
+        <Reveal as="ol" className="mt-14 grid gap-5 md:grid-cols-3">
+          {STEPS.map((s) => (
+            <RevealItem as="li" key={s.n}>
+              <div className="flex h-full flex-col rounded-3xl border border-border/80 bg-surface p-7 shadow-card transition-[transform,box-shadow] duration-300 ease-enter hover:-translate-y-1 hover:shadow-lift motion-reduce:transform-none">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-accent-soft text-highlight">{s.icon}</span>
+                  <span className="font-mono text-[13px] font-semibold text-muted">0{s.n}</span>
+                </div>
+                <h3 className="mt-8 text-[22px] font-extrabold leading-tight tracking-[-0.03em]">{s.title}</h3>
+                <p className="mt-3 text-[15.5px] leading-[1.6] text-muted">{s.body}</p>
+              </div>
             </RevealItem>
           ))}
         </Reveal>
-        <p className="mt-10 text-[12.5px] text-muted">Product facts from the code that runs today, not usage figures. Notara is a prototype and doesn't publish volume yet.</p>
       </div>
     </section>
   );
 }
 
-function CodeLine({ children }: { children: ReactNode }) {
-  return <span className="block">{children}</span>;
-}
+// ------------------------------------------------------------------ 5. send by link
 
-function Developers() {
-  const host = typeof location !== "undefined" ? location.origin : "";
-  const code = `curl -s ${host}/v1/check \\\n  -H 'content-type: application/json' \\\n  -d '{"network":"mainnet","recipient":"shop.near","amountDecimal":"12.50"}'`;
-  const [copied, setCopied] = useState<"idle" | "done" | "failed">("idle");
+function SendSection() {
+  const go = useGo();
   return (
-    <section id="developers" aria-labelledby="dev-h" className="scroll-mt-24 py-28 lg:py-40">
-      <div className={cn(WRAP, "grid items-center gap-14 [&>*]:min-w-0 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]")}>
-        <Reveal>
-          <RevealItem as="h2" className={H2}><span id="dev-h">One call before your agent pays.</span></RevealItem>
-          <RevealItem as="p" className={cn(LEAD, "mt-5 max-w-[44ch]")}>Ask check_an_account, get a verdict and the evidence. No API key. Stop on amber and ask a person; never pay on red.</RevealItem>
-          <RevealItem className="mt-7 text-[16px] font-semibold text-mint">
-            <LineHoverLink href="/llms.txt">Read the API notes <ArrowRight size={15} aria-hidden /></LineHoverLink>
+    <section id="send" aria-labelledby="send-h" className="scroll-mt-24 py-20 lg:py-32">
+      <div className={cn(WRAP, "grid items-center gap-16 lg:grid-cols-2")}>
+        {/* the claim page the receiver opens */}
+        <Reveal className="relative order-2 mx-auto w-full max-w-[480px] lg:order-1">
+          <RevealItem>
+            <Panel className="overflow-hidden !shadow-pop">
+              <div className="flex items-center gap-2 border-b border-border bg-surface-secondary px-4 py-2.5 text-[12px] text-muted">
+                <Lock size={13} aria-hidden /> <span className="truncate font-mono">notara · /claim/SEND-0007#…</span>
+                <Example className="ml-auto" />
+              </div>
+              <div className="px-6 pb-7 pt-6">
+                <p className="text-[13px] font-semibold text-muted">Someone sent you</p>
+                <p className="tnum mt-1 text-[48px] font-extrabold leading-none tracking-[-0.045em]">
+                  10.00 <span className="text-[16px] font-bold tracking-normal text-muted">USDC</span>
+                </p>
+                <p className="mt-3 text-[15px] font-semibold">"Thanks for the help with the move."</p>
+                <ul className="mt-5 flex flex-col gap-2 border-t border-border pt-4 text-[13px]">
+                  <li className="flex items-center gap-2 text-success">
+                    <CircleCheck size={15} aria-hidden /> Funded and waiting for you
+                  </li>
+                  <li className="flex items-center gap-2 text-success">
+                    <CircleCheck size={15} aria-hidden /> No NEAR needed: gas and the USDC setup are covered
+                  </li>
+                </ul>
+                <div className="mt-6 grid gap-2">
+                  <span className="flex h-11 items-center justify-center rounded-full bg-accent text-[14px] font-bold text-accent-foreground">Claim to my NEAR account</span>
+                  <span className="flex h-10 items-center justify-center rounded-full border border-border text-[13px] font-semibold">Get my own NEAR name</span>
+                </div>
+              </div>
+            </Panel>
+          </RevealItem>
+          <RevealItem className="absolute -right-3 -top-6 max-sm:hidden">
+            <Panel className="flex items-center gap-2.5 px-4 py-3">
+              <span className="inline-flex size-8 items-center justify-center rounded-lg bg-warning-soft text-warning">
+                <Lock size={15} aria-hidden />
+              </span>
+              <span className="text-[12.5px] font-semibold leading-tight">
+                The key lives after the #.
+                <br />
+                <span className="font-medium text-muted">Browsers never send it to our server.</span>
+              </span>
+            </Panel>
           </RevealItem>
         </Reveal>
-        <Reveal>
-          <RevealItem className="overflow-hidden rounded-3xl border border-border bg-surface shadow-pop">
-            <div className="flex items-center justify-between border-b border-border px-5 py-3">
-              <span className="font-mono text-[12.5px] text-muted">POST /v1/check</span>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(code);
-                    setCopied("done");
-                    setTimeout(() => setCopied("idle"), 1800);
-                  } catch {
-                    setCopied("failed");
-                  }
-                }}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-3 text-[12.5px] font-semibold transition-colors hover:bg-surface-secondary"
-              >
-                {copied === "done" ? <Check size={13} aria-hidden /> : <Copy size={13} aria-hidden />} {copied === "done" ? "Copied" : copied === "failed" ? "Select and copy" : "Copy"}
-                <span className="sr-only" role="status">{copied === "done" ? "Copied to the clipboard" : ""}</span>
-              </button>
-            </div>
-            <pre className="overflow-x-auto px-5 py-5 font-mono text-[13px] leading-[1.75]" tabIndex={0} aria-label="Example request and response">
-              <code>
-                <CodeLine><span className="text-mint">curl</span> -s {host}/v1/check \</CodeLine>
-                <CodeLine>{"  "}-H <span className="text-gold">'content-type: application/json'</span> \</CodeLine>
-                <CodeLine>{"  "}-d <span className="text-gold">{`'{"network":"mainnet","recipient":"shop.near","amountDecimal":"12.50"}'`}</span></CodeLine>
-                <CodeLine>&nbsp;</CodeLine>
-                <CodeLine><span className="text-muted">{"# →"} {"{"} "report": {"{"} "decision": </span><span className="text-mint">"ALLOW"</span><span className="text-muted"> | </span><span className="text-gold">"WARN"</span><span className="text-muted"> | </span><span className="text-danger">"BLOCK"</span><span className="text-muted">,</span></CodeLine>
-                <CodeLine><span className="text-muted">{"#     "}"reasons": [...], "signals": [...] {"}"} {"}"}</span></CodeLine>
-              </code>
-            </pre>
-          </RevealItem>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
 
-function Pricing() {
-  return (
-    <section id="pricing" aria-labelledby="price-h" className="scroll-mt-24 bg-background-secondary py-28">
-      <Reveal className={cn(WRAP, "grid items-end gap-10 lg:grid-cols-2")}>
-        <div>
-          <RevealItem as="h2" className={H2}><span id="price-h">Notara adds no fee.</span></RevealItem>
-          <RevealItem as="p" className={cn(LEAD, "mt-5 max-w-[46ch]")}>While it's a prototype, Notara is free to use. Money goes from the payer straight to you; Notara never holds it.</RevealItem>
+        <div className="order-1 lg:order-2">
+          <SectionHead
+            id="send-h"
+            eyebrow="02 · Send money"
+            title="Send USDC to anyone, even without a wallet yet."
+            lead="Fund a link and share it. Whoever opens it claims the money into a NEAR account, and can get their own NEAR name on the way."
+          />
+          <Reveal as="ul" className="mt-8 flex flex-col gap-3.5">
+            <RevealItem as="li">
+              <Tick>Your browser makes a one-time key for each link. It sits in the part of the link after the #, which is never sent to Notara.</Tick>
+            </RevealItem>
+            <RevealItem as="li">
+              <Tick>From 1 to 25 USDC per link in this prototype. Not claimed in 7 days? Open your own link and take the money back.</Tick>
+            </RevealItem>
+            <RevealItem as="li">
+              <Tick>It works like cash: anyone with the link can claim it, so the page says so before you share it.</Tick>
+            </RevealItem>
+          </Reveal>
+          <p className="mt-6 text-[13.5px] text-muted">Runs on NEAR testnet today. Real-money send links need a sponsor account that pays the claimer's gas, which this site doesn't have yet.</p>
+          <div className="mt-8">
+            <Button size="lg" onClick={() => go("/send")}>
+              <Send size={17} aria-hidden /> Send money with a link
+            </Button>
+          </div>
         </div>
-        <ul className="flex flex-col divide-y divide-border rounded-3xl border border-border bg-surface px-6">
-          {[
-            ["Creating and signing a link", "Free"],
-            ["Sending on NEAR", "The network's own fee, usually under 1¢"],
-            ["Paying from another chain", "The rate NEAR Intents quotes at checkout"],
-            ["Test money", "Free, and worth nothing"],
-          ].map(([a, b]) => (
-            <RevealItem as="li" key={a} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-4">
-              <span className="text-[15.5px] font-semibold">{a}</span>
-              <span className="text-[14.5px] text-muted">{b}</span>
-            </RevealItem>
-          ))}
-        </ul>
-      </Reveal>
+      </div>
     </section>
   );
 }
 
-const FAQ = [
-  ["Does Notara hold my money?", "No. Money goes from the customer's wallet to your account. Payments from other chains are routed by NEAR Intents, which delivers USDC to you on NEAR."],
-  ["What does the wallet signature prove?", "That the link's amount, recipient and description were approved by the wallet that gets paid. It shows who is asking, not that they will deliver."],
-  ["Does my customer need a crypto wallet?", "To pay a link, they need a wallet on a chain they already use. To receive a send link, they need nothing: they can claim the money into a new account."],
-  ["What does the account check actually look at?", "The account's age and activity, contracts it has deployed, earlier payments, shared scam reports and Notara's own lists, all read live. Green means no rule was broken. It never means safe."],
-  ["What stops an AI agent from being tricked?", "The agent can only ask a vault to pay. The vault checks a signed verdict, your limits and whether it's paused, on NEAR. Anything flagged waits for a person. A hacked agent can't skip those checks."],
-  ["What can I try for free?", "Payment links, wallet payments, send links, account checks and the agent vault all run on NEAR testnet with free test money. Paying from another chain needs mainnet."],
-  ["Is it audited?", "No. Notara is a hackathon prototype. Keep real-money amounts small."],
-  ["Where is my profile stored?", "Your display name, picture and links stay in your browser on your device. Your payment links live on Notara's server, listed only for your wallet."],
+// ------------------------------------------------------------------ 6. agent vault (canopy stage)
+
+const OUTCOMES = [
+  { d: "ALLOW", word: "Paid", body: "An onboarded merchant, within the caps: the vault checks the verdict's signature and pays.", icon: <ShieldCheck size={18} aria-hidden />, ink: "text-success", soft: "bg-success-soft" },
+  { d: "WARN", word: "Held for you", body: "A new shop or an unusual amount: the payment waits on-chain until the owner approves or rejects it.", icon: <ShieldAlert size={18} aria-hidden />, ink: "text-warning", soft: "bg-warning-soft" },
+  { d: "BLOCK", word: "Refused", body: "An account with a verified scam report: Notara won't sign, and the vault refuses a BLOCK verdict.", icon: <ShieldX size={18} aria-hidden />, ink: "text-danger", soft: "bg-danger-soft" },
+] as const;
+
+const BYPASS = [
+  "Submits the signed BLOCK verdict anyway",
+  "Rewrites BLOCK into ALLOW",
+  "Forges an ALLOW with its own key",
+  "Reuses another payment's ALLOW",
+  "Sends NEAR straight from the agent key",
+  "Calls an owner-only method",
 ];
 
-function Faq() {
+function VaultSection() {
+  const go = useGo();
   return (
-    <section id="faq" aria-labelledby="faq-h" className="scroll-mt-24 py-28 lg:py-40">
-      <div className={cn(WRAP, "grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]")}>
-        <Reveal>
-          <RevealItem as="h2" className={H2}><span id="faq-h">Questions, answered plainly.</span></RevealItem>
-        </Reveal>
-        <Reveal>
-          <RevealItem>
-            <Accordion className="nt-faq" variant="default">
-              {FAQ.map(([q, a]) => (
-                <Accordion.Item key={q} id={q}>
-                  <Accordion.Heading>
-                    <Accordion.Trigger className="py-5 text-left text-[17px] font-bold tracking-[-0.01em] text-foreground">
-                      {q}
-                      <Accordion.Indicator />
-                    </Accordion.Trigger>
-                  </Accordion.Heading>
-                  <Accordion.Panel>
-                    <Accordion.Body className="max-w-[60ch] pb-5 text-[15.5px] leading-relaxed text-muted">{a}</Accordion.Body>
-                  </Accordion.Panel>
-                </Accordion.Item>
+    <section id="agents" aria-labelledby="vault-h" className="scroll-mt-24 px-3 sm:px-4">
+      <div data-theme="dark" className="relative overflow-hidden rounded-[28px] bg-background text-foreground sm:rounded-[36px]">
+        <GridGround />
+        <div className={cn(WRAP, "relative py-20 lg:py-28")}>
+          <SectionHead
+            id="vault-h"
+            eyebrow="03 · AI agents"
+            title="Let an agent pay, without handing it the keys."
+            lead="The agent can only ask a vault contract to pay. The vault pays within the limits you set, holds anything unusual for you, and refuses what Notara blocks. Those rules run on NEAR, so a tricked agent still can't get past them."
+          />
+
+          <Reveal className="mt-14 grid gap-5 lg:grid-cols-[1.15fr_1fr] [&>*]:min-w-0">
+            {/* the vault console, as its owner sees it */}
+            <RevealItem>
+              <div className="h-full min-w-0 rounded-3xl border border-border bg-surface p-5 shadow-pop sm:p-7">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="flex items-center gap-2 text-[14px] font-bold">
+                    <Bot size={17} aria-hidden className="text-highlight" /> Vault console
+                  </p>
+                  <Example />
+                </div>
+                <div className="mt-6 grid grid-cols-3 gap-3 border-b border-border pb-6 sm:gap-4">
+                  {[
+                    ["Spent today", "12.00"],
+                    ["Daily cap", "100.00"],
+                    ["Per payment", "50.00"],
+                  ].map(([k, v]) => (
+                    <div key={k}>
+                      <p className="text-[12px] font-semibold text-muted">{k}</p>
+                      <p className="tnum mt-1 text-[19px] font-extrabold leading-none tracking-[-0.03em] sm:text-[24px]">
+                        {v} <span className="block text-[11px] font-bold tracking-normal text-muted sm:inline">USDC</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-default" aria-hidden>
+                  <div className="h-full w-[12%] rounded-full bg-mint" />
+                </div>
+                <ul className="mt-6 flex flex-col gap-2.5 text-[13.5px]">
+                  {[
+                    ["hosting-co.near", "8.00", "Paid", "text-success", <CircleCheck key="a" size={15} aria-hidden />],
+                    ["new-supplier.near", "30.00", "Held for you", "text-warning", <Clock key="b" size={15} aria-hidden />],
+                    ["reported-account.near", "45.00", "Refused: scam report", "text-danger", <CircleX key="c" size={15} aria-hidden />],
+                  ].map(([who, amt, st, ink, ic]) => (
+                    <li key={who as string} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-2xl bg-surface-secondary px-4 py-3">
+                      <span className="min-w-0 truncate font-mono text-[12.5px]">{who}</span>
+                      <span className="flex shrink-0 items-center gap-3">
+                        <span className="tnum font-bold">{amt}</span>
+                        <span className={cn("flex items-center gap-1 text-[12.5px] font-bold", ink as string)}>
+                          {ic} {st}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-5 text-[12.5px] text-muted">The caps above are the demo vault's real limits on testnet: 50 USDC a payment, 100 USDC a day.</p>
+              </div>
+            </RevealItem>
+
+            {/* the three outcomes */}
+            <div className="flex flex-col gap-5">
+              {OUTCOMES.map((o) => (
+                <RevealItem key={o.d}>
+                  <div className="flex items-start gap-4 rounded-3xl border border-border bg-surface p-5">
+                    <span className={cn("inline-flex size-10 shrink-0 items-center justify-center rounded-xl", o.soft, o.ink)}>{o.icon}</span>
+                    <div>
+                      <p className="flex items-center gap-2 text-[15.5px] font-bold">
+                        {o.word} <span className={cn("font-mono text-[11px] font-semibold", o.ink)}>{o.d}</span>
+                      </p>
+                      <p className="mt-1 text-[14px] leading-[1.55] text-muted">{o.body}</p>
+                    </div>
+                  </div>
+                </RevealItem>
               ))}
-            </Accordion>
-          </RevealItem>
-        </Reveal>
+            </div>
+          </Reveal>
+
+          {/* what a compromised agent tries */}
+          <Reveal className="mt-5 rounded-3xl border border-border bg-surface/60 p-6 sm:p-7">
+            <RevealItem as="p" className="text-[15px] font-bold">
+              A hacked agent that skips its own checks still meets the contract. The vault refuses each of these:
+            </RevealItem>
+            <RevealItem>
+              <ul className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                {BYPASS.map((b) => (
+                  <li key={b} className="flex items-center gap-2.5 rounded-2xl bg-surface-secondary px-4 py-3 text-[13.5px] font-medium">
+                    <CircleX size={15} aria-hidden className="shrink-0 text-danger" /> {b}
+                  </li>
+                ))}
+              </ul>
+            </RevealItem>
+          </Reveal>
+
+          <div className="mt-10 flex flex-wrap items-center gap-3">
+            <Button size="lg" variant="mint" onClick={() => go("/agents/vault")}>
+              Open the vault console <ArrowRight size={18} aria-hidden />
+            </Button>
+            <p className="text-[13.5px] text-muted">Testnet only, with free test money. Approvals are signed in the owner's own wallet.</p>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-/** Customers usually arrive from a link; this opens one they were sent. */
-function OpenLink() {
-  const nav = useNavigate();
-  const [v, setV] = useState("");
+// ------------------------------------------------------------------ 7. account check
+
+const SIGNALS = [
+  { name: "Account state", src: "Live · NEAR RPC", body: "Whether the account exists and holds a balance." },
+  { name: "Activity history", src: "Live · indexer", body: "Earliest observed activity, which is not its creation date." },
+  { name: "Contract deployments", src: "Live · indexer", body: "Code deployed in its recent transactions." },
+  { name: "Code changes", src: "Notara records", body: "Whether its contract code changed since the last check." },
+  { name: "Past payments", src: "Notara vault", body: "Payments the vault already made to this account." },
+  { name: "Scam reports", src: "Notara registry", body: "Shared reports. Only a verified one can cause a red verdict." },
+];
+
+function CheckSection() {
+  const go = useGo();
+  const [acct, setAcct] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  function open(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    const m = v.trim().match(/\/(pay|claim)\/([A-Za-z0-9-]+)(#.*)?/) ?? v.trim().match(/^()(INV-\d+)$/i);
-    if (!m) return setErr("Paste the whole link, like https://…/pay/INV-0042");
-    nav(`/${m[1] || "pay"}/${m[2].toUpperCase()}${m[3] ?? ""}`);
+    const a = acct.trim().toLowerCase();
+    if (!/^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/.test(a) || a.length < 2 || a.length > 64) {
+      setErr("Enter a NEAR account, like studio.near or someone.testnet");
+      document.getElementById("landing-acct")?.focus();
+      return;
+    }
+    go(`/agents/check?account=${encodeURIComponent(a)}`);
   }
   return (
-    <form onSubmit={open} noValidate className="mx-auto mt-12 flex w-full max-w-md flex-col gap-2 text-left">
-      <label htmlFor="open-link" className="text-[13.5px] font-semibold text-muted">Were you sent a link? Open it here.</label>
-      <div className="flex gap-2">
-        <input id="open-link" value={v} onChange={(e) => (setV(e.target.value), setErr(null))} placeholder="https://…/pay/INV-0042" aria-invalid={!!err || undefined} aria-describedby={err ? "open-link-err" : undefined} className="h-11 min-w-0 flex-1 rounded-full border border-border bg-surface px-4 text-[14.5px] placeholder:text-muted/60 focus:border-focus" />
-        <Button type="submit" variant="secondary">Open</Button>
+    <section id="check" aria-labelledby="check-h" className="scroll-mt-24 py-20 lg:py-32">
+      <div className={cn(WRAP, "grid gap-16 lg:grid-cols-[1fr_1.1fr] lg:items-start")}>
+        <div>
+          <SectionHead
+            id="check-h"
+            eyebrow="04 · Account check"
+            title="See who's asking before you pay."
+            lead="Notara reads an account's history and shared scam reports, then answers green, amber or red with the evidence behind it. It never calls an account safe: it can't tell you whether someone will deliver."
+          />
+          <form onSubmit={submit} noValidate className="mt-9 max-w-[480px]">
+            <label htmlFor="landing-acct" className="text-[14px] font-bold">
+              Check any NEAR account
+            </label>
+            <div className="mt-2 flex gap-2 max-sm:flex-col">
+              <input
+                id="landing-acct"
+                value={acct}
+                onChange={(e) => (setAcct(e.target.value), setErr(null))}
+                placeholder="studio.near"
+                autoComplete="off"
+                spellCheck={false}
+                aria-invalid={!!err}
+                aria-describedby={err ? "landing-acct-err" : "landing-acct-note"}
+                className="h-12 min-w-0 flex-1 rounded-full border border-border bg-surface px-5 font-mono text-[16px] outline-none transition-colors placeholder:text-muted/60 focus:border-highlight"
+              />
+              <Button size="lg" type="submit">
+                <Search size={17} aria-hidden /> Check account
+              </Button>
+            </div>
+            {err ? (
+              <p id="landing-acct-err" role="alert" className="mt-2 text-[13.5px] font-semibold text-danger">
+                {err}
+              </p>
+            ) : (
+              <p id="landing-acct-note" className="mt-2 text-[13px] text-muted">
+                Read-only: nothing is signed or sent. Works for mainnet and testnet accounts.
+              </p>
+            )}
+          </form>
+        </div>
+
+        <Reveal as="ul" className="grid gap-3 sm:grid-cols-2">
+          {SIGNALS.map((s) => (
+            <RevealItem as="li" key={s.name}>
+              <div className="h-full rounded-2xl border border-border/80 bg-surface p-5 shadow-card">
+                <span className="inline-flex rounded-full bg-accent-soft px-2.5 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-[0.06em] text-highlight">{s.src}</span>
+                <p className="mt-3 text-[15.5px] font-bold">{s.name}</p>
+                <p className="mt-1 text-[13.5px] leading-[1.55] text-muted">{s.body}</p>
+              </div>
+            </RevealItem>
+          ))}
+          <RevealItem as="li" className="sm:col-span-2">
+            <p className="rounded-2xl bg-background-secondary px-5 py-4 text-[13.5px] leading-[1.55] text-muted">
+              If a source can't be reached, its signal is marked unavailable and the answer is at least amber, never green.
+            </p>
+          </RevealItem>
+        </Reveal>
       </div>
-      {err && <p id="open-link-err" role="alert" className="text-[13px] font-semibold text-danger">{err}</p>}
+    </section>
+  );
+}
+
+// ------------------------------------------------------------------ 8. cost and limits
+
+function CostSection() {
+  return (
+    <section id="pricing" aria-labelledby="cost-h" className="scroll-mt-24 border-t border-border/70 bg-background-secondary py-20 lg:py-28">
+      <div className={cn(WRAP, "grid gap-14 lg:grid-cols-2")}>
+        <SectionHead id="cost-h" eyebrow="05 · Cost and limits" title="Notara adds no fee." lead="You pay what the networks charge, nothing on top. And because it's a prototype, here is what it doesn't do yet." />
+        <Reveal className="flex flex-col gap-5">
+          <RevealItem>
+            <dl className="divide-y divide-border rounded-3xl border border-border/80 bg-surface shadow-card">
+              {[
+                ["Creating and signing a link", "Free: a signed message, not a transaction"],
+                ["Paying on NEAR", "The network's own fee"],
+                ["Paying from another chain", "The rate NEAR Intents quotes at checkout"],
+                ["Account checks", "Free, read-only"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-6 py-4">
+                  <dt className="text-[15px] font-semibold">{k}</dt>
+                  <dd className="text-[14.5px] text-muted">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </RevealItem>
+          <RevealItem>
+            <ul className="flex flex-col gap-2.5 rounded-3xl border border-dashed border-border px-6 py-5 text-[14px] leading-[1.55] text-muted">
+              <li>Not audited. Keep real-money amounts small.</li>
+              <li>The agent vault and send links run on testnet only.</li>
+              <li>A green answer means no rule was broken, not that a person is honest.</li>
+            </ul>
+          </RevealItem>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ------------------------------------------------------------------ 9. questions
+
+const FAQ_ITEMS = [
+  {
+    title: "Does Notara hold my money or my keys?",
+    body: "No. A payment link pays from your client's wallet straight to your account. A send link keeps its key in the part of the link after the #, which browsers never send to our server. An agent vault is a contract that moves money only by its own rules.",
+  },
+  {
+    title: "What does the wallet signature prove?",
+    body: "That the amount, the recipient and the description were approved by the wallet that gets paid. It shows who is asking. It can't show that they will deliver what they promise.",
+  },
+  {
+    title: "Can my client pay from Ethereum, Base, Arbitrum or Solana?",
+    body: "Yes, on mainnet. They send their own token to a one-time address, NEAR Intents swaps and routes it, and you receive the exact USDC on NEAR. A NEAR wallet can also pay the link directly.",
+  },
+  {
+    title: "Why enforce the agent's limits in a contract?",
+    body: "A check inside the agent only stops an agent that cooperates. A tricked or hacked agent can skip it. Notara's agent key can only ask the vault to pay, and the vault needs a fresh verdict signed by Notara for that exact payment.",
+  },
+  {
+    title: "What can I try for free?",
+    body: "Payment links, send links, account checks and the AI-agent vault all run on NEAR testnet with free test money. Paying from another chain needs mainnet.",
+  },
+];
+
+/** Paste a link someone sent you: it opens the pay or claim page (the claim key after # is kept). */
+function OpenLink() {
+  const go = useGo();
+  const [v, setV] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    const m = v.trim().match(/\/(pay|claim)\/([A-Za-z0-9-]+)(#.*)?/) ?? v.trim().match(/^()(INV-\d+)$/i);
+    if (!m) {
+      setErr("Paste the whole link, like https://…/pay/INV-0042");
+      return;
+    }
+    go(`/${m[1] || "pay"}/${m[2].toUpperCase()}${m[3] ?? ""}`);
+  }
+  return (
+    <form onSubmit={submit} noValidate className="w-full max-w-[520px]">
+      <label htmlFor="open-link" className="text-[14px] font-bold text-cream">
+        Were you sent a link? Open it here
+      </label>
+      <div className="mt-2 flex gap-2 max-sm:flex-col">
+        <input
+          id="open-link"
+          value={v}
+          onChange={(e) => (setV(e.target.value), setErr(null))}
+          placeholder="https://…/pay/INV-0042"
+          aria-invalid={!!err}
+          aria-describedby={err ? "open-link-err" : undefined}
+          className="h-12 min-w-0 flex-1 rounded-full border border-mint/25 bg-canopy/50 px-5 font-mono text-[16px] text-cream outline-none placeholder:text-cream/45 focus:border-mint"
+        />
+        <Button size="lg" variant="secondary" type="submit" className="!border-mint/30 !bg-transparent !text-cream hover:!bg-mint/10">
+          Open link <ArrowUpRight size={16} aria-hidden />
+        </Button>
+      </div>
+      {err && (
+        <p id="open-link-err" role="alert" className="mt-2 text-[13.5px] font-semibold text-danger">
+          {err}
+        </p>
+      )}
     </form>
   );
 }
 
-function Closing() {
+function FaqAndClose() {
   const go = useGo();
   return (
-    <section aria-labelledby="close-h" className="relative overflow-hidden py-32 lg:py-44">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-[radial-gradient(55%_70%_at_50%_100%,color-mix(in_srgb,var(--color-moss)_60%,transparent),transparent)]" />
-      <Reveal className={cn(WRAP, "relative flex flex-col items-center text-center")}>
-        <RevealItem as="h2" className="max-w-[14ch] text-[clamp(40px,6vw+8px,92px)] font-extrabold leading-[1.02] tracking-[-0.05em] [text-wrap:balance]"><span id="close-h">Send your next invoice as a link.</span></RevealItem>
-        <RevealItem as="p" className={cn(LEAD, "mt-6 max-w-[40ch]")}>It takes about a minute. Signing is free and moves no money.</RevealItem>
-        <RevealItem className="mt-9">
-          <Button size="lg" variant="mint" onClick={() => go("/get-paid")}>
-            Get started <ArrowRight size={18} aria-hidden />
-          </Button>
-        </RevealItem>
-        <RevealItem className="w-full">
-          <OpenLink />
-        </RevealItem>
-      </Reveal>
-    </section>
-  );
-}
-
-export function LandingPage() {
-  const [ready, setReady] = useState(false);
-  const [tour, setTour] = useState(false);
-  return (
     <>
-      <Preloader onDone={() => setReady(true)} />
-      <Hero ready={ready} onTour={() => setTour(true)} />
-      <TrustStrip />
-      <HowItWorks />
-      <SafetyPanel />
-      <UseCases />
-      <Stats />
-      <Developers />
-      <Pricing />
-      <Faq />
-      <Closing />
-      <Tour open={tour} onClose={() => setTour(false)} />
+      <section id="faq" aria-labelledby="faq-h" className="scroll-mt-24 py-20 lg:py-28">
+        <div className={cn(WRAP, "grid gap-12 lg:grid-cols-[0.8fr_1.2fr]")}>
+          <SectionHead id="faq-h" eyebrow="06 · Questions" title="Questions, answered plainly." />
+          <ExpandGroup items={FAQ_ITEMS} />
+        </div>
+      </section>
+
+      <section aria-labelledby="close-h" className="px-3 pb-3 sm:px-4 sm:pb-4">
+        <div data-theme="dark" className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(0deg,var(--color-canopy)_0%,var(--color-canopy)_45%,var(--color-moss)_130%)] text-foreground sm:rounded-[36px]">
+          <GridGround />
+          <div className={cn(WRAP, "relative grid gap-14 py-20 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:py-28")}>
+            <Reveal>
+              <RevealItem>
+                <SealMark className="size-10 text-mint" tick="var(--color-canopy)" />
+              </RevealItem>
+              <RevealItem as="h2" className="mt-8 text-[clamp(36px,3.6vw+14px,68px)] font-extrabold leading-[1.02] tracking-[-0.045em] [text-wrap:balance]">
+                <span id="close-h">Send your next invoice as a link.</span>
+              </RevealItem>
+              <RevealItem as="p" className="mt-5 max-w-[46ch] text-[17px] leading-[1.6] text-cream/75">
+                It takes about a minute. Signing is free and moves no money.
+              </RevealItem>
+              <RevealItem className="mt-9 flex flex-wrap gap-3">
+                <Button size="lg" variant="mint" onClick={() => go("/get-paid")}>
+                  Create a payment link <ArrowRight size={18} aria-hidden />
+                </Button>
+                <Button size="lg" variant="secondary" className="!border-mint/30 !bg-transparent !text-cream hover:!bg-mint/10" onClick={() => go("/dashboard")}>
+                  Open the dashboard
+                </Button>
+              </RevealItem>
+            </Reveal>
+            <OpenLink />
+          </div>
+        </div>
+      </section>
     </>
   );
 }
 
+// ------------------------------------------------------------------ page root
+
+export function LandingPage() {
+  const [ready, setReady] = useState(false);
+  return (
+    <div data-theme="light" className="bg-background text-foreground">
+      <SmoothScroll />
+      <Preloader onDone={() => setReady(true)} />
+      <Hero ready={ready} />
+      <Facts />
+      <GetPaidSection />
+      <StepsSection />
+      <SendSection />
+      <VaultSection />
+      <CheckSection />
+      <CostSection />
+      <FaqAndClose />
+    </div>
+  );
+}

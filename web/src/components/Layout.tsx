@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
+import { ThemeProvider, useTheme as useNextTheme } from "next-themes";
 import { LoaderCircle, TriangleAlert } from "./icons";
 import { ftBalance, nearBalance, useWallet } from "../lib/wallet";
 import { api, type Deployment } from "../lib/api";
@@ -22,18 +23,20 @@ export const useToast = () => useContext(ToastCtx);
 // ---------------------------------------------------------------- theme
 
 export type ThemeChoice = "light" | "dark" | "system";
-const ThemeCtx = createContext<{ choice: ThemeChoice; resolved: "light" | "dark"; setChoice: (c: ThemeChoice) => void }>({ choice: "system", resolved: "light", setChoice: () => {} });
-export const useTheme = () => useContext(ThemeCtx);
 
-function storedTheme(): ThemeChoice {
-  try {
-    const t = localStorage.getItem("theme");
-    return t === "light" || t === "dark" ? t : "system";
-  } catch {
-    return "system";
-  }
+/**
+ * The site's one theme state (next-themes): the visitor's choice, kept in localStorage under "theme",
+ * defaulting to their system setting, written to <html data-theme>. Every toggle and the Preferences
+ * panel read and write it here.
+ */
+export function useTheme(): { choice: ThemeChoice; resolved: "light" | "dark"; setChoice: (c: ThemeChoice) => void } {
+  const { theme, resolvedTheme, setTheme } = useNextTheme();
+  return {
+    choice: theme === "light" || theme === "dark" ? theme : "system",
+    resolved: resolvedTheme === "dark" ? "dark" : "light",
+    setChoice: setTheme,
+  };
 }
-const systemDark = () => !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 
 // ---------------------------------------------------------------- balances
 
@@ -48,16 +51,13 @@ const BalanceCtx = createContext<Balances>({ usdc: undefined, near: undefined, r
 /** The connected wallet's balances, read live from NEAR. */
 export const useBalances = () => useContext(BalanceCtx);
 
-/** Notara's mark: a notary seal, a notched ring around a check. */
+/** Notara's mark: a signed route from a payment source to its destination, shaped as an N. */
 export function SealMark({ className = "size-7", tick = "var(--background)" }: { className?: string; tick?: string }) {
   return (
     <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden>
-      <path
-        d="M16 2.5l2.6 1.9 3.2-.3 1.3 2.9 2.9 1.3-.3 3.2 1.9 2.6-1.9 2.6.3 3.2-2.9 1.3-1.3 2.9-3.2-.3L16 26.5l-2.6-1.9-3.2.3-1.3-2.9-2.9-1.3.3-3.2L4.4 15l1.9-2.6-.3-3.2 2.9-1.3 1.3-2.9 3.2.3z"
-        fill="currentColor"
-      />
-      <path d="M11 15.2l3.3 3.3 6.6-6.8" stroke={tick} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M11.5 26.5l-1.8 4 3.1-.9 1.6 2.4.9-4M20.5 26.5l1.8 4-3.1-.9-1.6 2.4-.9-4" fill="currentColor" opacity=".55" />
+      <path d="M7 21.5V9a2 2 0 0 1 2-2h1.5l11 14.5V9a2 2 0 0 1 2-2H25" stroke="currentColor" strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="7" cy="24" r="2.25" fill={tick} stroke="currentColor" strokeWidth="1.8" />
+      <path d="m23.5 3.5 4.5 3.5-4.5 3.5 1.3-3.5z" fill="currentColor" />
     </svg>
   );
 }
@@ -66,8 +66,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [dep, setDep] = useState<Deployment | null>(null);
   const [depErr, setDepErr] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [choice, setChoiceState] = useState<ThemeChoice>(storedTheme);
-  const [sysDark, setSysDark] = useState(systemDark);
   const w = useWallet();
 
   const reload = useCallback(() => {
@@ -81,25 +79,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
       .catch((e) => setDepErr(e.message));
   }, []);
   useEffect(reload, [reload]);
-
-  useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-    if (!mq) return;
-    const on = () => setSysDark(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  const resolved: "light" | "dark" = choice === "system" ? (sysDark ? "dark" : "light") : choice;
-  useEffect(() => {
-    document.documentElement.dataset.theme = resolved;
-  }, [resolved]);
-  const setChoice = useCallback((c: ThemeChoice) => {
-    setChoiceState(c);
-    try {
-      if (c === "system") localStorage.removeItem("theme");
-      else localStorage.setItem("theme", c);
-    } catch {}
-  }, []);
 
   const toast = useCallback((text: ReactNode, kind: "ok" | "error" = "ok") => {
     const id = Date.now() + Math.random();
@@ -123,12 +102,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, [w.accountId, w.network, tick]);
   const balances = useMemo(() => ({ ...bal, refresh: () => setTick((t) => t + 1) }), [bal]);
 
-  const theme = useMemo(() => ({ choice, resolved, setChoice }), [choice, resolved, setChoice]);
   const deployment = useMemo(() => ({ dep, error: depErr, reload }), [dep, depErr, reload]);
 
   return (
     <DeploymentCtx.Provider value={deployment}>
-      <ThemeCtx.Provider value={theme}>
+      <ThemeProvider attribute="data-theme" storageKey="theme" defaultTheme="system" enableSystem themes={["light", "dark"]} scriptProps={{ type: "application/json" }}>
         <BalanceCtx.Provider value={balances}>
           <ToastCtx.Provider value={toast}>
             {children}
@@ -150,7 +128,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             </div>
           </ToastCtx.Provider>
         </BalanceCtx.Provider>
-      </ThemeCtx.Provider>
+      </ThemeProvider>
     </DeploymentCtx.Provider>
   );
 }

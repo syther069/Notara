@@ -22,6 +22,7 @@ const InvoicePage = lazy(() => import("./pages/Invoice").then((m) => ({ default:
 const PayPage = lazy(() => import("./pages/Pay").then((m) => ({ default: m.PayPage })));
 const MerchantPage = lazy(() => import("./pages/Merchant").then((m) => ({ default: m.MerchantPage })));
 const ClaimPage = lazy(() => import("./pages/Claim").then((m) => ({ default: m.ClaimPage })));
+const DocsPage = lazy(() => import("./docs/DocsPage").then((m) => ({ default: m.DocsPage })));
 
 /** An old address moves to its new home, keeping any ?query and #fragment it carried. */
 function Moved({ to }: { to: string }) {
@@ -74,6 +75,9 @@ createRoot(document.getElementById("root")!).render(
               <Route path="m/:account" element={page(<MerchantPage />)} />
               <Route path="invoices/:id" element={page(<InvoicePage />)} />
             </Route>
+
+            <Route path="docs" element={wait(<DocsPage />)} />
+            <Route path="docs/:slug" element={wait(<DocsPage />)} />
 
             {/* Addresses from before the redesign. The Agents area is two pages; everything else moved. */}
             <Route path="invoices" element={<Moved to="/get-paid" />} />

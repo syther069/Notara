@@ -1,0 +1,15 @@
+{
+ "url": "chrome-error://chromewebdata/",
+ "views": {
+  "desktop": {
+   "width": 1440,
+   "height": 900,
+   "navH": 0,
+   "scrollHeight": 900,
+   "screens": 1,
+   "sections": [],
+   "consoleErrors": []
+  }
+ },
+ "at": "2026-11-10T06:35:41.817Z"
+}

@@ -49,7 +49,7 @@ function BlockGuard({ open, recipient, reason, onCancel, onProceed }: { open: bo
   const match = typed.trim() === recipient;
   return (
     <Modal>
-      <Modal.Backdrop isOpen={open} onOpenChange={(o) => !o && onCancel()} className="nt" variant="blur" isDismissable={false}>
+      <Modal.Backdrop isOpen={open} onOpenChange={(o) => !o && onCancel()} className="nt z-[80]" variant="blur" isDismissable={false}>
         <Modal.Container size="md">
           <Modal.Dialog role="alertdialog" aria-label="This account has a red verdict" className="nt rounded-3xl border-2 border-danger/50 bg-background p-6 text-foreground shadow-pop">
             <div className="flex flex-col gap-4">
@@ -471,7 +471,7 @@ function DirectMode() {
               </motion.div>
             ) : (
               <motion.div key="review" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4">
-                <div data-theme="dark" className="rounded-3xl bg-canopy p-6 text-cream shadow-card sm:p-7">
+                <div data-theme="dark" className="stage-dark rounded-3xl bg-canopy p-6 text-cream shadow-card sm:p-7">
                   <p className="text-[13.5px] font-semibold text-mint">{review ? "Review and confirm" : "Your payment"}</p>
                   <p className="mt-3 text-[15px] text-cream/75">You are sending</p>
                   <p className="tnum mt-1 text-[44px] font-extrabold leading-none tracking-[-0.04em]">

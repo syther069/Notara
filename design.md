@@ -47,7 +47,7 @@ Semantic roles (`background`, `surface`, `overlay`, `muted`, `default`, `accent`
 
 **Motion:** expo-out `cubic-bezier(0.22, 1, 0.36, 1)` for entrances, `cubic-bezier(0.4, 0, 0.2, 1)` for exits. 300 to 500ms for interface changes, 700 to 1200ms for hero flourishes, about 2s for the preloader. Buttons scale 1.02 on hover and 0.98 on press. Sections rise 24px with a 60ms stagger as they scroll in. Route changes use fade-up-mask (fade plus a 16px rise, 420ms). A successful write gets one mint pulse and a 400ms drawn check, nothing louder. Under `prefers-reduced-motion` everything falls back to opacity.
 
-**Components and where they come from** (each adapted file records its changes): glass dock, morph text, animated number, stats counter, share sheet, social flip button, perspective carousel, verse cards and line-hover link from Vengeance UI; combobox, checkbox group and field from SmoothUI; tooltip, accordion, modal and table from HeroUI. Every dropdown is the SmoothUI combobox; there is no native `<select>`.
+**Components and where they come from** (each adapted file records its changes): glass dock, morph text, animated number, stats counter, share sheet, social flip button, perspective carousel, verse cards and line-hover link from Vengeance UI; smooth scroll, frame zoom, pinned card stack, scroll-spy list, remember list, expand cards, expand group and smooth caret from Skiper UI; combobox, checkbox group and field from SmoothUI; tooltip, accordion, modal and table from HeroUI. Every dropdown is the SmoothUI combobox; there is no native `<select>`.
 
 
 ### 3.2 Typography

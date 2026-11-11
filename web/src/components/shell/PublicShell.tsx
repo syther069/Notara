@@ -6,6 +6,7 @@ import { useWallet } from "@/lib/wallet";
 import { SealMark } from "@/components/Layout";
 import { TriangleAlert, X } from "@/components/icons";
 import { WalletChip, WalletModal } from "@/components/app/wallet";
+import { SpinThemeToggle } from "@/components/app/SpinThemeToggle";
 
 export function PublicShell() {
   const loc = useLocation();
@@ -20,16 +21,19 @@ export function PublicShell() {
   });
   useEffect(() => window.scrollTo(0, 0), [loc.pathname]);
   return (
-    <div className="nt min-h-dvh bg-background font-sans text-foreground antialiased">
+    <div className="nt app-shell min-h-dvh bg-background font-sans text-foreground antialiased">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-foreground">
         Skip to content
       </a>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-[1280px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-[72px]">
           <Link to="/" aria-label="Notara home" className="flex items-center gap-2.5 text-[20px] font-extrabold tracking-[-0.04em]">
-            <SealMark className="size-7 text-accent" /> Notara
+            <SealMark className="size-7 text-accent" /> notara
           </Link>
-          <WalletChip compact onConnect={() => setConnect(true)} onOpenProfile={() => {}} />
+          <span className="flex items-center gap-1.5">
+            <SpinThemeToggle />
+            <WalletChip compact onConnect={() => setConnect(true)} onOpenProfile={() => {}} />
+          </span>
         </div>
       </header>
       {notice && (

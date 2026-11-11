@@ -19,7 +19,10 @@
   line-gap-override: 0%;
 }
 
-:root {
+/* On every themed scope, not only the root: a section can force its own theme (the preview frame, the
+   tour), and these aliases must resolve against that scope's colours. */
+:root,
+[data-theme] {
   /* brand */
   --deep: var(--color-canopy);
   --green: var(--color-moss);
