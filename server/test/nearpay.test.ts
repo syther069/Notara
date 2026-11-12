@@ -35,3 +35,21 @@ test("with a memo, only a transfer carrying that memo counts", () => {
   assert.equal(receivedInTx(tx, USDC, VAULT, "fund AgentSpend vault"), 15_000_000n);
   assert.equal(receivedInTx(tx, USDC, VAULT, "INV-0042"), 0n); // a real transfer, but not a payment for this link
 });
+
+test("a transfer refunded in the same transaction counts as nothing (ft_transfer_call to a plain account)", () => {
+  // ft_transfer_call logs the transfer in; the receiver can't take it, so ft_resolve_transfer sends it back.
+  const ev = (data: object) => `EVENT_JSON:${JSON.stringify({ standard: "nep141", version: "1.0.0", event: "ft_transfer", data: [data] })}`;
+  const receipt = (log: string) => ({ outcome: { executor_id: USDC, status: { SuccessValue: "" }, logs: [log] } });
+  const refunded = {
+    status: { SuccessValue: "IjAi" },
+    receipts_outcome: [
+      receipt(ev({ old_owner_id: "payer.testnet", new_owner_id: VAULT, amount: "2000000", memo: "INV-0042" })),
+      { outcome: { executor_id: VAULT, status: { Failure: {} }, logs: [] } }, // ft_on_transfer: no such method
+      receipt(ev({ old_owner_id: VAULT, new_owner_id: "payer.testnet", amount: "2000000", memo: "refund" })),
+    ],
+  };
+  assert.equal(receivedInTx(refunded, USDC, VAULT, "INV-0042"), 0n);
+  // A partial refund leaves only what stayed.
+  refunded.receipts_outcome[2] = receipt(ev({ old_owner_id: VAULT, new_owner_id: "payer.testnet", amount: "500000", memo: "refund" }));
+  assert.equal(receivedInTx(refunded, USDC, VAULT, "INV-0042"), 1_500_000n);
+});

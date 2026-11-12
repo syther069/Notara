@@ -252,7 +252,7 @@ export function DocsPage() {
           </button>
           <Link to="/" className="flex min-h-11 items-center gap-2.5" aria-label="Notara home">
             <SealMark className="size-7 text-accent" />
-            <span className="text-[18px] font-extrabold tracking-[-0.04em]">notara</span>
+            <span className="text-[18px] font-extrabold tracking-[-0.04em]">Notara</span>
           </Link>
           <span aria-hidden className="h-5 w-px bg-border" />
           <Link to="/docs" className="text-[15px] font-semibold text-muted transition-colors hover:text-foreground">

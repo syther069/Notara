@@ -2,6 +2,7 @@
 // An invoice is paid by the customer's agent through Notara + vault, and its status is
 // reconciled from the vault's on-chain payment record (memo "invoice:<id>").
 
+import { randomBytes } from "node:crypto";
 import { docs } from "./db.ts";
 import { getAsset, listAssets } from "../passport/src/assets.ts";
 import { notifyPaid } from "./notify.ts";
@@ -49,6 +50,8 @@ export interface Invoice {
   claimTx?: string;
   /** "send": money sent by link to a one-time account; the receiver claims it. */
   kind?: "send";
+  /** Send links: the wallet that signed for the link (NEP-413). */
+  sentBy?: string;
   /** Paid directly from a NEAR wallet: the transaction hash that paid it. */
   nearTx?: string;
   /** NEP-413 token: the merchant's wallet signed this exact link. */
@@ -61,6 +64,9 @@ export interface Invoice {
 }
 
 const store = docs<Invoice>("invoices");
+/** A link id: INV- and 12 hex digits for new links; older links have 4 or more digits. */
+export const INV_ID = "INV-[0-9A-F]{4,16}";
+export const newInvoiceId = () => `INV-${randomBytes(6).toString("hex").toUpperCase()}`;
 const ACCOUNT_RE = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 
 export const listInvoices = (): Promise<Invoice[]> => store.all();
@@ -78,10 +84,11 @@ export async function createInvoice(input: { merchant: string; description: stri
   if (!/^\d+$/.test(input.amount) || BigInt(input.amount) <= 0n) throw new Error("Amount must be a positive integer in the smallest unit");
 
   const now = new Date().toISOString();
-  // Sequential ids; two servers creating at once both try the same id, so the loser retries the next one.
-  for (let n = (await store.count()) + 1, tries = 0; tries < 20; n++, tries++) {
+  // Random ids (48 bits), so nobody can walk INV-0001, INV-0002… to read other merchants' links.
+  // Older links keep their short numeric ids, which still match INV_ID.
+  for (let tries = 0; tries < 5; tries++) {
     const inv: Invoice = {
-      id: `INV-${String(n).padStart(4, "0")}`,
+      id: newInvoiceId(),
     merchant: input.merchant,
     description,
     amount: input.amount,

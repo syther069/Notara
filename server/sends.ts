@@ -17,6 +17,9 @@ import { viewAccount, viewFunction } from "../passport/src/near.ts";
 import { usdcFor } from "../passport/src/assets.ts";
 import { hasKey, readKey } from "../agent/src/keys.ts";
 import type { Invoice } from "./invoices.ts";
+import { verifySigned } from "./nep413.ts";
+import { SIGN_RECIPIENT, freshNonce } from "./merchants.ts";
+import { formatAmount } from "../passport/src/assets.ts";
 
 type Net = "mainnet" | "testnet";
 
@@ -25,7 +28,10 @@ export const LINK_ACCOUNT_NEAR = 2_000_000_000_000_000_000_000n; // 0.002 NEAR
 export const NEW_NAME_DEPOSIT = 2_000_000_000_000_000_000_000n; // 0.002 NEAR, what the near/testnet account contract needs
 export const MIN_SEND_UNITS = 1_000_000n; // 1 USDC: a link must be worth more than what it costs the sponsor
 export const MAX_SEND_UNITS = 25_000_000n; // 25 USDC in this prototype
-export const MAX_SENDS_PER_DAY = 20; // shortcut: global cap, not per person; add accounts or captcha before real launch
+// Backstop for the whole site; each signing wallet is also limited below. High enough that a few free testnet
+// accounts can't use up the day for everyone; at about 0.003 test NEAR of sponsor cost per link it's ~0.65 a day at most.
+export const MAX_SENDS_PER_DAY = 200;
+export const MAX_SENDS_PER_SENDER_PER_DAY = 5;
 const MAX_DELEGATE_GAS = 50_000_000_000_000n;
 
 export const isImplicit = (id: string) => /^[0-9a-f]{64}$/.test(id);
@@ -131,3 +137,30 @@ export async function relayClaim(net: Net, linkAccount: string, sd: any): Promis
 }
 
 export const usdcBalance = (net: Net, account: string) => viewFunction<string>(net, usdcFor(net), "ft_balance_of", { account_id: account });
+
+/** The exact text the sender's wallet signs (NEP-413) to make a send link. Free, and moves no money. */
+export const sendLinkMessage = (l: { sender: string; account: string; amount: string; asset: string }) =>
+  `Notara send link
+From: ${l.sender}
+Link account: ${l.account}
+Amount: ${formatAmount(l.amount, l.asset)}`;
+
+/**
+ * Proves a real wallet asked for this link: a fresh NEP-413 signature by one of the sender's full-access keys.
+ * Without it anyone could script empty links, spend the sponsor's NEAR on storage and use up the day's limit.
+ */
+export async function verifySender(proof: unknown, l: Parameters<typeof sendLinkMessage>[0], net: Net): Promise<void> {
+  if (typeof proof !== "string" || !proof) throw new Error("Sign with your wallet to make a send link");
+  const r = await verifySigned(proof, { expectedRecipient: SIGN_RECIPIENT, expectedMessage: sendLinkMessage(l), validateNonce: freshNonce(600_000) }, net).catch((e) => {
+    throw new Error(`Your wallet signature didn't check out: ${e.message}`);
+  });
+  if (r.accountId !== l.sender) throw new Error(`Signed by ${r.accountId}, not ${l.sender}`);
+}
+
+/** Why a new send link must wait until tomorrow, or null. `today` is YYYY-MM-DD (UTC). */
+export function sendLimitReason(list: Pick<Invoice, "kind" | "createdAt" | "sentBy">[], sender: string, today: string): string | null {
+  const sends = list.filter((i) => i.kind === "send" && i.createdAt.startsWith(today));
+  if (sends.filter((i) => i.sentBy === sender).length >= MAX_SENDS_PER_SENDER_PER_DAY) return `You can make ${MAX_SENDS_PER_SENDER_PER_DAY} send links a day in this prototype. Try again tomorrow.`;
+  if (sends.length >= MAX_SENDS_PER_DAY) return "Daily limit for new send links reached";
+  return null;
+}

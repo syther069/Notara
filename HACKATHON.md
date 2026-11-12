@@ -8,7 +8,7 @@ Checked on 2026-11-04 at https://nearhackathon.com/. Re-check before submitting.
 | Judging | 16–18 Nov 2026 (results by 18 Nov 23:59 UTC) |
 | Primary track | 06 AI Security & Defense (`security`) |
 | Second track | 08 Real-World Money (`realworld`). Decided 2026-11-04; requires the merchant invoice flow (PRD 6.6) |
-| Network | Testnet for contracts and funds. Mainnet is used **read-only** for signal lookups |
+| Network | Testnet for the contracts and the agent vault. Mainnet for USDC payment links (NEAR wallet or NEAR Intents, approved by the owner, small amounts) and read-only signal lookups. No Notara contract on mainnet |
 
 ## Submission requirements
 - A working prototype in a **public** repository. The README must match what runs.

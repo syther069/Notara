@@ -28,7 +28,6 @@
     "near-sign-verify": "0.4.5",
     "next-themes": "^0.4.6",
     "qrcode": "^1.5.4",
-    "qrcode-generator": "^2.0.4",
     "radix-ui": "^1.8.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",

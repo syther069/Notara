@@ -28,7 +28,7 @@ export function PublicShell() {
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-[1280px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-[72px]">
           <Link to="/" aria-label="Notara home" className="flex items-center gap-2.5 text-[20px] font-extrabold tracking-[-0.04em]">
-            <SealMark className="size-7 text-accent" /> notara
+            <SealMark className="size-7 text-accent" /> Notara
           </Link>
           <span className="flex items-center gap-1.5">
             <SpinThemeToggle />

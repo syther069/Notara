@@ -94,7 +94,7 @@ export function PagePreview({ path, host, who, website, forText, emptyFor, amoun
         </div>
         <div className="flex flex-col gap-3.5 px-5 pb-6 pt-5">
           <div className="flex items-center gap-2 text-[12px] font-extrabold tracking-[-0.03em]">
-            <SealMark className="size-4 text-accent" /> notara
+            <SealMark className="size-4 text-accent" /> Notara
           </div>
           <div>
             <p className="text-[11px] font-semibold text-muted">Pay</p>

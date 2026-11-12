@@ -17,9 +17,11 @@ test("old JSON data is imported once, then the files are set aside", async () =>
   assert.equal((await getMerchant("m.near")).websiteVerified, true);
   assert.ok(existsSync(join(dir, "invoices.json.imported")) && !existsSync(join(dir, "invoices.json")));
 
-  // New ids continue after imported ones, and updates change one row.
+  // New links get random ids (nobody can walk INV-0001, INV-0002…); imported ones keep theirs. Updates change one row.
   const n = await createInvoice({ merchant: "m.testnet", description: "new", amount: "2", asset: "NEAR" });
-  assert.equal(n.id, "INV-0002");
+  assert.match(n.id, /^INV-[0-9A-F]{12}$/);
+  const { INV_ID } = await import("../invoices.ts");
+  for (const id of [n.id, "INV-0001"]) assert.match(id, new RegExp(`^${INV_ID}$`)); // old and new ids both route
   assert.equal((await updateInvoice("INV-0001", { status: "refunded" })).status, "refunded");
-  assert.deepEqual((await listInvoices()).map((i) => i.id).sort(), ["INV-0001", "INV-0002"]);
+  assert.deepEqual((await listInvoices()).map((i) => i.id).sort(), ["INV-0001", n.id].sort());
 });

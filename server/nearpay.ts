@@ -5,10 +5,12 @@ import { NETWORKS } from "../passport/src/config.ts";
 import type { Network } from "../passport/src/types.ts";
 
 /**
- * Total `token` units that reached `receiver` in a finished transaction, counted from the
+ * Net `token` units that reached `receiver` in a finished transaction, counted from the
  * token contract's own NEP-141 `ft_transfer` events in receipts that succeeded.
- * With `memo`, only transfers carrying exactly that memo count. Payment links pass their invoice id,
+ * With `memo`, only incoming transfers carrying exactly that memo count. Payment links pass their invoice id,
  * so an unrelated transfer to the same merchant (public on-chain) can't mark a link paid.
+ * Anything the receiver sent back in the same transaction is subtracted: an `ft_transfer_call` to an
+ * account that can't accept it logs the transfer in, then refunds it (`ft_resolve_transfer`).
  */
 export function receivedInTx(tx: any, token: string, receiver: string, memo?: string): bigint {
   if (!tx?.status || "Failure" in tx.status) return 0n;
@@ -25,10 +27,14 @@ export function receivedInTx(tx: any, token: string, receiver: string, memo?: st
         continue;
       }
       if (ev.standard !== "nep141" || ev.event !== "ft_transfer") continue;
-      for (const d of ev.data ?? []) if (d.new_owner_id === receiver && /^\d+$/.test(String(d.amount)) && (memo === undefined || d.memo === memo)) total += BigInt(d.amount);
+      for (const d of ev.data ?? []) {
+        if (!/^\d+$/.test(String(d.amount))) continue;
+        if (d.new_owner_id === receiver && (memo === undefined || d.memo === memo)) total += BigInt(d.amount);
+        else if (d.old_owner_id === receiver) total -= BigInt(d.amount); // sent back: a refund, whatever its memo
+      }
     }
   }
-  return total;
+  return total > 0n ? total : 0n;
 }
 
 async function rpc(url: string, method: string, params: object) {

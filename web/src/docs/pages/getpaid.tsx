@@ -235,7 +235,7 @@ export function InvoicesCsv() {
 
       <H3>For accounting tools: the API export</H3>
       <P>
-        <C>GET /api/invoices.csv?merchant=you.near</C> returns a merchant's links with these columns: <C>invoice_id</C>, <C>created_at</C>, <C>description</C>, <C>amount</C> (in the asset's own unit), <C>currency</C>,{" "}
+        <C>GET /api/invoices.csv?merchant=you.near</C>, signed by the merchant's wallet (see the <A href="/docs/api">API reference</A>), returns their links with these columns: <C>invoice_id</C>, <C>created_at</C>, <C>description</C>, <C>amount</C> (in the asset's own unit), <C>currency</C>,{" "}
         <C>asset_contract</C>, <C>merchant</C>, <C>status</C>, <C>decision</C>, <C>vault_payment_id</C>, <C>tx_hash</C>, <C>explorer_url</C> and <C>paid_at</C>.
       </P>
       <Callout kind="note" title="Safe to open in a spreadsheet">

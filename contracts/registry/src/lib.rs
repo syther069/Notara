@@ -128,9 +128,16 @@ impl Registry {
         require!(reporter != subject, "Cannot report yourself");
 
         let mut ids = self.by_subject.get(&subject).cloned().unwrap_or_default();
+        // Only open reports count toward the limit. Otherwise the subject could file junk reports about
+        // itself from other accounts until the limit is full, so a real report could never be filed.
+        // A verifier rejecting the junk frees its slot.
+        let open = ids
+            .iter()
+            .filter(|i| self.reports.get(**i as u32).map_or(false, |r| r.status != Status::Rejected))
+            .count();
         require!(
-            ids.len() < MAX_REPORTS_PER_SUBJECT,
-            "Too many reports for this subject"
+            open < MAX_REPORTS_PER_SUBJECT,
+            "Too many open reports for this subject"
         );
 
         let now = U64(env::block_timestamp_ms());
@@ -410,6 +417,30 @@ mod tests {
         let mut r = setup();
         ctx("reporter.testnet", NearToken::from_yoctonear(0));
         r.add_verifier(acc("reporter.testnet"));
+    }
+
+    fn fill_to_limit(r: &mut Registry) -> Vec<U64> {
+        (0..MAX_REPORTS_PER_SUBJECT).map(|_| file(r)).collect()
+    }
+
+    #[test]
+    #[should_panic(expected = "Too many open reports for this subject")]
+    fn open_reports_are_capped() {
+        let mut r = setup();
+        fill_to_limit(&mut r);
+        file(&mut r);
+    }
+
+    #[test]
+    fn rejected_reports_free_their_slot() {
+        // The subject floods its own slots with junk; a verifier rejects one and a real report fits again.
+        let mut r = setup();
+        let ids = fill_to_limit(&mut r);
+        ctx("verifier.testnet", NearToken::from_yoctonear(0));
+        r.set_status(ids[0], Status::Rejected, Some("junk".into()));
+        let real = file(&mut r);
+        assert_eq!(r.get_report(real).unwrap().status, Status::Unverified);
+        assert_eq!(r.get_reports_for(acc("attacker.testnet")).len(), MAX_REPORTS_PER_SUBJECT + 1);
     }
 
     #[test]

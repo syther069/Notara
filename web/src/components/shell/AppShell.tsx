@@ -316,7 +316,7 @@ function Frame({ children }: { children: ReactNode }) {
         <aside className="app-rail group/rail fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col border-r border-border/70 bg-background text-foreground transition-[width,box-shadow] duration-300 ease-enter hover:w-[236px] hover:shadow-pop focus-within:w-[236px] focus-within:shadow-pop lg:flex">
           <Link to="/dashboard" aria-label="Notara, to your dashboard" className="flex h-[68px] shrink-0 items-center gap-3 overflow-hidden border-b border-border/70 px-[22px]">
             <SealMark className="size-7 shrink-0 text-accent" />
-            <span className="text-[19px] font-extrabold tracking-[-0.04em] opacity-0 transition-opacity duration-200 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">notara</span>
+            <span className="text-[19px] font-extrabold tracking-[-0.04em] opacity-0 transition-opacity duration-200 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">Notara</span>
           </Link>
           <Rail />
         </aside>
@@ -335,7 +335,7 @@ function Frame({ children }: { children: ReactNode }) {
               >
                 <div className="flex h-[68px] items-center justify-between border-b border-border/70 px-5">
                   <span className="flex items-center gap-2.5 text-[19px] font-extrabold tracking-[-0.04em]">
-                    <SealMark className="size-7 text-accent" /> notara
+                    <SealMark className="size-7 text-accent" /> Notara
                   </span>
                   <button type="button" aria-label="Close menu" onClick={closeDrawer} className="inline-flex size-10 items-center justify-center rounded-full hover:bg-default">
                     <X size={19} />

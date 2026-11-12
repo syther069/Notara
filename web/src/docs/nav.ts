@@ -11,7 +11,7 @@ export interface DocPage {
   mainnet?: boolean;
 }
 
-export const UPDATED = "11 November 2026";
+export const UPDATED = "12 November 2026";
 export const REPO = "https://github.com/syther069/Notara";
 
 export const DOCS: DocPage[] = [

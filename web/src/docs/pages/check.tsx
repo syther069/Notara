@@ -40,6 +40,7 @@ export function Signals() {
         <li>Only a Verified report in a blocking category (Scam, Phishing, MaliciousContract, Impersonation) can cause BLOCK.</li>
         <li>Unverified and Disputed reports are treated as leads and cause WARN at most.</li>
         <li>Rejected reports are listed for information only.</li>
+        <li>An account can have at most 50 open reports. Rejected reports don't count, so the subject can't fill its own slots with junk to stop real reports.</li>
         <li>Demo reports seeded for testing are flagged as fixtures and are never presented as real incidents.</li>
       </UL>
       <P>

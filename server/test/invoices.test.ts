@@ -13,12 +13,12 @@ before(async () => {
 
 const NEAR = "1000000000000000000000000";
 
-test("create assigns sequential ids and starts unpaid", async () => {
+test("create assigns random, unguessable ids and starts unpaid", async () => {
   const a = await inv.createInvoice({ merchant: "merchant.testnet", description: "API credits", amount: NEAR });
   const b = await inv.createInvoice({ merchant: "merchant.testnet", description: "More credits", amount: NEAR });
   assert.equal(a.status, "unpaid");
   assert.notEqual(a.id, b.id);
-  assert.match(a.id, /^INV-\d{4}$/);
+  assert.match(a.id, /^INV-[0-9A-F]{12}$/);
 });
 
 test("create validates input", async () => {

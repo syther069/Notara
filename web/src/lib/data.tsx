@@ -1,6 +1,6 @@
 // What the signed-in pages share: this wallet's Notara links, its notifications, and the watch runner.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { api, type Invoice } from "./api";
+import { ApiError, api, type Invoice } from "./api";
 import { useWallet } from "./wallet";
 import { CHECKS_KEY, PREFS_KEY, WATCH_EVERY_MS, WATCH_KEY, defaultPrefs, readLocal, useLocal, writeLocal, type LocalCheck, type Prefs, type Watch } from "./local";
 import { formatAsset } from "./format";
@@ -68,8 +68,24 @@ export function AccountDataProvider({ children }: { children: ReactNode }) {
       return;
     }
     setLinksLoading(true);
-    api
-      .invoices(acct)
+    const net = w.network;
+    const proofKey = `notara-links-proof:${net}:${acct}`;
+    // The public site lists your links only with your wallet's signature: asked once, then reused for a day.
+    // Locally (or while a saved signature is still good) the first request is enough.
+    const load = async () => {
+      const saved = readLocal<{ token: string; at: number } | null>(proofKey, null);
+      const fresh = saved && Date.now() - saved.at < 23 * 3_600_000 ? saved.token : undefined;
+      try {
+        return await api.invoices(acct, fresh ? { proof: fresh, network: net } : undefined);
+      } catch (e) {
+        if (!(e instanceof ApiError) || e.status !== 401) throw e;
+        const { token, accountId } = await w.signLink(async (a) => (await api.linksListMessage(a)).message, net);
+        if (accountId !== acct) throw new Error(`Your wallet signed as ${accountId}, not ${acct}`);
+        writeLocal(proofKey, { token, at: Date.now() });
+        return api.invoices(acct, { proof: token, network: net });
+      }
+    };
+    load()
       .then((r) => {
         if (mine !== seq.current) return; // an older request answered late
         const list = r.invoices.filter((i) => i.merchant === acct).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -84,7 +100,8 @@ export function AccountDataProvider({ children }: { children: ReactNode }) {
       })
       .catch((e) => mine === seq.current && setLinksError(e.message))
       .finally(() => mine === seq.current && setLinksLoading(false));
-  }, [w.accountId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [w.accountId, w.network]);
   useEffect(() => {
     setLinks(null);
     reloadLinks();

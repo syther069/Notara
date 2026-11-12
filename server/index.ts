@@ -27,7 +27,9 @@ import { LOCAL_ONLY, refuseReason, runOnce } from "./guard.ts";
 import { createCheckout, isDone, overallStatus, payTokens, readCheckout } from "./checkout.ts";
 import { fetchTx, receivedInTx } from "./nearpay.ts";
 import {
-  MAX_SENDS_PER_DAY,
+  sendLimitReason,
+  sendLinkMessage,
+  verifySender,
   MAX_SEND_UNITS,
   MIN_SEND_UNITS,
   checkClaimDelegate,
@@ -42,8 +44,8 @@ import {
   tla,
   usdcBalance,
 } from "./sends.ts";
-import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, verifyLinkToken } from "./merchants.ts";
-import { clearInvoiceFlag, createInvoice, getInvoice, type Invoice, listInvoices, setInvoiceFlag, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
+import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, linksMessage, verifyLinkToken, verifyLinksProof } from "./merchants.ts";
+import { INV_ID, clearInvoiceFlag, createInvoice, getInvoice, type Invoice, listInvoices, setInvoiceFlag, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
 import { SCENARIOS, createVisitorVault, getVisitorVault, isVisitorVault, runVisitorScenario } from "./vaults.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -98,6 +100,19 @@ function toAssetUnits(amount: unknown, assetId = "NEAR"): string {
     return toUnits(String(amount ?? ""), asset);
   } catch (e: any) {
     throw new HttpError(400, e.message);
+  }
+}
+
+/**
+ * On the public site a merchant's list of links (and its CSV) needs their wallet's signature, sent in the
+ * x-notara-proof header (never the URL), with the network in x-notara-network.
+ */
+async function requireLinksProof(req: IncomingMessage, account: string) {
+  const net = req.headers["x-notara-network"] === "testnet" ? "testnet" : "mainnet";
+  try {
+    await verifyLinksProof(String(req.headers["x-notara-proof"] ?? ""), account, net);
+  } catch (e: any) {
+    throw new HttpError(401, e.message);
   }
 }
 
@@ -550,6 +565,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (m === "GET" && path === "/api/invoices") {
     const merchant = url.searchParams.get("merchant");
     if (PUBLIC && !merchant) throw new HttpError(400, "Connect your wallet to see your links"); // no dump of every merchant's sales
+    if (PUBLIC) await requireLinksProof(req, merchant!);
     const list = (await listInvoices()).filter((i) => !merchant || i.merchant === merchant);
     // Only vault approvals are refreshed here (one cheap view each, local demo only). Any-chain checkouts
     // update when their pay page polls, so a long list doesn't make one NEAR Intents call per open address.
@@ -565,17 +581,31 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const amount = toAssetUnits(b.amountDecimal, usdcFor(net));
     if (BigInt(amount) > MAX_SEND_UNITS) throw new HttpError(400, "Send by link is limited to 25 USDC per link in this prototype");
     if (BigInt(amount) < MIN_SEND_UNITS) throw new HttpError(400, "A send link must hold at least 1 USDC");
-    const today = new Date().toISOString().slice(0, 10);
-    if ((await listInvoices()).filter((i) => i.kind === "send" && i.createdAt.startsWith(today)).length >= MAX_SENDS_PER_DAY) throw new HttpError(429, "Daily limit for new send links reached");
+    const sender = String(b.sender ?? "").trim();
+    // A wallet signature first: nothing is spent, and no limit is counted, for a request nobody signed.
+    try {
+      await verifySender(b.proof, { sender, account, amount, asset: usdcFor(net) }, net);
+    } catch (e: any) {
+      throw new HttpError(401, e.message);
+    }
+    const why = sendLimitReason(await listInvoices(), sender, new Date().toISOString().slice(0, 10));
+    if (why) throw new HttpError(429, why);
     try {
       await ensureUsdcStorage(net, account);
     } catch (e: any) {
       throw new HttpError(409, e.message);
     }
     const inv = await createInvoice({ merchant: account, description: String(b.note ?? "").trim().slice(0, 120) || "Money sent by link", amount, asset: usdcFor(net) });
-    return send(res, 201, publicInvoice(await updateInvoice(inv.id, { kind: "send" })));
+    return send(res, 201, publicInvoice(await updateInvoice(inv.id, { kind: "send", sentBy: sender })));
   }
-  const nm = path.match(/^\/api\/invoices\/(INV-\d{4,})\/near-tx$/);
+  if (m === "POST" && path === "/api/sends/message") {
+    const b = await readJson(req);
+    const net = b.network === "testnet" ? "testnet" : "mainnet";
+    const account = String(b.implicitAccount ?? "");
+    if (!isImplicit(account)) throw new HttpError(400, "Invalid link account");
+    return send(res, 200, { recipient: SIGN_RECIPIENT, message: sendLinkMessage({ sender: String(b.sender ?? "").trim(), account, amount: toAssetUnits(b.amountDecimal, usdcFor(net)), asset: usdcFor(net) }) });
+  }
+  const nm = path.match(new RegExp(`^/api/invoices/(${INV_ID})/near-tx$`));
   if (nm && m === "POST") {
     const b = await readJson(req);
     const txHash = String(b.txHash ?? "");
@@ -596,7 +626,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const paid = await updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `${NETWORKS[net].explorer}/txns/${txHash}`, paidAt: new Date().toISOString() });
     return send(res, 200, publicInvoice(paid));
   }
-  const sm = path.match(/^\/api\/sends\/(INV-\d{4,})(\/activate|\/claim)?$/);
+  const sm = path.match(new RegExp(`^/api/sends/(${INV_ID})(/activate|/claim)?$`));
   if (sm) {
     let inv = await refreshInvoice(sm[1]);
     if (inv.kind !== "send") throw new HttpError(404, "Not a send link");
@@ -627,10 +657,15 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     }
     return send(res, 200, { ...(await merchantProfile(mm[1])), ...result });
   }
+  if (m === "POST" && path === "/api/links/list-message") {
+    const b = await readJson(req);
+    return send(res, 200, { recipient: SIGN_RECIPIENT, message: linksMessage(String(b.account ?? "").trim()) });
+  }
   if (m === "GET" && path === "/api/checkout/tokens") return send(res, 200, { tokens: await payTokens() });
   if (m === "GET" && path === "/api/invoices.csv") {
     const merchant = url.searchParams.get("merchant");
     if (PUBLIC && !merchant) throw new HttpError(400, "Connect your wallet to export your links");
+    if (PUBLIC) await requireLinksProof(req, merchant!);
     res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
     return res.end(toCsv((await listInvoices()).filter((i) => !merchant || i.merchant === merchant), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
   }
@@ -656,7 +691,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       throw new HttpError(400, e.message);
     }
   }
-  const invMatch = path.match(/^\/api\/invoices\/(INV-\d{4,})(\/pay|\/quote)?$/);
+  const invMatch = path.match(new RegExp(`^/api/invoices/(${INV_ID})(/pay|/quote)?$`));
   if (invMatch) {
     if (m === "GET" && !invMatch[2]) return send(res, 200, await withSignature(await refreshInvoice(invMatch[1])));
     if (m === "POST" && invMatch[2] === "/quote") return send(res, 200, await withSignature(await quoteInvoice(invMatch[1], await readJson(req))));

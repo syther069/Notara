@@ -209,12 +209,18 @@ export const api = {
     return r.text();
   },
   demoStatus: () => req<{ running: boolean }>("/api/demo/status"),
-  invoices: (merchant?: string) => req<{ invoices: Invoice[] }>(`/api/invoices${merchant ? `?merchant=${encodeURIComponent(merchant)}` : ""}`),
+  /** A merchant's links. The public site wants the merchant's wallet signature (`proof`), sent as a header. */
+  invoices: (merchant?: string, auth?: { proof: string; network: "mainnet" | "testnet" }) =>
+    req<{ invoices: Invoice[] }>(`/api/invoices${merchant ? `?merchant=${encodeURIComponent(merchant)}` : ""}`, auth ? { headers: { "x-notara-proof": auth.proof, "x-notara-network": auth.network } } : undefined),
+  /** The exact text a merchant's wallet signs to see their own links. */
+  linksListMessage: (account: string) => post<{ recipient: string; message: string }>("/api/links/list-message", { account }),
   invoice: (id: string) => req<Invoice>(`/api/invoices/${encodeURIComponent(id)}`),
   linkMessage: (b: { merchant: string; description: string; amountDecimal: string; asset: string }) => post<{ message: string }>("/api/links/message", b),
   merchant: (account: string) => req<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}`),
   checkWebsite: (account: string, website: string) => post<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}/website`, { website }),
-  createSend: (b: { amountDecimal: string; implicitAccount: string; note?: string; network?: "mainnet" | "testnet" }) => post<Invoice>("/api/sends", b),
+  /** The exact text the sender's wallet signs for a send link. */
+  sendMessage: (b: { sender: string; amountDecimal: string; implicitAccount: string; network?: "mainnet" | "testnet" }) => post<{ recipient: string; message: string }>("/api/sends/message", b),
+  createSend: (b: { amountDecimal: string; implicitAccount: string; note?: string; network?: "mainnet" | "testnet"; sender: string; proof: string }) => post<Invoice>("/api/sends", b),
   getSend: (id: string) => req<SendState>(`/api/sends/${encodeURIComponent(id)}`),
   activateSend: (id: string) => post<SendState>(`/api/sends/${encodeURIComponent(id)}/activate`, {}),
   /** Hands the link-signed transfer (base64 borsh SignedDelegate, NEP-366) to the sponsor to relay. */

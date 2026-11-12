@@ -32,7 +32,7 @@ export function Architecture() {
       />
       <H3>Trust assumptions</H3>
       <UL>
-        <li>The Notara signer key isn't stolen. In this prototype it's a local file; keeping it in a TEE is planned.</li>
+        <li>The Notara signer key isn't stolen. It's a local file when run locally and an environment variable on the public deploy; keeping it in a TEE is planned.</li>
         <li>A human holds the vault owner key, not the agent.</li>
         <li>FastNear and NEAR RPC return correct data. When they don't answer, the result is WARN.</li>
       </UL>
@@ -146,17 +146,20 @@ export function Api() {
       <H2>Payment links</H2>
       <Endpoint method="GET" path="/api/invoices/{id}">
         <p>
-          One link: merchant, amount in the smallest unit, asset, description, status, <C>txHash</C> once paid, and <C>signed</C> with <C>signature</C> (<C>valid</C> when the merchant's wallet signed this exact link). Links paid from another
+          One link, by its id. New links get a random id like <C>INV-3F9A2C7B1D0E</C>, so ids can't be guessed in order. Returns the merchant, amount in the smallest unit, asset, description, status, <C>txHash</C> once paid, and <C>signed</C> with <C>signature</C> (<C>valid</C> when the merchant's wallet signed this exact link). Links paid from another
           chain list their <C>checkouts</C>.
         </p>
       </Endpoint>
       <Code title="curl: the mainnet proof link" lang="bash">{`curl -s ${BASE}/api/invoices/INV-0016`}</Code>
       <Endpoint method="GET" path="/api/invoices?merchant={account}">
-        <p>A merchant's links. The merchant is required on the public site.</p>
+        <p>
+          A merchant's own links. On the public site it needs the merchant's wallet signature: sign the text from <C>POST /api/links/list-message</C> (body <C>{"{ account }"}</C>) with NEP-413, then send the token in the{" "}
+          <C>x-notara-proof</C> header and the network in <C>x-notara-network</C>. One signature works for 24 hours. Without it the answer is 401.
+        </p>
       </Endpoint>
       <Endpoint method="GET" path="/api/invoices.csv?merchant={account}">
         <p>
-          The same as CSV. See <A href="/docs/invoices-csv">the columns</A>.
+          The same as CSV, with the same signature headers. See <A href="/docs/invoices-csv">the columns</A>.
         </p>
       </Endpoint>
       <Endpoint method="POST" path="/api/links/message">
@@ -239,9 +242,10 @@ export function Contracts() {
       <Facts
         rows={[
           ["Vault code hash", <C key="1">AjewPGjjqqFwDYD6GnYrKkkH7UyNmhBHgJ5M2r4sehCm</C>],
-          ["Registry code hash", <C key="2">8Upc4cEhHbLSiTYJ5UDiRSZ9Kkd3xfvS7JstwKNGy5T8</C>],
+          ["Registry code hash", <C key="2">GSur5172GNggBZ2SAd6VPtAaV6MUyBfyfU5z7R8Q2gQ</C>],
+          ["Registry redeployed", <>12 November 2026, state kept (<A key="t" href="https://testnet.nearblocks.io/txns/4xUtNNtYbFiVCZUNMTFg6AMedaEhJfBEVpkaDR5tCU2r">transaction</A>). Rejected reports now free their slot in the 50-report limit.</>],
           ["Notara signer public key", <C key="3">ed25519:37ANNUiF39w3dKqppw2jU5EeHPVD7LdXnGTPvFnqugqr</C>],
-          ["Checked", "On-chain with view_account and get_config, 11 November 2026"],
+          ["Checked", "On-chain with view_account and get_config, 12 November 2026"],
         ]}
       />
 

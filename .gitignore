@@ -17,3 +17,10 @@ graphify-out/cache/
 
 # Headless Chrome profile used for screenshots: holds cookies, login data and history. Never commit.
 .taste-skill/chrome-shoot/
+
+# Local tools and working files: kept on this machine, not part of the project
+.claude/skills/
+.taste-skill/
+*.zip
+*.docx
+skiper-components.md

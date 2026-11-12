@@ -16,6 +16,20 @@ export interface Merchant {
   websiteCheckedAt?: string;
 }
 
+/** What a merchant's wallet signs (NEP-413) to see their own list of links. One signature lasts a day. */
+export const linksMessage = (account: string) => `Notara: show my payment links
+Account: ${account}`;
+export const LINKS_PROOF_MAX_AGE_MS = 24 * 3_600_000;
+
+/** Proves the caller controls `account` before its links (descriptions, amounts, status) are listed. */
+export async function verifyLinksProof(proof: unknown, account: string, network: "mainnet" | "testnet"): Promise<void> {
+  if (typeof proof !== "string" || !proof) throw new Error("Sign with your wallet to see your links");
+  const r = await verifySigned(proof, { expectedRecipient: SIGN_RECIPIENT, expectedMessage: linksMessage(account), validateNonce: freshNonce(LINKS_PROOF_MAX_AGE_MS) }, network).catch((e) => {
+    throw new Error(`Your wallet signature didn't check out: ${e.message}`);
+  });
+  if (r.accountId !== account) throw new Error(`Signed by ${r.accountId}, not ${account}`);
+}
+
 /** The exact text the merchant sees and signs in their wallet. */
 export function linkMessage(l: { merchant: string; amount: string; asset: string; description: string }): string {
   return `Notara payment link\nPay to: ${l.merchant}\nAmount: ${formatAmount(l.amount, l.asset)}\nFor: ${l.description}`;

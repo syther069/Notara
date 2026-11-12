@@ -56,3 +56,22 @@ test("an implicit account id maps back to its ed25519 key", () => {
   const kp = KeyPair.fromRandom("ed25519");
   assert.equal(implicitPublicKey(hex(kp)), kp.getPublicKey().toString());
 });
+
+test("send links are limited per signing wallet, with a site-wide backstop", async () => {
+  const { sendLimitReason, MAX_SENDS_PER_SENDER_PER_DAY, MAX_SENDS_PER_DAY } = await import("../sends.ts");
+  const today = "2026-11-12";
+  const mk = (sentBy: string, n: number, day = today) => Array.from({ length: n }, () => ({ kind: "send" as const, createdAt: `${day}T10:00:00Z`, sentBy }));
+  assert.equal(sendLimitReason([], "alice.testnet", today), null);
+  assert.match(sendLimitReason(mk("alice.testnet", MAX_SENDS_PER_SENDER_PER_DAY), "alice.testnet", today)!, /send links a day/);
+  assert.equal(sendLimitReason(mk("alice.testnet", MAX_SENDS_PER_SENDER_PER_DAY), "bob.testnet", today), null); // one sender can't block another
+  assert.equal(sendLimitReason(mk("alice.testnet", 50, "2026-11-11"), "alice.testnet", today), null); // yesterday doesn't count
+  const many = Array.from({ length: MAX_SENDS_PER_DAY }, (_, i) => mk(`s${i}.testnet`, 1)).flat();
+  assert.match(sendLimitReason(many, "new.testnet", today)!, /Daily limit/);
+});
+
+test("a send link needs the sender's wallet signature", async () => {
+  const { verifySender } = await import("../sends.ts");
+  const l = { sender: "alice.testnet", account: "a".repeat(64), amount: "5000000", asset: USDC_TESTNET };
+  await assert.rejects(() => verifySender(undefined, l, "testnet"), /Sign with your wallet/);
+  await assert.rejects(() => verifySender("not-a-token", l, "testnet"), /didn't check out/);
+});

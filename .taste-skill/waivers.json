@@ -1,7 +1,0 @@
-[
-  {
-    "check": "field-label",
-    "target": "select.net-select",
-    "reason": "the network picker in the header shows its value as a word (Testnet or Mainnet) and has an aria-label; a visible 'Network' label beside it would crowd the one-line bar at 1440 and push it off a 320px screen"
-  }
-]

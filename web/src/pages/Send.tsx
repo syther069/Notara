@@ -76,6 +76,7 @@ function BlockGuard({ open, recipient, reason, onCancel, onProceed }: { open: bo
 
 function SendLinkMode() {
   const { dep } = useDeployment();
+  const w = useWallet();
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [net, setNet] = useState<Net>("testnet");
@@ -96,7 +97,9 @@ function SendLinkMode() {
     try {
       // The key is made here, in your browser. The server only learns which account it controls.
       const key = newLinkKey();
-      const inv = await api.createSend({ amountDecimal: amount, implicitAccount: key.account, note: note.trim(), network: net });
+      // Your wallet signs a short message first (free, no transaction), so only real senders can make links.
+      const { token, accountId } = await w.signLink(async (sender: string) => (await api.sendMessage({ sender, amountDecimal: amount, implicitAccount: key.account, network: net })).message, net);
+      const inv = await api.createSend({ amountDecimal: amount, implicitAccount: key.account, note: note.trim(), network: net, sender: accountId, proof: token });
       const fragment = toFragment(key);
       try {
         sessionStorage.setItem(`send-key-${inv.id}`, fragment);
@@ -170,8 +173,9 @@ function SendLinkMode() {
             )}
             <div>
               <Button type="submit" size="lg" busy={busy} disabled={mainnetOff}>
-                <Link2 size={18} aria-hidden /> {busy ? "Creating…" : "Create send link"}
+                <Link2 size={18} aria-hidden /> {busy ? "Waiting for your wallet…" : "Create send link"}
               </Button>
+              <p className="mt-2 text-[13px] text-muted">Your wallet signs a short message to make the link. It's free and moves no money.</p>
             </div>
           </form>
         )}

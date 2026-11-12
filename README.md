@@ -2,7 +2,7 @@
 
 **A counterparty check and a payment vault for AI agents on NEAR.** Before an agent pays anyone, Notara looks up the recipient and returns **ALLOW**, **WARN** or **BLOCK** with reasons and sources. A NEAR contract then enforces that decision, so an agent that skips its own safety code still can't move the money.
 
-Built for the NEAR Hackathon, track **AI Security & Defense**. Network: **testnet** for contracts and funds, **mainnet read-only** for lookups.
+Built for the NEAR Hackathon, tracks **AI Security & Defense** and **Real-World Money**. Network: **testnet** for the contracts and the agent vault; **mainnet** for USDC payment links (paid from a NEAR wallet, or from other chains through NEAR Intents) and read-only account checks. No Notara contract is deployed on mainnet. Full documentation, with every on-chain proof linked: [`/docs`](https://notara-sable.vercel.app/docs).
 
 ---
 
@@ -62,6 +62,8 @@ Status: **ran on NEAR testnet on 2026-11-04 with all 9 checks passing.** The vau
 
 The agent ran in scripted mode (no LLM key yet).
 
+**Latest run: 2026-11-09, all 10 checks passing**, with a real LLM (`anthropic/claude-fable-5` through NEAR AI Cloud) reading the invoices; check 2b keeps a scripted model that obeys the hidden text, the worst case. Transactions: [1 ALLOW paid](https://testnet.nearblocks.io/txns/5j4znZunnoz4A96xanMohcfnVXtUzXA1HYTFitFgbMv5), [2 the model ignored the injection and paid the real merchant](https://testnet.nearblocks.io/txns/2iF5JKQL3vSncAWfgCJQikJFTDHiXgGKUSuTJUnpsLA2), [3a](https://testnet.nearblocks.io/txns/J1e2bM4q3KfNEGjLuseL3ij1CDwEPcy1E8vHt2ZKGjvw), [3b](https://testnet.nearblocks.io/txns/9DJtVuLGfVCkETEsYsQpVRjZiLCZYwT1X1wa4W2qaCPv), [3c](https://testnet.nearblocks.io/txns/BoZrazvQgogDekky392WwHZ9Ra1W5eKoqhEm9J2URz3i), [3d](https://testnet.nearblocks.io/txns/6tCuNKaBaB3TAQHGmaxvS3iRZmatLZagHi3YE3TeNquo) refused on-chain, [4 WARN parked](https://testnet.nearblocks.io/txns/41UpfgoS7tBNub92kcY5s2hEtaqEKpw3KdVGkKC42wmg) then [approved by the owner](https://testnet.nearblocks.io/txns/EE1yWe1c5pyBEj8BahXmjNLEva6DxzYwsmxvMBkp33VT). Checks 2b, 3e and 3f send no transaction (stopped before signing, or rejected by the protocol).
+
 ## Signals, data sources and their limits
 
 Every signal in a report states its source (`live-rpc`, `live-indexer`, `on-chain-contract`, `local-config`, `local-cache`), the network, the endpoint and when it was fetched. Every signal also carries its own caveats.
@@ -87,7 +89,7 @@ Every signal in a report states its source (`live-rpc`, `live-indexer`, `on-chai
 - ✅ Gas is paid from a fixed allowance (0.5 NEAR in setup). When the allowance runs out, the key stops working. Top up by adding a new key with the vault's full-access key before locking it.
 - ❌ They **do not** judge the recipient. Without the vault's checks, a function-call key on a naive payment contract could still pay anyone. The safety comes from the vault contract's rules, not from the key alone.
 - ❌ Whoever holds the vault's **full-access key** can still change or drain the vault. Setup keeps it so you can redeploy during development. `npm run owner -- lock-vault` deletes it, after which the vault can only change through its own contract methods.
-- ❌ Notara signer key is a local file in this prototype. Whoever holds it can sign any verdict. A stretch goal is to keep it in a TEE.
+- ❌ Notara signer key is a local file when you run Notara yourself, and an environment variable on the public deploy. Whoever holds it can sign any verdict. A stretch goal is to keep it in a TEE.
 
 ## The website
 
@@ -127,7 +129,7 @@ Tested end to end on testnet (2026-11-09): a testnet link paid by the agent thro
 
 ## Live site (Vercel)
 
-**https://notara-sable.vercel.app** runs in public mode: payment links, checks, Merchant Passports, scam reports, wallet payments and testnet send links. Owner, demo and agent-pay routes run locally only.
+**https://notara-sable.vercel.app** runs in public mode: payment links, checks, Merchant Passports, scam reports, wallet payments and testnet send links. Owner, demo and agent-pay routes run locally only. A merchant's list of links and its CSV need that merchant's wallet signature (NEP-413, valid 24 hours), new links get random ids (`INV-` and 12 hex digits) so they can't be read in order, and a send link needs the sender's wallet signature (5 a day per sender).
 
 - **Build:** `vercel.json` runs `scripts/build-vercel.mjs`, which writes Vercel's Build Output API folder: the website as static files, and the whole backend bundled (esbuild) into one Node function behind `/api/*` and `/v1/*`.
 - **Storage:** Neon Postgres from the Vercel Marketplace (`DATABASE_URL`). Locally, without `DATABASE_URL`, the same code uses a SQLite file. Every write is one atomic statement (merge, insert-if-new, set-once flags), because several copies of the function run at once.
@@ -157,7 +159,7 @@ npm run web:build
 npm run serve
 ```
 
-Then open http://127.0.0.1:8787. The pages are Home, Check, Attack demo, Vault, Invoices and About. The Check page works without any setup. The Attack demo, Vault and Invoices pages need the testnet deployment (step 3). For live editing, run `npm run web:dev` while `npm run serve` is running, and open http://localhost:5173.
+Then open http://127.0.0.1:8787. The landing page is at `/`, the app at `/dashboard` (Get Paid, Send, Agents → Vault Console and Account check, Transactions, Profile, Settings) and the documentation at `/docs`. Account check works without any setup. The Vault Console and the agent demo need the testnet deployment (step 3). For live editing, run `npm run web:dev` while `npm run serve` is running, and open http://localhost:5173.
 
 **1. Tests (no network, no keys)**
 
@@ -169,7 +171,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 69 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode, the database import, alerts, EVM call encoding and link networks. `cargo test` runs 37 contract unit tests (29 vault, 8 registry). One of the vault tests checks a signature made by the TypeScript signer inside the contract.
+`npm test` runs 85 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode, the database import, alerts, EVM call encoding and link networks. `cargo test` runs 39 contract unit tests (29 vault, 10 registry). On Windows, set `AWS_LC_SYS_PREBUILT_NASM=1` first: a test dependency otherwise needs the NASM assembler. One of the vault tests checks a signature made by the TypeScript signer inside the contract.
 
 **2. Read-only check of a real mainnet account (no keys)**
 
@@ -214,7 +216,7 @@ AGENT_LLM_API_KEY=... AGENT_LLM_MODEL=<model id> npm run demo
 
 `AGENT_LLM_BASE_URL` defaults to `https://cloud-api.near.ai/v1`. Each log says which mode ran.
 
-**Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Intear Wallet. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `bash scripts/deploy-contracts.sh` (cargo-near build + `near contract deploy`, testnet, before `lock-vault`). Deployed now: vault code hash `AjewPGjjqqFwDYD6GnYrKkkH7UyNmhBHgJ5M2r4sehCm`, registry `8Upc4cEhHbLSiTYJ5UDiRSZ9Kkd3xfvS7JstwKNGy5T8`, which match `cargo near build` of this repo.
+**Approve with your own NEAR wallet:** open the Vault page and click **Connect NEAR wallet**. Use a testnet wallet such as Intear Wallet. Click **Hand the vault to …** (step 1), then **Accept ownership** in your wallet (step 2). From then on, Approve and Reject are signed in your wallet. Code changes that keep the stored state can be redeployed with `bash scripts/deploy-contracts.sh` (cargo-near build + `near contract deploy`, testnet, before `lock-vault`). Deployed now: vault code hash `AjewPGjjqqFwDYD6GnYrKkkH7UyNmhBHgJ5M2r4sehCm`, registry `GSur5172GNggBZ2SAd6VPtAaV6MUyBfyfU5z7R8Q2gQ`, which match `cargo near build` of this repo. The registry was redeployed on 2026-11-12 ([tx](https://testnet.nearblocks.io/txns/4xUtNNtYbFiVCZUNMTFg6AMedaEhJfBEVpkaDR5tCU2r)) so that rejected reports no longer use up an account's 50-report limit; its state (reports, verifiers, bond) was kept.
 
 **Any-chain payment links (real money, NEAR mainnet):** on the Invoices page, choose **USDC, any chain** and enter your mainnet account. The customer opens `/pay/<id>`, sees the safety check, picks a token, and gets a one-time NEAR Intents deposit address. The merchant receives exact USDC on NEAR, and we never hold the money. NEAR Intents has no testnet, so this uses real funds: keep amounts small. Optionally put `ONECLICK_JWT=...` in `.env` to avoid the unauthenticated fee. **Status: one real payment made end to end on 2026-11-09 (below).**
 
@@ -239,7 +241,7 @@ NEAR_MAINNET_OWNER=you.near NEAR_MAINNET_OWNER_KEY=ed25519:... npx tsx scripts/s
 
 Once `deployment.mainnet.json` exists, mainnet checks read real reports, and the safety panel shows **Report this account** (signed by the reporter's wallet, 0.01 NEAR bond). **Status: script written, not run.**
 
-**Public mode:** for a public deploy, set `NOTARA_PUBLIC=1` and `NOTARA_PUBLIC_HOST=your.domain`. Owner approvals, the agent demo and verdict signing are switched off, and the owner key is never loaded. Payment links, send links, checks and Merchant Passport keep working.
+**Public mode:** for a public deploy, set `NOTARA_PUBLIC=1` and `NOTARA_PUBLIC_HOST=your.domain`. Owner approvals and the local agent demo are switched off, `POST /v1/check` never returns a signed verdict, and the owner key is never loaded. Verdicts are signed in-process only for visitor-vault runs, which need the vault owner's wallet signature. Payment links, send links, checks and Merchant Passport keep working.
 
 **Storage:** Node's built-in SQLite in `data/notara.db` (Node 22.13+). On first start, old `data/*.json` files are imported once and kept as `*.imported`.
 
@@ -297,22 +299,22 @@ If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a s
 
 **Implemented**
 - Vault contract: signed-verdict check, recipient/amount/asset/vault binding, expiry and max TTL, nonce replay protection, BLOCK refusal, WARN parking with owner approve/reject/expiry, per-transaction and daily caps per asset, NEAR and NEP-141 payouts with a failure callback that releases the cap reservation, pause, events.
-- Registry contract: bonded reports with evidence URI and hash, verifier appointment, Verified/Rejected rulings, disputes, fixture flag.
+- Registry contract: bonded reports with evidence URI and hash, verifier appointment, Verified/Rejected rulings, disputes, fixture flag, and at most 50 open reports per account (rejected reports free their slot, so a subject can't fill its own slots with junk to block real reports).
 - Notara: six live signals with provenance and caveats, a fail-closed policy engine, a canonical report hash, ed25519 verdict signing that matches the contract byte for byte, CLI and HTTP API.
 - Agent: the wrapper (BLOCK stops, WARN parks and notifies, ALLOW pays), an LLM agent (NEAR AI Cloud / OpenAI-compatible) with a scripted fallback, a four-scenario attack demo with a saved log, owner CLI.
-- Website: Home, Check, Attack demo, Vault, Invoices and About. WARN approvals can be signed in the owner's own NEAR wallet (`@hot-labs/near-connect`, the connector NEAR's hackathon docs recommend), after a two-step ownership handover (`propose_owner` → `accept_owner`).
+- Website: landing page, app (Dashboard, Get Paid, Send, Vault Console, Account check, Transactions, Profile, Settings), customer pages (`/pay`, `/claim`, `/m`, `/invoices`) and documentation (`/docs`). WARN approvals can be signed in the owner's own NEAR wallet (`@hot-labs/near-connect`, the connector NEAR's hackathon docs recommend), after a two-step ownership handover (`propose_owner` → `accept_owner`).
 
 **Not done yet / planned**
-- Running the demo with a real LLM (NEAR AI Cloud). So far only the scripted agent has run on testnet.
 - Integration tests in `near-sandbox`. Today the contracts have unit tests only, because the sandbox doesn't run on Windows; it can run under WSL.
 - Keeping Notara signer key in a TEE (OutLayer / NEAR AI Cloud attestation).
-- NEAR Intents / 1Click as an optional execution layer after an ALLOW.
+- NEAR Intents for the agent vault: today Intents is used for customer payment links, not as the vault's payout path after an ALLOW.
 - A web UI for reports and approvals.
 - Gas-allowance monitoring for the agent key.
 - Reading report data on mainnet: there is no mainnet registry, and mainnet deployment is not planned.
 
 ## Honest limits
 - This is a hackathon prototype. It has not been audited. Don't put real funds in it.
+- On the public deploy, the server holds the Notara signer key and the shared visitor-vault agent key as environment variables, and signs verdicts for visitor vaults itself. Whoever obtains those variables controls every visitor vault's spending, within its caps (0.5 test NEAR per payment, 1 a day).
 - The verdict reflects the configured policy and the evidence collected. It is not proof that anyone is malicious or safe. Accuracy against real scams has not been measured.
 - The heuristics are easy to game on their own: age can be bought, and reports start empty. The value of the design is that the vault enforces the decision and the caps even when the agent is compromised.
 

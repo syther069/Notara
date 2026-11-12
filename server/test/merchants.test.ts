@@ -44,3 +44,10 @@ test("a signature stays fresh for its window, even from a clock that runs a litt
   assert.ok(!ok(nonceAt(Date.now() - 11 * 60_000)), "expired");
   assert.ok(!ok(new Uint8Array(16)), "wrong length");
 });
+
+test("listing a merchant's links needs that merchant's wallet signature", async () => {
+  const { verifyLinksProof, linksMessage } = await import("../merchants.ts");
+  assert.equal(linksMessage("shop.near"), "Notara: show my payment links\nAccount: shop.near");
+  await assert.rejects(() => verifyLinksProof("", "shop.near", "mainnet"), /Sign with your wallet/);
+  await assert.rejects(() => verifyLinksProof("garbage", "shop.near", "mainnet"), /didn't check out/);
+});

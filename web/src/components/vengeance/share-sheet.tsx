@@ -2,10 +2,10 @@ import * as React from 'react'
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from "motion/react"
-import qrcode from 'qrcode-generator' // MIT, © Kazuhiko Arase
+import QR from 'qrcode'
 
 // ShareSheet: local QR generation, no API keys or external images.
-// The QR encoder is qrcode-generator (MIT, Kazuhiko Arase). Pass a public URL.
+// The QR encoder is the same `qrcode` package the rest of the site uses. Pass a public URL.
 // `variant`: 'default' | 'message' | 'compact'. `theme`: 'auto' | 'dark' | 'light'.
 // Pass a real URL in production. The default URL is a demo placeholder.
 // Shared by all ShareSheet instances in this module.
@@ -67,12 +67,10 @@ function QrArt({ url, size = 170, onReady }: { url: string; size?: number; onRea
   const svg = useMemo(() => {
     try {
       if (!url) return ''
-      const qr = qrcode(0, 'M')
-      qr.addData(url)
-      qr.make()
-      const cells = qr.getModuleCount(), margin = 4, n = cells + margin * 2
+      const m = QR.create(url, { errorCorrectionLevel: 'M' }).modules
+      const cells = m.size, margin = 4, n = cells + margin * 2
       let rects = ''
-      for (let y = 0; y < cells; y++) for (let x = 0; x < cells; x++) if (qr.isDark(y, x)) rects += `<rect x="${x + margin}" y="${y + margin}" width="1" height="1"/>`
+      for (let y = 0; y < cells; y++) for (let x = 0; x < cells; x++) if (m.get(y, x)) rects += `<rect x="${x + margin}" y="${y + margin}" width="1" height="1"/>`
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${n * 10}" height="${n * 10}" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges"><path fill="#fff" d="M0 0h${n}v${n}H0z"/><g fill="#111116">${rects}</g></svg>`
     } catch { return '' }
   }, [url])

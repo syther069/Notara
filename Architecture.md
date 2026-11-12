@@ -52,6 +52,7 @@ Shared reports about accounts.
 - `submit_report` (anyone, 0.01 NEAR bond), `dispute` (anyone, bond), `set_status` (verifiers only), `add_verifier` (owner).
 - Statuses: `Unverified`, `Verified`, `Rejected`, `Disputed`.
 - `is_fixture: true` marks seeded demo data.
+- At most 50 open reports per subject; `Rejected` reports don't count, so a subject can't fill its own slots with junk to block real reports (redeployed on testnet 2026-11-12, code hash `GSur5172GNggBZ2SAd6VPtAaV6MUyBfyfU5z7R8Q2gQ`).
 
 ### 2.3 Notara (`passport/src`, TypeScript)
 The checker. Pure read access to chain data plus one signing key.

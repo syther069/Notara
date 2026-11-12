@@ -54,9 +54,9 @@
     "semantic_hash": ""
   },
   "contracts/registry/src/lib.rs": {
-    "mtime": 1794048116.721827,
-    "seen": 1794049810.3449924,
-    "ast_hash": "5d1bee78a544d2b2aa182bcce6f6ce8e",
+    "mtime": 1794423619.244467,
+    "seen": 1794424046.4654565,
+    "ast_hash": "8949a7ce451d3ed2bd79137ad695e79f",
     "semantic_hash": ""
   },
   "contracts/vault/Cargo.toml": {
@@ -204,27 +204,27 @@
     "semantic_hash": ""
   },
   "server/index.ts": {
-    "mtime": 1794248453.086312,
-    "seen": 1794248588.2988393,
-    "ast_hash": "028767025094baf841eb5804f17256b4",
+    "mtime": 1794464160.8405309,
+    "seen": 1794464406.9857628,
+    "ast_hash": "cf6ecd8cd345fcf6b29ad2f37079d98d",
     "semantic_hash": ""
   },
   "server/invoices.ts": {
-    "mtime": 1794209454.2747831,
-    "seen": 1794210588.7609413,
-    "ast_hash": "8eae5a1ff240a51d97785d2d23b73297",
+    "mtime": 1794464147.1442847,
+    "seen": 1794464406.9857628,
+    "ast_hash": "21f7da4f7e48603fb61e9c3f8762a1ca",
     "semantic_hash": ""
   },
   "server/merchants.ts": {
-    "mtime": 1794234455.0725563,
-    "seen": 1794242945.3678346,
-    "ast_hash": "958ea61d333319df97f87fc8780484c2",
+    "mtime": 1794464147.1442847,
+    "seen": 1794464406.9857628,
+    "ast_hash": "2aa6249e4fcc346700dbdae4ff84fd90",
     "semantic_hash": ""
   },
   "server/sends.ts": {
-    "mtime": 1794248452.2234445,
-    "seen": 1794248588.2988393,
-    "ast_hash": "122a075ef6580e81c3b1cc54bad80c0d",
+    "mtime": 1794464124.3127575,
+    "seen": 1794464406.9857628,
+    "ast_hash": "2098ae3320b9c405dd6560fc1fc4c42f",
     "semantic_hash": ""
   },
   "server/test/checkout.test.ts": {
@@ -240,15 +240,15 @@
     "semantic_hash": ""
   },
   "server/test/invoices.test.ts": {
-    "mtime": 1794209506.561304,
-    "seen": 1794210588.7609413,
-    "ast_hash": "a56bc6adf8d4af5700d7e4cacc19325b",
+    "mtime": 1794464348.3352096,
+    "seen": 1794464406.9857628,
+    "ast_hash": "61bec59b3304be1b713bfbdc618ea6db",
     "semantic_hash": ""
   },
   "server/test/merchants.test.ts": {
-    "mtime": 1794234496.159755,
-    "seen": 1794242945.3678346,
-    "ast_hash": "41e87d261014f514909d47a6042e2fdc",
+    "mtime": 1794464181.0551805,
+    "seen": 1794464406.9857628,
+    "ast_hash": "40697045ee303f62f1d28600dc66903f",
     "semantic_hash": ""
   },
   "tsconfig.json": {
@@ -258,9 +258,9 @@
     "semantic_hash": ""
   },
   "web/package.json": {
-    "mtime": 1794385591.547159,
-    "seen": 1794413511.554728,
-    "ast_hash": "e3b472e01e43f128ecd843cb5191d7ff",
+    "mtime": 1794464283.7667687,
+    "seen": 1794464406.9857628,
+    "ast_hash": "a88a9a9acf1eae63703374ea33a6c9a5",
     "semantic_hash": ""
   },
   "web/src/components/CheckResult.tsx": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "web/src/components/Layout.tsx": {
-    "mtime": 1794373765.7706845,
-    "seen": 1794413511.554728,
+    "mtime": 1794421496.896217,
+    "seen": 1794424046.4654565,
     "ast_hash": "7d4d38fb4cda35b41b1b645386e0f3e2",
     "semantic_hash": ""
   },
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/api.ts": {
-    "mtime": 1794254564.2085404,
-    "seen": 1794254832.872914,
-    "ast_hash": "38e20ba66fd954baa57b2e610aefd1d4",
+    "mtime": 1794464209.0861468,
+    "seen": 1794464406.9857628,
+    "ast_hash": "9184fd9a91e9f4267c934c7d98a18563",
     "semantic_hash": ""
   },
   "web/src/lib/format.ts": {
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Send.tsx": {
-    "mtime": 1794415141.0644836,
-    "seen": 1794415205.6576653,
-    "ast_hash": "8bf70fd3e280e81d4caaaeeab009605d",
+    "mtime": 1794423914.6930518,
+    "seen": 1794424046.4654565,
+    "ast_hash": "39a43a4ab771b4497f4ff765ce5e3aeb",
     "semantic_hash": ""
   },
   "web/src/pages/Vault.tsx": {
@@ -390,9 +390,9 @@
     "semantic_hash": ""
   },
   "Architecture.md": {
-    "mtime": 1794048434.0073893,
-    "seen": 1794049810.3449924,
-    "ast_hash": "fda59eb13c79273ff2d2db5e7382e252",
+    "mtime": 1794463597.454744,
+    "seen": 1794463665.032132,
+    "ast_hash": "116b0562ddbb34261720885635b2bc9b",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -402,9 +402,9 @@
     "semantic_hash": ""
   },
   "HACKATHON.md": {
-    "mtime": 1793785404.5798688,
-    "seen": 1794049810.3449924,
-    "ast_hash": "2924917e42e1b97feb8221b6c603a3de",
+    "mtime": 1794423998.0124884,
+    "seen": 1794424046.4654565,
+    "ast_hash": "2b93a7dcb308f37e8fdaa3bd7f648146",
     "semantic_hash": ""
   },
   "PLAN.md": {
@@ -420,9 +420,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794329144.6452675,
-    "seen": 1794413511.554728,
-    "ast_hash": "7cb6fa8a6bcce0ab3f38edbc8e0369e2",
+    "mtime": 1794464358.2284002,
+    "seen": 1794464406.9857628,
+    "ast_hash": "b791effabc3892c574c46afb2bb2376e",
     "semantic_hash": ""
   },
   "demo/inbox/invoice-injected.md": {
@@ -462,8 +462,8 @@
     "semantic_hash": ""
   },
   "web/public/favicon.svg": {
-    "mtime": 1793786488.5538025,
-    "seen": 1794049810.3449924,
+    "mtime": 1794421507.776084,
+    "seen": 1794424046.4654565,
     "ast_hash": "7099863685bd12b0dccee53e8c2da22e",
     "semantic_hash": ""
   },
@@ -480,15 +480,15 @@
     "semantic_hash": ""
   },
   "server/nearpay.ts": {
-    "mtime": 1794207617.8895416,
-    "seen": 1794208307.842678,
-    "ast_hash": "db72e6541082de43e5772d7ef10d8143",
+    "mtime": 1794423590.3603063,
+    "seen": 1794424046.4654565,
+    "ast_hash": "23da69d631676a8beeb37a8ac03c6705",
     "semantic_hash": ""
   },
   "server/test/db.test.ts": {
-    "mtime": 1794209506.561304,
-    "seen": 1794210588.7609413,
-    "ast_hash": "c4acaf9edc8176ac6a279234db820c0d",
+    "mtime": 1794464181.0071495,
+    "seen": 1794464406.9857628,
+    "ast_hash": "45222c4d8b9954e7ce595b1754561e05",
     "semantic_hash": ""
   },
   "server/test/fixture-usdc-transfer.json": {
@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "server/test/nearpay.test.ts": {
-    "mtime": 1794207618.291757,
-    "seen": 1794208307.842678,
-    "ast_hash": "caf54d60f475186f1ba9ef2c67fc86e4",
+    "mtime": 1794423590.4069693,
+    "seen": 1794424046.4654565,
+    "ast_hash": "aa3e4e012cbfdf0fb17af67223cb37d8",
     "semantic_hash": ""
   },
   "IMPLEMENTATION.md": {
@@ -564,9 +564,9 @@
     "semantic_hash": ""
   },
   "server/test/sends.test.ts": {
-    "mtime": 1794207594.6930406,
-    "seen": 1794208307.842678,
-    "ast_hash": "7903662829d0e5ddcbdecd1f24a93e82",
+    "mtime": 1794423853.8643522,
+    "seen": 1794424046.4654565,
+    "ast_hash": "1dce6504ed47e08c667c73ffc13f1e9c",
     "semantic_hash": ""
   },
   "scripts/build-vercel.mjs": {
@@ -635,12 +635,6 @@
     "ast_hash": "887b7ad5f458828b6ca021b5fef64598",
     "semantic_hash": ""
   },
-  "skiper-components.md": {
-    "mtime": 1794230662.7787461,
-    "seen": 1794232729.044029,
-    "ast_hash": "8f53d22b1786b59b27d7ef8793ff375f",
-    "semantic_hash": ""
-  },
   "web/public/fonts/Manrope-OFL.txt": {
     "mtime": 1794227986.0,
     "seen": 1794232729.044029,
@@ -689,1848 +683,6 @@
     "ast_hash": "4746fb64726aaf0981365d8777bcc8d0",
     "semantic_hash": ""
   },
-  ".claude/skills/design-taste-frontend/assets/backgrounds/backgrounds.js": {
-    "mtime": 1794290707.5234973,
-    "seen": 1794294485.670024,
-    "ast_hash": "addbc522bccf5b00d644bf02377d0192",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/backgrounds/pick.mjs": {
-    "mtime": 1794290707.5488725,
-    "seen": 1794294485.670024,
-    "ast_hash": "c4770ff96f0b2d6d134d80dac6aa49c2",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/components/fx-map/bake.mjs": {
-    "mtime": 1794290704.3353734,
-    "seen": 1794294485.670024,
-    "ast_hash": "5e3a1105df50a871bb30f563c9fe5d3b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/diagrams/diagram.js": {
-    "mtime": 1794290704.2271154,
-    "seen": 1794294485.670024,
-    "ast_hash": "532c780e47efb926f3f9b3d9ad2c2307",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/diagrams/mount.js": {
-    "mtime": 1794290704.1598842,
-    "seen": 1794294485.670024,
-    "ast_hash": "2c253f09e80e3b839e5aed8bdaa5b9f8",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/effects/fx.js": {
-    "mtime": 1794290704.3854742,
-    "seen": 1794294485.670024,
-    "ast_hash": "41537a608876c2a3afea18dcae80dd0c",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/effects/grain-gradient/effect.js": {
-    "mtime": 1794291528.445288,
-    "seen": 1794294485.670024,
-    "ast_hash": "f53f82c5436fb8d9c2325747d811e0df",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/effects/grain-gradient/meta.json": {
-    "mtime": 1794291528.843916,
-    "seen": 1794294485.670024,
-    "ast_hash": "352ce5e141b5c471d37814059499bdec",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/effects/index.json": {
-    "mtime": 1794290704.346415,
-    "seen": 1794294485.670024,
-    "ast_hash": "87d7649fd16b1dde71a332950e2f6c98",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/effects/pick.js": {
-    "mtime": 1794290704.4807734,
-    "seen": 1794294485.670024,
-    "ast_hash": "6381d387708edd0da930da2b87b1c441",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/check.mjs": {
-    "mtime": 1794290705.2648945,
-    "seen": 1794294485.670024,
-    "ast_hash": "cbec1f4185e8b1108f9ed329d2551633",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/deal.mjs": {
-    "mtime": 1794290705.3859088,
-    "seen": 1794294485.670024,
-    "ast_hash": "8ce4036c4c879cac549df01ebbef7c2c",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/heroes.json": {
-    "mtime": 1794291391.6773405,
-    "seen": 1794294485.670024,
-    "ast_hash": "85bb0169bdf5d2e4e81628026e6c4ad6",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/layout-check.js": {
-    "mtime": 1794290705.241866,
-    "seen": 1794294485.670024,
-    "ast_hash": "87c1879e49df999edc21026f4f5ec976",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/layout.js": {
-    "mtime": 1794290705.2612197,
-    "seen": 1794294485.670024,
-    "ast_hash": "80c8e3b5876e2b0d8394f50e825b5b33",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/closing-lift/moment.js": {
-    "mtime": 1794290706.6311686,
-    "seen": 1794294485.670024,
-    "ast_hash": "f00f81360e5b3bf140d8380ffc162bbe",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/counter-rolls/moment.js": {
-    "mtime": 1794290707.0865898,
-    "seen": 1794294485.670024,
-    "ast_hash": "03e0233b822041bcbea3b243895b1af3",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/cursor-spotlight/moment.js": {
-    "mtime": 1794290706.9689476,
-    "seen": 1794294485.670024,
-    "ast_hash": "8878e19da5892387fb2563a225ec16e8",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/giant-type-pass/moment.js": {
-    "mtime": 1794290706.5242004,
-    "seen": 1794294485.670024,
-    "ast_hash": "ecbbeda1a65e1ec8732390e4d738933d",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/headline-arrives/moment.js": {
-    "mtime": 1794290705.98841,
-    "seen": 1794294485.670024,
-    "ast_hash": "091d199668ca58f5f4952ad949876c2a",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/index.json": {
-    "mtime": 1794290706.7669063,
-    "seen": 1794294485.670024,
-    "ast_hash": "df204f49cce5d457567d4e99fd71e488",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/iris-opens/moment.js": {
-    "mtime": 1794290707.4664526,
-    "seen": 1794294485.670024,
-    "ast_hash": "b465b86658e057438a367d88d2308d69",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/letters-assemble/moment.js": {
-    "mtime": 1794290706.286165,
-    "seen": 1794294485.670024,
-    "ast_hash": "da799242b4e9881fe81a2284e4f333b4",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/lib.js": {
-    "mtime": 1794290707.2103076,
-    "seen": 1794294485.670024,
-    "ast_hash": "73f48dd375df1de26fcc71349cd93ed5",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/line-carries-colour/moment.js": {
-    "mtime": 1794290706.3870387,
-    "seen": 1794294485.670024,
-    "ast_hash": "9aca8f60bc742d47159a1074d270b122",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/lines-rise/moment.js": {
-    "mtime": 1794290706.0577881,
-    "seen": 1794294485.670024,
-    "ast_hash": "296273c6e0b9145bbdc7940a2659899a",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/liquid-hover/moment.js": {
-    "mtime": 1794290706.124274,
-    "seen": 1794294485.670024,
-    "ast_hash": "95a3d32ed86c639b7e7e864f052c5c0a",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/liquid-type/moment.js": {
-    "mtime": 1794290706.8288896,
-    "seen": 1794294485.670024,
-    "ast_hash": "d8af5acd6c0867e92378510e65c8f45a",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/marquee-row/moment.js": {
-    "mtime": 1794290707.2103076,
-    "seen": 1794294485.670024,
-    "ast_hash": "8d7151b66a01c8fe1c04224f25d4b7c3",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/moments.js": {
-    "mtime": 1794290706.7523255,
-    "seen": 1794294485.670024,
-    "ast_hash": "274702695c122c8cc5f884f0ef6ea414",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/photo-chapters/moment.js": {
-    "mtime": 1794290706.4526503,
-    "seen": 1794294485.670024,
-    "ast_hash": "5153618bc2cea70fb8f50718efdd13bf",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/picture-develops/moment.js": {
-    "mtime": 1794290706.2017963,
-    "seen": 1794294485.670024,
-    "ast_hash": "adbccc86bed0dcbb2b3152211152bdb8",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/pinned-chapters/moment.js": {
-    "mtime": 1794290706.7094367,
-    "seen": 1794294485.670024,
-    "ast_hash": "c8c38c5fcc35604660e33ffb43ecd964",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/window-parallax/moment.js": {
-    "mtime": 1794290706.560401,
-    "seen": 1794294485.670024,
-    "ast_hash": "56c37c989952a0db66e83826eb6e79cc",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/word-highlight/moment.js": {
-    "mtime": 1794290707.050433,
-    "seen": 1794294485.670024,
-    "ast_hash": "e89c4a34958f20457f6365f15a747f1d",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/word-rotate/moment.js": {
-    "mtime": 1794290706.9020047,
-    "seen": 1794294485.670024,
-    "ast_hash": "aa7886d205e167b39b84da878649f209",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/motion/motion.js": {
-    "mtime": 1794290704.5815718,
-    "seen": 1794294485.670024,
-    "ast_hash": "37f5401f9ea77424bd9f3f81ce8a8581",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/_print-core/auto.js": {
-    "mtime": 1794290705.694147,
-    "seen": 1794294485.670024,
-    "ast_hash": "29c211b888440626f1c666f36ab1f4f1",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/_print-core/lint-glsl.mjs": {
-    "mtime": 1794290705.6694171,
-    "seen": 1794294485.670024,
-    "ast_hash": "37caccf19890416385f33cb7ca2d4853",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/_print-core/print3d.js": {
-    "mtime": 1794290705.6514573,
-    "seen": 1794294485.670024,
-    "ast_hash": "499b63c14409027e5cbdb2b8b5e7a08e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/_scenes/kit.js": {
-    "mtime": 1794290705.7792065,
-    "seen": 1794294485.670024,
-    "ast_hash": "eecbae50b9e96b6b88ffc9beaa74dbc9",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/dither-sequence/object.js": {
-    "mtime": 1794290705.619608,
-    "seen": 1794294485.670024,
-    "ast_hash": "3bc35c156a406c58642d3f748498ac5e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/dot-object/object.js": {
-    "mtime": 1794290705.8182545,
-    "seen": 1794294485.670024,
-    "ast_hash": "3abe68d4c0f54f9882697d75fa65a8ee",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/exploded-layers/object.js": {
-    "mtime": 1794290705.855375,
-    "seen": 1794294485.670024,
-    "ast_hash": "71ba614799fe608aa0d1d533817bc914",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/photo-dither/object.js": {
-    "mtime": 1794290705.4559681,
-    "seen": 1794294485.670024,
-    "ast_hash": "bdf98264c68f1c6696de0a4ccdfcafdb",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/photo-engraving/object.js": {
-    "mtime": 1794290705.4883294,
-    "seen": 1794294485.670024,
-    "ast_hash": "a6f610700d14a36b71b0c2c489e51a15",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/photo-halftone/object.js": {
-    "mtime": 1794290705.4380817,
-    "seen": 1794294485.670024,
-    "ast_hash": "9a55c85386e85e38d9b4a5abfe8067aa",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/photo-kit/photo.js": {
-    "mtime": 1794290705.893183,
-    "seen": 1794294485.6712441,
-    "ast_hash": "5cba1b29f24b29710d72574330bb6bf3",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/photo-kit/photos.json": {
-    "mtime": 1794290705.867275,
-    "seen": 1794294485.6712441,
-    "ast_hash": "76b9fbafa607a9b5e23e1422b9d5286e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/product-render/auto.js": {
-    "mtime": 1794290705.57227,
-    "seen": 1794294485.6712441,
-    "ast_hash": "89cfefb4df1e5ba72f06830acfdf7608",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/product-render/build.js": {
-    "mtime": 1794290705.5428514,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b3bc933fbc9eec1bed6fa7971844ba94",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/product-render/make-posters.mjs": {
-    "mtime": 1794290705.5163777,
-    "seen": 1794294485.6712441,
-    "ast_hash": "bfed95eb02d960f2da582d48af078afa",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/product-render/specs/city-bike.json": {
-    "mtime": 1794290705.5908117,
-    "seen": 1794294485.6712441,
-    "ast_hash": "cf33b9170d58f7b45176a39abe5c5fec",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/split-reveal/object.js": {
-    "mtime": 1794290705.7395487,
-    "seen": 1794294485.6712441,
-    "ast_hash": "35248a3e30fff98ead08f730ac35a2b7",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/photos/photos.json": {
-    "mtime": 1794290705.1530693,
-    "seen": 1794294485.6712441,
-    "ast_hash": "58789e2a6dea000981bd346a1ea7f561",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/scenes/_demo/shoot.mjs": {
-    "mtime": 1794290704.6079953,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4afc73c615a0ea63154ee90ac2ff6615",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/scenes/index.json": {
-    "mtime": 1794290704.6277425,
-    "seen": 1794294485.6712441,
-    "ast_hash": "d7c8f0a3230e0d9366203ffba0e849ee",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/scenes/lib.js": {
-    "mtime": 1794290704.6298814,
-    "seen": 1794294485.6712441,
-    "ast_hash": "dd6a0dd8193cca8e210daf1460f38f39",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/scenes/scenes.js": {
-    "mtime": 1794290704.6697106,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c081f378ebe7aaef946cd054277df150",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/system.js": {
-    "mtime": 1794290704.8972828,
-    "seen": 1794294485.6712441,
-    "ast_hash": "8e0053b10e34e7162f77014b193144cc",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/ui/ui.js": {
-    "mtime": 1794290704.811539,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b89ec13bdecccd4094cec5278b476c5d",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/library/palettes.json": {
-    "mtime": 1794291392.198872,
-    "seen": 1794294485.6712441,
-    "ast_hash": "972ce31bf98e0b77d9298bc286ea7fa4",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/library/type.json": {
-    "mtime": 1794290703.806493,
-    "seen": 1794294485.6712441,
-    "ast_hash": "770973e2b2fc5045915e6c66eae6cd63",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/consistency.mjs": {
-    "mtime": 1794290707.564934,
-    "seen": 1794294485.6712441,
-    "ast_hash": "59bc3bf1d8fd7f65f1a0bc8576ab8e22",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/copy-lint.mjs": {
-    "mtime": 1794290707.61599,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e6fb615ab5f1945ee83410379cfb6464",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/effects.mjs": {
-    "mtime": 1794290707.61152,
-    "seen": 1794294485.6712441,
-    "ast_hash": "508f6ca2663a880630e89fb455586a0e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/gate.mjs": {
-    "mtime": 1794290707.5665777,
-    "seen": 1794294485.6712441,
-    "ast_hash": "318115cf2c3420b5ce94b102249baeb6",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/icons.mjs": {
-    "mtime": 1794290707.6200657,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9ec85423af28fde422e9a90b535cf429",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/moments.mjs": {
-    "mtime": 1794290707.61152,
-    "seen": 1794294485.6712441,
-    "ast_hash": "197e8d3ec3c1fb87ee7ed1db371cea89",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/perf.mjs": {
-    "mtime": 1794290707.61599,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4a9ad70f7741b7edc894a928a6a661bc",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/photos.mjs": {
-    "mtime": 1794290707.61599,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e1b176620a67e32f15c57294d86a8dd1",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/shoot.mjs": {
-    "mtime": 1794290707.562905,
-    "seen": 1794294485.6712441,
-    "ast_hash": "21616f3ac2e8d95e77494e404db762fd",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/start.mjs": {
-    "mtime": 1794290707.564934,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b9a925e5ba08e5bdf2a077175f8905eb",
-    "semantic_hash": ""
-  },
-  ".taste-skill/build.done.json": {
-    "mtime": 1794294169.5934129,
-    "seen": 1794294485.6712441,
-    "ast_hash": "cde367803dcb7d292eb9f66ea95aaedc",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/OptimizationGuideModelsManifest/1.20261018.2/_metadata/verified_contents.json": {
-    "mtime": 315532800.0,
-    "seen": 1794294485.6712441,
-    "ast_hash": "5b44fa27bb01e29943da3fd7452fb153",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/OptimizationGuideModelsManifest/1.20261018.2/manifest.json": {
-    "mtime": 315532800.0,
-    "seen": 1794294485.6712441,
-    "ast_hash": "caefca98267b2c829d40e3c9d350b7d9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/extensions_crx_cache/metadata.json": {
-    "mtime": 1794292542.946937,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2aa9e263ee3796d9ce358460a2451b4c",
-    "semantic_hash": ""
-  },
-  ".taste-skill/effects-history.json": {
-    "mtime": 1794291498.6469967,
-    "seen": 1794294485.6712441,
-    "ast_hash": "38a1017bb58e2ebb8d3192d606e29447",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate.json": {
-    "mtime": 1794294320.8673394,
-    "seen": 1794294485.6712441,
-    "ast_hash": "93c34dae49f70ff72e76fd7a0a1eea60",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/report.json": {
-    "mtime": 1794294305.4062867,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f45177b8fcbf6676ff706a9b386124eb",
-    "semantic_hash": ""
-  },
-  ".taste-skill/history.json": {
-    "mtime": 1794291424.4046679,
-    "seen": 1794294485.6712441,
-    "ast_hash": "45514d5182d00975dd88e06e7cd136bf",
-    "semantic_hash": ""
-  },
-  ".taste-skill/layout-history.json": {
-    "mtime": 1794291408.2964818,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c5bc91fcd6c607c3d802b41bbfd75e8e",
-    "semantic_hash": ""
-  },
-  ".taste-skill/shots/tiles/sections.json": {
-    "mtime": 1794292541.81992,
-    "seen": 1794294485.6712441,
-    "ast_hash": "8f05d0a515f52341067ee94e5f888f6f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/waivers.json": {
-    "mtime": 1794294167.9481568,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e827d3bb66d4506a7ec9aad0f90cf440",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/SKILL.md": {
-    "mtime": 1794290707.556787,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9fe1f17c0eaef84589bc890281e2500b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/diagrams/lab.html": {
-    "mtime": 1794290704.1442115,
-    "seen": 1794294485.6712441,
-    "ast_hash": "cbe135d8a17ba736aa2f7d4d2a4e062a",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/effects/README.md": {
-    "mtime": 1794290704.5079396,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4c87178f6a7860238e4a259d3e00c05a",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/effects/gallery.html": {
-    "mtime": 1794290704.4507053,
-    "seen": 1794294485.6712441,
-    "ast_hash": "59916766b47da3e4a6fe744f46b79482",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/icons/demo.html": {
-    "mtime": 1794290704.3058612,
-    "seen": 1794294485.6712441,
-    "ast_hash": "436816fbfb46e57dd61ef4e72c9dbd72",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/fonts.html": {
-    "mtime": 1794290705.3047585,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9729db7f5cdbe58dce4451122ec9f793",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-centred.html": {
-    "mtime": 1794291394.2597625,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1afee7b4bda6c21563e5aa03a92ee09b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-collage.html": {
-    "mtime": 1794291393.746533,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a210b9869ec1c15afa29e8636ad13b78",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-editorial.html": {
-    "mtime": 1794290705.4165356,
-    "seen": 1794294485.6712441,
-    "ast_hash": "be18afbf1b4ccf0120e21cdfa98c12bd",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-film.html": {
-    "mtime": 1794290705.3397324,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b817b49531a5be2e101fc081dbf4936e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-photo.html": {
-    "mtime": 1794290705.3849008,
-    "seen": 1794294485.6712441,
-    "ast_hash": "8a3b7fda8d9488c4f568b4d296912f26",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-place.html": {
-    "mtime": 1794290705.321973,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a417bbd8ff103ee20e81d74e60830e5e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-product.html": {
-    "mtime": 1794290705.3047585,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9cafe38939da03ce7025a0255343cc86",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-split.html": {
-    "mtime": 1794291393.220333,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e862f7970521421df042829ce12c6832",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-statement.html": {
-    "mtime": 1794291395.302789,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1ea47fa1b9c578bd6a8616563b8eaee8",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-triptych.html": {
-    "mtime": 1794291394.7874684,
-    "seen": 1794294485.6712441,
-    "ast_hash": "8931c0c6beafa6f1bba9e4853606ec80",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/hero-word.html": {
-    "mtime": 1794290705.3192558,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1b38e38a6f812859326103543fbfe8a9",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/in-card.html": {
-    "mtime": 1794290707.3198752,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e6db0c057a561ef3bb480536a03d5533",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/in-page-service.html": {
-    "mtime": 1794290707.3569171,
-    "seen": 1794294485.6712441,
-    "ast_hash": "5f644ccd33200ae67321dc2fc00e9413",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/in-page.html": {
-    "mtime": 1794290707.4020188,
-    "seen": 1794294485.6712441,
-    "ast_hash": "79f6101dbff5e10ee8151f9090f2703d",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/closing-lift/demo.html": {
-    "mtime": 1794290706.6812155,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6ae2a0d199f556a39e9c0821548a476f",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/counter-rolls/demo.html": {
-    "mtime": 1794290707.1262908,
-    "seen": 1794294485.6712441,
-    "ast_hash": "7e56ec1338f9432a898b1636c9c40c70",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/cursor-spotlight/demo.html": {
-    "mtime": 1794290706.9378066,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b8cd1406ca5a1385d5f96b797ce2cb00",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/gallery.html": {
-    "mtime": 1794290707.1394072,
-    "seen": 1794294485.6712441,
-    "ast_hash": "292882ba5246451150650b8b66935210",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/giant-type-pass/demo.html": {
-    "mtime": 1794290706.4911613,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4eeebc426a7a05e4951307eb6605c504",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/headline-arrives/demo.html": {
-    "mtime": 1794290706.0255804,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e17c4590213bbeace986e47c001077e6",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/iris-opens/demo.html": {
-    "mtime": 1794290707.4502678,
-    "seen": 1794294485.6712441,
-    "ast_hash": "69d1002b3367727bac9e01052378ce6b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/letters-assemble/demo.html": {
-    "mtime": 1794290706.3088338,
-    "seen": 1794294485.6712441,
-    "ast_hash": "d1316aeea3c2e82e68ceeb179a2ac7b9",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/line-carries-colour/demo.html": {
-    "mtime": 1794290706.359004,
-    "seen": 1794294485.6712441,
-    "ast_hash": "cd565692cf5faece2d993f17e761599e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/lines-rise/demo.html": {
-    "mtime": 1794290706.09144,
-    "seen": 1794294485.6712441,
-    "ast_hash": "de5b68f8871e39b729c0fddc1f362f92",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/liquid-hover/demo.html": {
-    "mtime": 1794290706.1672761,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9e06458c666d617a6202ee63279e6aaf",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/liquid-type/demo.html": {
-    "mtime": 1794290706.7996547,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f09e0f1f48c9f90c2228b81159270d14",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/marquee-row/demo.html": {
-    "mtime": 1794290707.1793358,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ffc680a086835bea054fd3dc4a31e5e7",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/photo-chapters/demo.html": {
-    "mtime": 1794290706.435434,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ad28c506601b3c194124ec0fc3508022",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/picture-develops/demo.html": {
-    "mtime": 1794290706.2449467,
-    "seen": 1794294485.6712441,
-    "ast_hash": "529cebc11536ef346d4b7177f59a2e35",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/pinned-chapters/demo.html": {
-    "mtime": 1794290706.7418377,
-    "seen": 1794294485.6712441,
-    "ast_hash": "fb6d40b44d2c9e5e1dc1da14267926e8",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/window-parallax/demo.html": {
-    "mtime": 1794290706.6033885,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9f741393b46f8a4fc338b94944ad92dc",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/word-highlight/demo.html": {
-    "mtime": 1794290707.014801,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6bc43080a67a3d955a739da536aa32df",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/word-rotate/demo.html": {
-    "mtime": 1794290706.8643084,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6569a3b15332ced02470928f462eda5c",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/motion/demo.html": {
-    "mtime": 1794290704.5556693,
-    "seen": 1794294485.6712441,
-    "ast_hash": "84dd797765db2121b79a559bf4ea1587",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/_print-core/README.md": {
-    "mtime": 1794290705.7156246,
-    "seen": 1794294485.6712441,
-    "ast_hash": "866d1f616963fc38e0af086ed35940ed",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/objects/index.html": {
-    "mtime": 1794290705.9522235,
-    "seen": 1794294485.6712441,
-    "ast_hash": "260e2cd7b57b96cf9715dcfa60179e5f",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/starter.html": {
-    "mtime": 1794290705.1931937,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e3335ce84a1ce7c894b45bfe67c940c9",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/ui/_lab/object-card.html": {
-    "mtime": 1794290704.862147,
-    "seen": 1794294485.6712441,
-    "ast_hash": "04e58c7a070e6b9b87be373d1f056888",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/ui/cards.html": {
-    "mtime": 1794290704.7702289,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0d68cefd0d57f77e9edef682e84ec6a9",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/ui/index.html": {
-    "mtime": 1794290704.7279851,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0f0867ed23b93796f2fd94e6d110d6ac",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/backgrounds.md": {
-    "mtime": 1794290703.8605857,
-    "seen": 1794294485.6712441,
-    "ast_hash": "91a2f1f5e0b191826a4c8802296f971b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/cards.md": {
-    "mtime": 1794290703.9210598,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c5907de4f8ca35f0aec60c4777fa7e3d",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/copy-moves.md": {
-    "mtime": 1794290704.0936084,
-    "seen": 1794294485.6712441,
-    "ast_hash": "50de20326ab4dbab23e4d50201c73636",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/copy-registers.md": {
-    "mtime": 1794290704.000737,
-    "seen": 1794294485.6712441,
-    "ast_hash": "85fa97226d900e53c6a0be4b7843047d",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/copy-tells.md": {
-    "mtime": 1794290703.8816173,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ee5bd4cb174d8ceb123cb3d85a9566f3",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/copy-voice.md": {
-    "mtime": 1794290704.0689979,
-    "seen": 1794294485.6712441,
-    "ast_hash": "bccd627170cee19349d075522624dc4b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/copy.md": {
-    "mtime": 1794290704.0343277,
-    "seen": 1794294485.6712441,
-    "ast_hash": "d5fd0e2f0a6d81a2bf2e4cf6cb08e8da",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/diagrams.md": {
-    "mtime": 1794290703.8971179,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6b27f69776b747c799e63ce29d5a538e",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/effects-creative.md": {
-    "mtime": 1794290704.0567138,
-    "seen": 1794294485.6712441,
-    "ast_hash": "831a70fe0341ef868a924004add79c5b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/effects-objects.md": {
-    "mtime": 1794290703.8707762,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9a613390575cbfc0d19b0944a09a2102",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/effects-usage.md": {
-    "mtime": 1794290703.9371428,
-    "seen": 1794294485.6712441,
-    "ast_hash": "5de449b5519199201c04440a8929f4d3",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/gate.md": {
-    "mtime": 1794290703.848143,
-    "seen": 1794294485.6712441,
-    "ast_hash": "285839e135dc834e7b877a25bb04281f",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/icons.md": {
-    "mtime": 1794290703.841579,
-    "seen": 1794294485.6712441,
-    "ast_hash": "fd531e377ad8df9d59dc38d9ae2eb4c8",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/layout-v4.md": {
-    "mtime": 1794290703.9873803,
-    "seen": 1794294485.6712441,
-    "ast_hash": "125352742ab08f71c0d275049168a6fa",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/moments.md": {
-    "mtime": 1794290704.010631,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0b4929fa18421993d78bfb2c1a1cb5a4",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/motion.md": {
-    "mtime": 1794290703.9546547,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6ab1bc865e5603d8f6d9c9354c95076a",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/perf.md": {
-    "mtime": 1794290704.047792,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0fa32ca74c6802ce37babac485afc299",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/photos.md": {
-    "mtime": 1794290704.0825784,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ff1b91c352e3f66a2e9c15cc04ce895f",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/scenes.md": {
-    "mtime": 1794290703.9794934,
-    "seen": 1794294485.6712441,
-    "ast_hash": "bbb020e67a67ad4e75207cbd37971b7f",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/sections-library.md": {
-    "mtime": 1794290703.9092243,
-    "seen": 1794294485.6712441,
-    "ast_hash": "21fbbc846b47dda0fa24ad644503de84",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/sections.md": {
-    "mtime": 1794290703.825656,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2f4a1b875f08776dca2d79bd10b9ce17",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/references/system.md": {
-    "mtime": 1794290703.966482,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f4fd28472c55358d0e9b5e5de98bc871",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/scripts/fx-gallery.template.html": {
-    "mtime": 1794290707.61152,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c131cc46a11761ca878441316886e1a9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/cons.txt": {
-    "mtime": 1794292912.1308353,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e622dfb4e04bcd60ca943a78dcbd197f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate-run.txt": {
-    "mtime": 1794294320.868851,
-    "seen": 1794294485.6712441,
-    "ast_hash": "328ecc6105dec7877dae538008fb60b8",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/rendered.html": {
-    "mtime": 1794294175.5817945,
-    "seen": 1794294485.6712441,
-    "ast_hash": "30bbe86f94ce981deb7877d2bbda9ab4",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/img/photo-d534.jpg": {
-    "mtime": 1794290705.3521647,
-    "seen": 1794294485.6712441,
-    "ast_hash": "931791f4aaed9c8a8d8fae115c274115",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/img/photo-d540.jpg": {
-    "mtime": 1794290705.3692777,
-    "seen": 1794294485.6712441,
-    "ast_hash": "08bab3cecd61821f5f3d483abb0c9757",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/layout/img/photo-d88.jpg": {
-    "mtime": 1794290705.361612,
-    "seen": 1794294485.6712441,
-    "ast_hash": "341f824ddc27dfaebf8b08ad910bbc15",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-1049-tall.jpg": {
-    "mtime": 1794290707.2809403,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ff3c60e910a7e87b1c09b9bf015c4573",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-1049.jpg": {
-    "mtime": 1794290707.2504907,
-    "seen": 1794294485.6712441,
-    "ast_hash": "5b02dd792eff8ea06f43fcb61ff2f572",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-1081.jpg": {
-    "mtime": 1794290707.2588344,
-    "seen": 1794294485.6712441,
-    "ast_hash": "001ca628516c07de6826adc5a7956cdf",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-640.jpg": {
-    "mtime": 1794290707.233351,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4ec246f43d2ac1e5636645692b2ac1e7",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-702-tall.jpg": {
-    "mtime": 1794290707.223575,
-    "seen": 1794294485.6712441,
-    "ast_hash": "22f8bcc7757fd09dbfd46271e6dadb1b",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-702.jpg": {
-    "mtime": 1794290707.2725277,
-    "seen": 1794294485.6712441,
-    "ast_hash": "76cf197c826ba3a53c8da944a786bcfa",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-855.jpg": {
-    "mtime": 1794290707.2429676,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0987456ed03f02e558563c9ee5506e18",
-    "semantic_hash": ""
-  },
-  ".claude/skills/design-taste-frontend/assets/moments/_demo/photo-887.jpg": {
-    "mtime": 1794290707.2874806,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6163eb1f5bf3e461e93a7f37d4471b5a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Icons/128.png": {
-    "mtime": 1794292535.7000568,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4d6718d1d2454b28eb57e77a0b453f03",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Icons/192.png": {
-    "mtime": 1794292535.7035477,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b9a97c31f96686dadf876b063fcb9371",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Icons/256.png": {
-    "mtime": 1794292535.714459,
-    "seen": 1794294485.6712441,
-    "ast_hash": "d2695f49e72d99213761bf869e97e895",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Icons/32.png": {
-    "mtime": 1794292535.692681,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c50a16207e11eac0a53a115fcf3b051f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Icons/48.png": {
-    "mtime": 1794292535.694898,
-    "seen": 1794294485.6712441,
-    "ast_hash": "db7d1fef456b4f5602fd843e804ea04a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Icons/64.png": {
-    "mtime": 1794292535.697041,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2d4e8b7ba69ba8a6801b7139cb7facd3",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Icons/96.png": {
-    "mtime": 1794292535.6990495,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c7a07ac785598ddf0873b82f02fa0391",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Trusted Icons/Icons/128.png": {
-    "mtime": 1794292535.7300682,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4d6718d1d2454b28eb57e77a0b453f03",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Trusted Icons/Icons/192.png": {
-    "mtime": 1794292535.7339773,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b9a97c31f96686dadf876b063fcb9371",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Trusted Icons/Icons/256.png": {
-    "mtime": 1794292535.7425175,
-    "seen": 1794294485.6712441,
-    "ast_hash": "d2695f49e72d99213761bf869e97e895",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Trusted Icons/Icons/32.png": {
-    "mtime": 1794292535.722083,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c50a16207e11eac0a53a115fcf3b051f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Trusted Icons/Icons/48.png": {
-    "mtime": 1794292535.724392,
-    "seen": 1794294485.6712441,
-    "ast_hash": "db7d1fef456b4f5602fd843e804ea04a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Trusted Icons/Icons/64.png": {
-    "mtime": 1794292535.724392,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2d4e8b7ba69ba8a6801b7139cb7facd3",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/aghbiahbpaijignceidepookljebhfak/Trusted Icons/Icons/96.png": {
-    "mtime": 1794292535.724392,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c7a07ac785598ddf0873b82f02fa0391",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Icons/128.png": {
-    "mtime": 1794292535.9049647,
-    "seen": 1794294485.6712441,
-    "ast_hash": "8a5c8fbf7b03f3247dde95c8834abe99",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Icons/192.png": {
-    "mtime": 1794292535.9070392,
-    "seen": 1794294485.6712441,
-    "ast_hash": "48db912e1656fdbc289c704fbdf1f37a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Icons/256.png": {
-    "mtime": 1794292535.9132218,
-    "seen": 1794294485.6712441,
-    "ast_hash": "42e1c8f772479e7e6d46a8420a0b5476",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Icons/32.png": {
-    "mtime": 1794292535.8964326,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e4847d3a4975d5ebf607098e345de0b6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Icons/48.png": {
-    "mtime": 1794292535.8992932,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f43720c23db7a78076bd96cbd8695fb5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Icons/64.png": {
-    "mtime": 1794292535.8992932,
-    "seen": 1794294485.6712441,
-    "ast_hash": "11bd4fb05e4d3ac9d62a62e9482d3208",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Icons/96.png": {
-    "mtime": 1794292535.9013066,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a582e127fc4ec2578f4b3720aa7ee6f0",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Trusted Icons/Icons/128.png": {
-    "mtime": 1794292535.927814,
-    "seen": 1794294485.6712441,
-    "ast_hash": "8a5c8fbf7b03f3247dde95c8834abe99",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Trusted Icons/Icons/192.png": {
-    "mtime": 1794292535.929822,
-    "seen": 1794294485.6712441,
-    "ast_hash": "48db912e1656fdbc289c704fbdf1f37a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Trusted Icons/Icons/256.png": {
-    "mtime": 1794292535.9357622,
-    "seen": 1794294485.6712441,
-    "ast_hash": "42e1c8f772479e7e6d46a8420a0b5476",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Trusted Icons/Icons/32.png": {
-    "mtime": 1794292535.9186494,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e4847d3a4975d5ebf607098e345de0b6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Trusted Icons/Icons/48.png": {
-    "mtime": 1794292535.9186494,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f43720c23db7a78076bd96cbd8695fb5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Trusted Icons/Icons/64.png": {
-    "mtime": 1794292535.9213986,
-    "seen": 1794294485.6712441,
-    "ast_hash": "11bd4fb05e4d3ac9d62a62e9482d3208",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/agimnkijcaahngcdmfeangaknmldooml/Trusted Icons/Icons/96.png": {
-    "mtime": 1794292535.9234085,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a582e127fc4ec2578f4b3720aa7ee6f0",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Icons/128.png": {
-    "mtime": 1794292535.7760959,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b4d3e1915751a4baace955649591e9e9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Icons/192.png": {
-    "mtime": 1794292535.7807443,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c020e6448fb4e4a5fb27cf1b6253ef82",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Icons/256.png": {
-    "mtime": 1794292535.7867198,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4bb4e1440bd21c3fb2b524e24cfa91d5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Icons/32.png": {
-    "mtime": 1794292535.7696788,
-    "seen": 1794294485.6712441,
-    "ast_hash": "14e11a6083d7dc28e62941e4d357296a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Icons/48.png": {
-    "mtime": 1794292535.7696788,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0b08a30e8d8177c9eb4d29e0a7b8b2c5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Icons/64.png": {
-    "mtime": 1794292535.7732127,
-    "seen": 1794294485.6712441,
-    "ast_hash": "eec53528b1feede3c1c5fdd61576bb71",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Icons/96.png": {
-    "mtime": 1794292535.7732127,
-    "seen": 1794294485.6712441,
-    "ast_hash": "55ff94ecef85bcda19d583cbee44e063",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Trusted Icons/Icons/128.png": {
-    "mtime": 1794292535.797076,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b4d3e1915751a4baace955649591e9e9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Trusted Icons/Icons/192.png": {
-    "mtime": 1794292535.800652,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c020e6448fb4e4a5fb27cf1b6253ef82",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Trusted Icons/Icons/256.png": {
-    "mtime": 1794292535.807181,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4bb4e1440bd21c3fb2b524e24cfa91d5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Trusted Icons/Icons/32.png": {
-    "mtime": 1794292535.7913222,
-    "seen": 1794294485.6712441,
-    "ast_hash": "14e11a6083d7dc28e62941e4d357296a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Trusted Icons/Icons/48.png": {
-    "mtime": 1794292535.7913222,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0b08a30e8d8177c9eb4d29e0a7b8b2c5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Trusted Icons/Icons/64.png": {
-    "mtime": 1794292535.793329,
-    "seen": 1794294485.6712441,
-    "ast_hash": "eec53528b1feede3c1c5fdd61576bb71",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fhihpiojkbmbpdjeoajapmgkhlnakfjf/Trusted Icons/Icons/96.png": {
-    "mtime": 1794292535.793329,
-    "seen": 1794294485.6712441,
-    "ast_hash": "55ff94ecef85bcda19d583cbee44e063",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Icons/128.png": {
-    "mtime": 1794292535.5494006,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0b21559ca3747caea5341359e605fbfa",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Icons/192.png": {
-    "mtime": 1794292535.5540707,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9daabb9829c620d1ced3823c9b07eefd",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Icons/256.png": {
-    "mtime": 1794292535.5599153,
-    "seen": 1794294485.6712441,
-    "ast_hash": "10c383e1344517c2894e2510e579f588",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Icons/32.png": {
-    "mtime": 1794292535.5430338,
-    "seen": 1794294485.6712441,
-    "ast_hash": "5b31d7ccd2804182dc992921f773b426",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Icons/48.png": {
-    "mtime": 1794292535.5440922,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e76bdb13919d0feb56b3d39175123285",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Icons/64.png": {
-    "mtime": 1794292535.545348,
-    "seen": 1794294485.6712441,
-    "ast_hash": "fbefdebb9ca26f364f6e6ddf21ab5ff8",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Icons/96.png": {
-    "mtime": 1794292535.54735,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2f03f586a232e6b7be57f550da5a9ee7",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Trusted Icons/Icons/128.png": {
-    "mtime": 1794292535.5752153,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0b21559ca3747caea5341359e605fbfa",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Trusted Icons/Icons/192.png": {
-    "mtime": 1794292535.5783086,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9daabb9829c620d1ced3823c9b07eefd",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Trusted Icons/Icons/256.png": {
-    "mtime": 1794292535.5841265,
-    "seen": 1794294485.6712441,
-    "ast_hash": "10c383e1344517c2894e2510e579f588",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Trusted Icons/Icons/32.png": {
-    "mtime": 1794292535.5681462,
-    "seen": 1794294485.6712441,
-    "ast_hash": "5b31d7ccd2804182dc992921f773b426",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Trusted Icons/Icons/48.png": {
-    "mtime": 1794292535.5693479,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e76bdb13919d0feb56b3d39175123285",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Trusted Icons/Icons/64.png": {
-    "mtime": 1794292535.5704637,
-    "seen": 1794294485.6712441,
-    "ast_hash": "fbefdebb9ca26f364f6e6ddf21ab5ff8",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/fmgjjmmmlfnkbppncabfkddbjimcfncm/Trusted Icons/Icons/96.png": {
-    "mtime": 1794292535.572709,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2f03f586a232e6b7be57f550da5a9ee7",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Icons/128.png": {
-    "mtime": 1794292535.8370984,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f2c27ef66940b4d73cc837bafe3f67b6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Icons/192.png": {
-    "mtime": 1794292535.8391054,
-    "seen": 1794294485.6712441,
-    "ast_hash": "81bcef6b5161393cb5507ab50c8b1c4b",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Icons/256.png": {
-    "mtime": 1794292535.8424273,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c295411d013831918e5d19fda4d3e952",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Icons/32.png": {
-    "mtime": 1794292535.8283415,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c3c0e9226bbafa8b88331e2cdc6db002",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Icons/48.png": {
-    "mtime": 1794292535.8305686,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ce64def504a75b4539bcc58bed7b6809",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Icons/64.png": {
-    "mtime": 1794292535.831075,
-    "seen": 1794294485.6712441,
-    "ast_hash": "45ab13054ed283fd4889a126a8b6d4d8",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Icons/96.png": {
-    "mtime": 1794292535.8330836,
-    "seen": 1794294485.6712441,
-    "ast_hash": "dda841f0e1fcb4ab18aabc62c5bd1a20",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Trusted Icons/Icons/128.png": {
-    "mtime": 1794292535.8633313,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f2c27ef66940b4d73cc837bafe3f67b6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Trusted Icons/Icons/192.png": {
-    "mtime": 1794292535.865629,
-    "seen": 1794294485.6712441,
-    "ast_hash": "81bcef6b5161393cb5507ab50c8b1c4b",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Trusted Icons/Icons/256.png": {
-    "mtime": 1794292535.8733232,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c295411d013831918e5d19fda4d3e952",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Trusted Icons/Icons/32.png": {
-    "mtime": 1794292535.8542142,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c3c0e9226bbafa8b88331e2cdc6db002",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Trusted Icons/Icons/48.png": {
-    "mtime": 1794292535.8562226,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ce64def504a75b4539bcc58bed7b6809",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Trusted Icons/Icons/64.png": {
-    "mtime": 1794292535.8582323,
-    "seen": 1794294485.6712441,
-    "ast_hash": "45ab13054ed283fd4889a126a8b6d4d8",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/kefjledonklijopmnomlcbpllchaibag/Trusted Icons/Icons/96.png": {
-    "mtime": 1794292535.8582323,
-    "seen": 1794294485.6712441,
-    "ast_hash": "dda841f0e1fcb4ab18aabc62c5bd1a20",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Icons/128.png": {
-    "mtime": 1794292535.6307304,
-    "seen": 1794294485.6712441,
-    "ast_hash": "45ab3b1c9bbf2721e1069ac8ba4f37a9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Icons/192.png": {
-    "mtime": 1794292535.6342404,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ee998f313ad58825e9768d077bc802ba",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Icons/256.png": {
-    "mtime": 1794292535.6428874,
-    "seen": 1794294485.6712441,
-    "ast_hash": "98a1ab521b60f0039a818f186855fadd",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Icons/32.png": {
-    "mtime": 1794292535.6235938,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b1f7b1594a50ffdf2af90b916818c3c0",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Icons/48.png": {
-    "mtime": 1794292535.6247077,
-    "seen": 1794294485.6712441,
-    "ast_hash": "db566e2b44a2c1422ddf8cd7e1ac09b5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Icons/64.png": {
-    "mtime": 1794292535.6257112,
-    "seen": 1794294485.6712441,
-    "ast_hash": "418ed11baaff1f12b0316c5c6b9c92af",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Icons/96.png": {
-    "mtime": 1794292535.6267126,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a35361ac5f677ed4d47efbbee2ce6d60",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Trusted Icons/Icons/128.png": {
-    "mtime": 1794292535.6585424,
-    "seen": 1794294485.6712441,
-    "ast_hash": "45ab3b1c9bbf2721e1069ac8ba4f37a9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Trusted Icons/Icons/192.png": {
-    "mtime": 1794292535.662546,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ee998f313ad58825e9768d077bc802ba",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Trusted Icons/Icons/256.png": {
-    "mtime": 1794292535.6695392,
-    "seen": 1794294485.6712441,
-    "ast_hash": "98a1ab521b60f0039a818f186855fadd",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Trusted Icons/Icons/32.png": {
-    "mtime": 1794292535.649502,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b1f7b1594a50ffdf2af90b916818c3c0",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Trusted Icons/Icons/48.png": {
-    "mtime": 1794292535.6509676,
-    "seen": 1794294485.6712441,
-    "ast_hash": "db566e2b44a2c1422ddf8cd7e1ac09b5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Trusted Icons/Icons/64.png": {
-    "mtime": 1794292535.6520944,
-    "seen": 1794294485.6712441,
-    "ast_hash": "418ed11baaff1f12b0316c5c6b9c92af",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/mpnpojknpmmopombnjdcgaaiekajbnjb/Trusted Icons/Icons/96.png": {
-    "mtime": 1794292535.6545398,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a35361ac5f677ed4d47efbbee2ce6d60",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Icons/128.png": {
-    "mtime": 1794292535.9640615,
-    "seen": 1794294485.6712441,
-    "ast_hash": "442e70a4876f0efb53ca6a8a38fdf617",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Icons/192.png": {
-    "mtime": 1794292535.9660678,
-    "seen": 1794294485.6712441,
-    "ast_hash": "3b9fd7fa846b9d9a5cdee0a5b975ca20",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Icons/256.png": {
-    "mtime": 1794292535.9718843,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c1e5541bb448e13f31774db3cd8bace9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Icons/32.png": {
-    "mtime": 1794292535.9599247,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1b7822ea3fade00be4ebb7fa00229685",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Icons/48.png": {
-    "mtime": 1794292535.9604273,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1aa8c008ec6fbf48b81eae8ac95bc127",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Icons/64.png": {
-    "mtime": 1794292535.962054,
-    "seen": 1794294485.6712441,
-    "ast_hash": "77c1d493fe1e7d70cd12e5cf38c13ab6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Icons/96.png": {
-    "mtime": 1794292535.962054,
-    "seen": 1794294485.6712441,
-    "ast_hash": "75760ee744059b7640d25f2344902257",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Trusted Icons/Icons/128.png": {
-    "mtime": 1794292535.9813566,
-    "seen": 1794294485.6712441,
-    "ast_hash": "442e70a4876f0efb53ca6a8a38fdf617",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Trusted Icons/Icons/192.png": {
-    "mtime": 1794292535.982444,
-    "seen": 1794294485.6712441,
-    "ast_hash": "3b9fd7fa846b9d9a5cdee0a5b975ca20",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Trusted Icons/Icons/256.png": {
-    "mtime": 1794292535.9898365,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c1e5541bb448e13f31774db3cd8bace9",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Trusted Icons/Icons/32.png": {
-    "mtime": 1794292535.9771552,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1b7822ea3fade00be4ebb7fa00229685",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Trusted Icons/Icons/48.png": {
-    "mtime": 1794292535.9771552,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1aa8c008ec6fbf48b81eae8ac95bc127",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Trusted Icons/Icons/64.png": {
-    "mtime": 1794292535.9789395,
-    "seen": 1794294485.6712441,
-    "ast_hash": "77c1d493fe1e7d70cd12e5cf38c13ab6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/chrome-shoot/Default/Web Applications/Manifest Resources/pommaclcbfghclhalboakcipcmmndhcj/Trusted Icons/Icons/96.png": {
-    "mtime": 1794292535.9789395,
-    "seen": 1794294485.6712441,
-    "ast_hash": "75760ee744059b7640d25f2344902257",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-01-field-label.jpg": {
-    "mtime": 1794294212.7834644,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6ea28a573fd05e9042ab4ea3978eb2a5",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-02-nav.jpg": {
-    "mtime": 1794294212.8018682,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f93b3a38199840fda7079b95744e308b",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-03-copy-buttons.jpg": {
-    "mtime": 1794294212.824615,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2b98430cd08bd4bef2124f9c5bcdb320",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-04-copy-actions.jpg": {
-    "mtime": 1794294212.836198,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9508c9b263b803f158a94000ab350f37",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-05-links.jpg": {
-    "mtime": 1794294212.8593974,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ddeb57c7aa1f4d21f1a7377236cfe099",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-06-links.jpg": {
-    "mtime": 1794294212.8736854,
-    "seen": 1794294485.6712441,
-    "ast_hash": "05668cc9052edcd8f86cd3372e0d999e",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-07-links.jpg": {
-    "mtime": 1794294212.8996632,
-    "seen": 1794294485.6712441,
-    "ast_hash": "cf5878b9b94b676056e37d308f365e57",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-08-links.jpg": {
-    "mtime": 1794294212.9111626,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9508c9b263b803f158a94000ab350f37",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-09-nav-family.jpg": {
-    "mtime": 1794294212.942015,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e45351cc740a5501c823ef470e1b9871",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-10-nav-family.jpg": {
-    "mtime": 1794294212.957625,
-    "seen": 1794294485.6712441,
-    "ast_hash": "e45351cc740a5501c823ef470e1b9871",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-11-section-gaps.jpg": {
-    "mtime": 1794294212.9879289,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0db3a3c7ade6f9c9acfec744ce36d9eb",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-12-copy-headings.jpg": {
-    "mtime": 1794294213.0131028,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6961ceccc317c284082741f04ef20bfb",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-13-links.jpg": {
-    "mtime": 1794294213.040665,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c67cf42feffdbfda6914b582b4c34877",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-14-card-layout.jpg": {
-    "mtime": 1794294213.0773017,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1c09e623b79c99b84aadd8dcafd5bff4",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-15-cut-text.jpg": {
-    "mtime": 1794294213.108389,
-    "seen": 1794294485.6712441,
-    "ast_hash": "3136bf7054f64bafea06bd7199b49363",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-16-cut-text.jpg": {
-    "mtime": 1794294213.1233954,
-    "seen": 1794294485.6712441,
-    "ast_hash": "32b388858a2e86f45861903d73dc9de1",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-17-scroll-reveal.jpg": {
-    "mtime": 1794294213.1401286,
-    "seen": 1794294485.6712441,
-    "ast_hash": "861a813531503bea2ed270046692372c",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-18-copy-length.jpg": {
-    "mtime": 1794294213.184326,
-    "seen": 1794294485.6712441,
-    "ast_hash": "43e4240e776bb44321aff15106435f93",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-19-empty-area.jpg": {
-    "mtime": 1794294213.2160442,
-    "seen": 1794294485.6712441,
-    "ast_hash": "31a038f5c232fb56da3b0e7c1cf81383",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-20-form-fields.jpg": {
-    "mtime": 1794294213.2398894,
-    "seen": 1794294485.6712441,
-    "ast_hash": "fa6525a26e0cf598473d98a49bcf526f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-21-links.jpg": {
-    "mtime": 1794294213.2623236,
-    "seen": 1794294485.6712441,
-    "ast_hash": "c46356f29c2cc23484452706557c857f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-22-empty-area.jpg": {
-    "mtime": 1794294213.2921371,
-    "seen": 1794294485.6712441,
-    "ast_hash": "8d12512d291ee56dbd4e349df5518249",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-23-heading-order.jpg": {
-    "mtime": 1794294213.3142884,
-    "seen": 1794294485.6712441,
-    "ast_hash": "ba6788a92329c43518b22bb291d17797",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-reduced-01-hidden-content.jpg": {
-    "mtime": 1794294236.2011726,
-    "seen": 1794294485.6712441,
-    "ast_hash": "4a945bc7f54a8ecb65921ea4ca925f19",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-rhythm-01-section-air.jpg": {
-    "mtime": 1794294242.3134544,
-    "seen": 1794294485.6712441,
-    "ast_hash": "9aa1f8f4606ed7b02606a34300980fee",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/1440-rhythm-02-container-edges.jpg": {
-    "mtime": 1794294242.7604263,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a40373d5b23cf93478263ccaacfa86cf",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-01-nav.jpg": {
-    "mtime": 1794294274.490082,
-    "seen": 1794294485.6712441,
-    "ast_hash": "f51ea8a7767282082b23b5c2342eda0f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-02-tap-size.jpg": {
-    "mtime": 1794294274.499735,
-    "seen": 1794294485.6712441,
-    "ast_hash": "7198e442eb052d3cdd9acd5333d8e63f",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-03-tap-size.jpg": {
-    "mtime": 1794294274.508361,
-    "seen": 1794294485.6712441,
-    "ast_hash": "a0cc856d9e3850833e800a277015578a",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-04-text-contrast.jpg": {
-    "mtime": 1794294274.520643,
-    "seen": 1794294485.6712441,
-    "ast_hash": "29e426a29bc8fe773f76e4a47ab0d38d",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-05-nav-family.jpg": {
-    "mtime": 1794294274.533159,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b8db24a9e0f070eb187af2ee82dbade4",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-06-nav-family.jpg": {
-    "mtime": 1794294274.5406828,
-    "seen": 1794294485.6712441,
-    "ast_hash": "b8db24a9e0f070eb187af2ee82dbade4",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-07-card-layout.jpg": {
-    "mtime": 1794294274.5599008,
-    "seen": 1794294485.6712441,
-    "ast_hash": "d68d489cebe5e6f59a7b7feda7fab184",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-08-fade-cut.jpg": {
-    "mtime": 1794294274.571268,
-    "seen": 1794294485.6712441,
-    "ast_hash": "390073001731aafc2d70aabed091ed90",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/390-09-button-styles.jpg": {
-    "mtime": 1794294274.5821824,
-    "seen": 1794294485.6712441,
-    "ast_hash": "2833a3d77ed3fe624fa7e0bbe63a1f4d",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/narrow-320-01-tap-size.jpg": {
-    "mtime": 1794294299.0812106,
-    "seen": 1794294485.6712441,
-    "ast_hash": "6645a1ff7c61a8c5dd0c48b96b17af96",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/narrow-320-02-tap-size.jpg": {
-    "mtime": 1794294299.11556,
-    "seen": 1794294485.6712441,
-    "ast_hash": "0e4ae8d39fc796f4c1615242dd3f9cc6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/narrow-320-03-tap-size.jpg": {
-    "mtime": 1794292653.175017,
-    "seen": 1794294485.6712441,
-    "ast_hash": "89326dd35e86a39813f51e3b33aa2957",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/narrow-320-04-tap-size.jpg": {
-    "mtime": 1794292653.5609155,
-    "seen": 1794294485.6712441,
-    "ast_hash": "69dee48677e9db920a8515451727cdc6",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/narrow-320-05-tap-size.jpg": {
-    "mtime": 1794292653.5682728,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1685e2610e1672557d681ee1c30f7deb",
-    "semantic_hash": ""
-  },
-  ".taste-skill/gate/consistency/narrow-320-06-tap-size.jpg": {
-    "mtime": 1794292653.573251,
-    "seen": 1794294485.6712441,
-    "ast_hash": "170870f814b00d783265c8734cd7f822",
-    "semantic_hash": ""
-  },
-  ".taste-skill/shots/1440.png": {
-    "mtime": 1794292542.9332995,
-    "seen": 1794294485.6712441,
-    "ast_hash": "1fb7e4a85bd92862f18e8813c1d0a0a8",
-    "semantic_hash": ""
-  },
   "web/public/theme.js": {
     "mtime": 1794329144.7355626,
     "seen": 1794413511.554728,
@@ -2556,8 +708,8 @@
     "semantic_hash": ""
   },
   "web/src/components/app/preview.tsx": {
-    "mtime": 1794420393.0632956,
-    "seen": 1794420470.3448832,
+    "mtime": 1794421499.2576466,
+    "seen": 1794424046.4654565,
     "ast_hash": "7f8494051ef546a1d6904f53f259f0b6",
     "semantic_hash": ""
   },
@@ -2592,20 +744,20 @@
     "semantic_hash": ""
   },
   "web/src/components/shell/AppShell.tsx": {
-    "mtime": 1794419865.477426,
-    "seen": 1794419990.739111,
+    "mtime": 1794421498.245953,
+    "seen": 1794424046.4654565,
     "ast_hash": "234d56b7801bb21f803c124eab09b3de",
     "semantic_hash": ""
   },
   "web/src/components/shell/MarketingShell.tsx": {
-    "mtime": 1794420587.0175867,
-    "seen": 1794420629.2947154,
+    "mtime": 1794421497.3266501,
+    "seen": 1794424046.4654565,
     "ast_hash": "9c454d6f49f3942c792b05fe66901376",
     "semantic_hash": ""
   },
   "web/src/components/shell/PublicShell.tsx": {
-    "mtime": 1794408282.268018,
-    "seen": 1794413511.554728,
+    "mtime": 1794421497.7250652,
+    "seen": 1794424046.4654565,
     "ast_hash": "b2e69e3e7fd31293a6cea5634cadd572",
     "semantic_hash": ""
   },
@@ -2639,12 +791,6 @@
     "ast_hash": "eedeb1fe20ca9b19d3ae10351c22911d",
     "semantic_hash": ""
   },
-  "web/src/components/smoothui/lib/use-fluid-hover.ts": {
-    "mtime": 1794329144.7800426,
-    "seen": 1794413511.554728,
-    "ast_hash": "5b23ac4f7b76f8c37c8c3034ca0d1a91",
-    "semantic_hash": ""
-  },
   "web/src/components/smoothui/smooth-button/index.tsx": {
     "mtime": 1794416315.3631554,
     "seen": 1794416362.8108218,
@@ -2675,16 +821,10 @@
     "ast_hash": "9128ed66d4a5551271ff3a6def64278a",
     "semantic_hash": ""
   },
-  "web/src/components/vengeance/perspective-carousel.tsx": {
-    "mtime": 1794329144.801934,
-    "seen": 1794413511.554728,
-    "ast_hash": "727dcf1d82f36d37e57256d744b09088",
-    "semantic_hash": ""
-  },
   "web/src/components/vengeance/share-sheet.tsx": {
-    "mtime": 1794329144.8034441,
-    "seen": 1794413511.554728,
-    "ast_hash": "282ff15cdcfa017a57fd7318c4266bde",
+    "mtime": 1794464280.608101,
+    "seen": 1794464406.9857628,
+    "ast_hash": "5ed858d7fd9257edaf1e5c2c27f259c1",
     "semantic_hash": ""
   },
   "web/src/components/vengeance/social-flip-button.tsx": {
@@ -2699,16 +839,10 @@
     "ast_hash": "c19bbf75bc42d796ccaf18a13be4fc3f",
     "semantic_hash": ""
   },
-  "web/src/components/vengeance/verse-cards.tsx": {
-    "mtime": 1794329144.8065724,
-    "seen": 1794413511.554728,
-    "ast_hash": "3bc7d36816db3e71256bb53c3467540a",
-    "semantic_hash": ""
-  },
   "web/src/lib/data.tsx": {
-    "mtime": 1794329144.807923,
-    "seen": 1794413511.554728,
-    "ast_hash": "ebfed3841fc2928fd3b81da324bd945b",
+    "mtime": 1794464209.0861468,
+    "seen": 1794464406.9857628,
+    "ast_hash": "cd899b78e25f3bdb8d482d2f7d8fcb56",
     "semantic_hash": ""
   },
   "web/src/lib/guide.ts": {
@@ -2742,9 +876,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/Landing.tsx": {
-    "mtime": 1794420393.0652957,
-    "seen": 1794420470.3448832,
-    "ast_hash": "e9e2677a416047c00592d6515f18a109",
+    "mtime": 1794464225.9805555,
+    "seen": 1794464406.9857628,
+    "ast_hash": "4a618798b314b5616f67f58c42b8fc0f",
     "semantic_hash": ""
   },
   "web/src/pages/Profile.tsx": {
@@ -2778,8 +912,8 @@
     "semantic_hash": ""
   },
   "web/src/docs/DocsPage.tsx": {
-    "mtime": 1794419193.2017415,
-    "seen": 1794419469.203033,
+    "mtime": 1794421498.8190913,
+    "seen": 1794424046.4654565,
     "ast_hash": "fdb26467ae12e3fb4aa5f5c3993247b9",
     "semantic_hash": ""
   },
@@ -2790,9 +924,9 @@
     "semantic_hash": ""
   },
   "web/src/docs/nav.ts": {
-    "mtime": 1794418653.6828501,
-    "seen": 1794419469.203033,
-    "ast_hash": "866e41a71ea2537dc7047f2f0ba5db96",
+    "mtime": 1794463585.2960336,
+    "seen": 1794463665.032132,
+    "ast_hash": "e6ea1571bd84fcac1b2540503e6ffe5a",
     "semantic_hash": ""
   },
   "web/src/docs/pages/agents.tsx": {
@@ -2802,21 +936,21 @@
     "semantic_hash": ""
   },
   "web/src/docs/pages/check.tsx": {
-    "mtime": 1794419004.2204723,
-    "seen": 1794419469.203033,
-    "ast_hash": "25beff5a6d38a9fe0dd8bb95327e4e51",
+    "mtime": 1794463585.2939904,
+    "seen": 1794463665.032132,
+    "ast_hash": "6cfb359b521036c36786f6830b4ff9d5",
     "semantic_hash": ""
   },
   "web/src/docs/pages/developers.tsx": {
-    "mtime": 1794419225.457234,
-    "seen": 1794419469.203033,
-    "ast_hash": "ca49d2ce28bf61f31404f95c7cc18fd9",
+    "mtime": 1794464245.4379852,
+    "seen": 1794464406.9857628,
+    "ast_hash": "b09bcffa399bd913525516313ca88c8b",
     "semantic_hash": ""
   },
   "web/src/docs/pages/getpaid.tsx": {
-    "mtime": 1794418818.2429912,
-    "seen": 1794419469.203033,
-    "ast_hash": "4c018e9c27306841479b22597cf5dc03",
+    "mtime": 1794464245.4379852,
+    "seen": 1794464406.9857628,
+    "ast_hash": "a21b2b2ef003f5ffd9a696caa43d1e9b",
     "semantic_hash": ""
   },
   "web/src/docs/pages/index.ts": {
@@ -2826,9 +960,9 @@
     "semantic_hash": ""
   },
   "web/src/docs/pages/send.tsx": {
-    "mtime": 1794418842.2731338,
-    "seen": 1794419469.203033,
-    "ast_hash": "c0e0911b3b7853846d56ced51674e3ee",
+    "mtime": 1794464124.3173738,
+    "seen": 1794464406.9857628,
+    "ast_hash": "c5f616a8bf5ffc44493051d9e459385d",
     "semantic_hash": ""
   },
   "web/src/docs/pages/start.tsx": {
@@ -2838,9 +972,9 @@
     "semantic_hash": ""
   },
   "web/src/docs/pages/trust.tsx": {
-    "mtime": 1794419125.076946,
-    "seen": 1794419469.203033,
-    "ast_hash": "cd837483376a510dff86f8e441e5ca9a",
+    "mtime": 1794464124.3127575,
+    "seen": 1794464406.9857628,
+    "ast_hash": "57c765c9a03c794474760b615f9f17a4",
     "semantic_hash": ""
   },
   "package-lock.json": {
@@ -2850,9 +984,9 @@
     "semantic_hash": ""
   },
   "web/package-lock.json": {
-    "mtime": 1794385591.651589,
-    "seen": 1794413511.554728,
-    "ast_hash": "077b539c13b1684a2b875f34f5e77b1d",
+    "mtime": 1794464283.8840158,
+    "seen": 1794464406.9857628,
+    "ast_hash": "326368d758d232d4c9e758652d0b8328",
     "semantic_hash": ""
   }
 }

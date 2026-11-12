@@ -30,7 +30,8 @@ export function SendLinks() {
       <Facts
         rows={[
           ["Amount", "1 to 25 USDC per link"],
-          ["New links", "At most 20 a day across the whole site in this prototype"],
+          ["New links", "5 a day per sender, and 200 a day across the whole site, in this prototype"],
+          ["To make one", "Your wallet signs a short message (NEP-413). It's free and moves no money; it stops scripts from making empty links."],
           ["Reminder period", "7 days. After that, the claim page asks the sender to take the money back."],
           ["Who can claim", "Anyone holding the link, at any time, until it's claimed"],
         ]}

@@ -732,7 +732,7 @@ function OpenLink() {
   const [err, setErr] = useState<string | null>(null);
   function submit(e: FormEvent) {
     e.preventDefault();
-    const m = v.trim().match(/\/(pay|claim)\/([A-Za-z0-9-]+)(#.*)?/) ?? v.trim().match(/^()(INV-\d+)$/i);
+    const m = v.trim().match(/\/(pay|claim)\/([A-Za-z0-9-]+)(#.*)?/) ?? v.trim().match(/^()(INV-[0-9A-F]{4,16})$/i);
     if (!m) {
       setErr("Paste the whole link, like https://…/pay/INV-0042");
       return;
