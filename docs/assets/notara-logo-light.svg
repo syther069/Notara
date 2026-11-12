@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 232 56" width="232" height="56" role="img" aria-label="Notara">
+  <g transform="translate(4 4) scale(1.5)" fill="none" stroke-width="2.2">
+    <path d="M16 13 10.5 7.5H6.2A2.2 2.2 0 0 0 4 9.7v12.6a2.2 2.2 0 0 0 2.2 2.2h4.3L16 19l5.5 5.5h4.3a2.2 2.2 0 0 0 2.2-2.2V9.7a2.2 2.2 0 0 0-2.2-2.2h-4.3z" stroke="#0a1f17" stroke-linejoin="round"/>
+    <path d="M16 13v6" stroke="#c8a96a" stroke-linecap="round"/>
+  </g>
+  <text x="66" y="39" fill="#0a1f17" font-family="Manrope, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="32" font-weight="800" letter-spacing="-1.2">Notara</text>
+</svg>
