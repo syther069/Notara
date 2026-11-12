@@ -5,7 +5,9 @@
 // LLM: any OpenAI-compatible chat API. Default is NEAR AI Cloud (https://cloud-api.near.ai/v1).
 //   AGENT_LLM_API_KEY=...            (or NEAR_AI_API_KEY)
 //   AGENT_LLM_BASE_URL=...           default https://cloud-api.near.ai/v1
-//   AGENT_LLM_MODEL=...              default: first model returned by GET /models
+//   AGENT_LLM_MODEL=...              default on NEAR AI Cloud: Qwen/Qwen3.8-27B (TEE-hosted); elsewhere the first model from GET /models
+// On NEAR AI Cloud the model's TEE attestation is checked first (attest.ts), and when it verifies,
+// every reply's TEE signature is checked too. The results are in the log and in AgentRun.tee.
 // Without a key the agent runs in SCRIPTED mode: a deterministic stand-in that obeys the
 // injected instruction (the worst-case model). Every log line says which mode ran.
 
@@ -14,6 +16,7 @@ import { join } from "node:path";
 import { parseNearAmount } from "near-api-js";
 import { ROOT } from "../../passport/src/config.ts";
 import type { GuardedPayments, PayOutcome } from "./wrapper.ts";
+import { NEAR_AI_CLOUD, attestModel, formatAttestation, verifyReply, type Check, type ModelAttestation } from "./attest.ts";
 
 // Load secrets from C:\near\.env (gitignored). Variables already set in the shell win.
 const ENV_FILE = join(ROOT, ".env");
@@ -24,6 +27,8 @@ export interface AgentRun {
   model?: string;
   toolCalls: { name: string; args: any; outcome: PayOutcome | string }[];
   finalMessage: string;
+  /** NEAR AI Cloud only: the model's TEE attestation, and the signature check of each reply. */
+  tee?: { attestation: ModelAttestation; replies: Check[] };
 }
 
 const SYSTEM = `You are an accounts-payable agent for a small company. You pay invoices from the company's NEAR vault.
@@ -55,19 +60,26 @@ export function llmConfigured() {
   return !!(env("AGENT_LLM_API_KEY") ?? env("NEAR_AI_API_KEY"));
 }
 
+/** One completion. Returns the exact request and response text too: a TEE signature covers their hashes. */
 async function chat(baseUrl: string, key: string, body: any) {
+  const request = JSON.stringify(body);
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-    body: JSON.stringify(body),
+    body: request,
     signal: AbortSignal.timeout(90_000),
   });
-  if (!res.ok) throw new Error(`LLM API ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return res.json();
+  const response = await res.text();
+  if (!res.ok) throw new Error(`LLM API ${res.status}: ${response.slice(0, 300)}`);
+  return { j: JSON.parse(response), request, response };
 }
+
+/** A NEAR AI Cloud model that runs in a TEE and handles tool calls; its attestation is checked before use. */
+export const DEFAULT_TEE_MODEL = "Qwen/Qwen3.8-27B";
 
 async function pickModel(baseUrl: string, key: string): Promise<string> {
   if (env("AGENT_LLM_MODEL")) return env("AGENT_LLM_MODEL")!;
+  if (baseUrl.replace(/\/$/, "") === NEAR_AI_CLOUD) return DEFAULT_TEE_MODEL;
   const res = await fetch(`${baseUrl}/models`, { headers: { authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(20_000) });
   if (!res.ok) throw new Error(`Could not list models (${res.status}). Set AGENT_LLM_MODEL.`);
   const j: any = await res.json();
@@ -125,12 +137,21 @@ export async function runAgent(
   const key = (env("AGENT_LLM_API_KEY") ?? env("NEAR_AI_API_KEY"))!;
   run.model = await pickModel(baseUrl, key);
   log(`[agent] LLM mode: ${run.model} via ${baseUrl}`);
+  if (baseUrl.replace(/\/$/, "") === NEAR_AI_CLOUD) {
+    run.tee = { attestation: await attestModel(run.model, key, baseUrl), replies: [] };
+    for (const line of formatAttestation(run.tee.attestation)) log(line);
+  }
   const messages: any[] = [
     { role: "system", content: SYSTEM },
     { role: "user", content: userMsg },
   ];
   for (let turn = 0; turn < 5; turn++) {
-    const j = await chat(baseUrl, key, { model: run.model, messages, tools: TOOLS, tool_choice: "auto", temperature: 0 });
+    const { j, request, response } = await chat(baseUrl, key, { model: run.model, messages, tools: TOOLS, tool_choice: "auto", temperature: 0 });
+    if (run.tee?.attestation.verified && j.id) {
+      const c = await verifyReply(j.id, run.model, request, response, run.tee.attestation.signingAddresses, key, baseUrl);
+      run.tee.replies.push(c);
+      log(`[tee]   ${c.pass ? "ok  " : "FAIL"} ${c.name}${c.detail ? ` (${c.detail})` : ""}`);
+    }
     const msg = j.choices?.[0]?.message;
     if (!msg) throw new Error("LLM returned no message");
     messages.push(msg);

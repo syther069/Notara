@@ -34,7 +34,7 @@ export function Security() {
         <li>A verdict reflects the configured policy and the evidence collected. It is not proof that anyone is malicious or safe, and its accuracy against real scams hasn't been measured.</li>
         <li>The heuristics can be gamed on their own: account age can be bought and reports start empty. The design's value is that the vault enforces the decision and the caps even when the agent is compromised.</li>
         <li>The Notara signer key is a local file when you run Notara yourself, and an environment variable on the public deploy, where the server also holds the shared visitor-vault agent key and signs verdicts for visitor vaults. Whoever holds the key can sign any verdict.</li>
-        <li>Whoever holds a vault's full-access key can change it, until that key is deleted with lock-vault. Visitor vaults never have one.</li>
+        <li>Whoever holds a vault's full-access key can change it, until that key is deleted with lock-vault. The shared demo vault was locked on 12 November 2026, and visitor vaults never have one.</li>
         <li>A send link is like cash: anyone holding it can claim it.</li>
         <li>A website proof shows control of a domain when it was checked, not who the business is.</li>
       </UL>
@@ -50,7 +50,9 @@ export function Security() {
           ["Pay from another chain through NEAR Intents", "Built; one real mainnet payment on 9 November 2026"],
           ["Pay a link from a NEAR wallet on mainnet", "Built and tested against a recorded transfer; not yet run with real funds"],
           ["Mainnet report registry", "Script written, not run"],
-          ["Signer key in a TEE", "Planned"],
+          ["Agent's AI model in a TEE: attestation and reply signatures checked", "Built; NVIDIA GPU evidence and reply signatures verified on 12 November 2026. Intel TDX quote not verified yet"],
+          ["Demo vault locked (no full-access key)", "Done, 12 November 2026"],
+          ["Notara's verdict-signing key in a TEE", "Planned"],
           ["Contract integration tests in near-sandbox", "Planned; unit tests today"],
           ["Gas-allowance monitoring for the agent key", "Planned"],
           ["Security audit", "Not done"],

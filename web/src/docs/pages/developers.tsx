@@ -336,7 +336,7 @@ NEAR_OWNER_ACCOUNT=you.testnet NEAR_OWNER_PRIVATE_KEY=ed25519:... npm run setup:
       <Code lang="bash">{`npm run serve   # in one terminal
 npm run demo    # in another`}</Code>
       <P>
-        The agent runs scripted by default: a stand-in that obeys injected text, the worst case. To use a real model through NEAR AI Cloud or any OpenAI-compatible API, set <C>AGENT_LLM_API_KEY</C> and <C>AGENT_LLM_MODEL</C>.{" "}
+        The agent runs scripted by default: a stand-in that obeys injected text, the worst case. To use a real model, set <C>AGENT_LLM_API_KEY</C>. On NEAR AI Cloud the agent uses <C>Qwen/Qwen3.8-27B</C>, which runs in a TEE, and checks its <A href="/docs/tee-model">attestation</A> first; set <C>AGENT_LLM_MODEL</C> for another model or any OpenAI-compatible API.{" "}
         <C>-- --yes</C> approves the WARN step; <C>-- --only 2</C> runs one scenario.
       </P>
     </>

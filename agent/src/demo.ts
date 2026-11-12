@@ -22,6 +22,7 @@ import { KeyPair, actions, parseNearAmount } from "near-api-js";
 import { NETWORKS, ROOT, loadDeployment, type Deployment } from "../../passport/src/config.ts";
 import { bold, decisionColor, dim, formatReport, green, red, yellow } from "../../passport/src/format.ts";
 import { signVerdict } from "../../passport/src/verdict.ts";
+import { USDC_TESTNET } from "../../passport/src/assets.ts";
 import { llmConfigured, runAgent } from "./agent.ts";
 import { accountFromKey } from "./keys.ts";
 import { GuardedPayments, passportCheck } from "./wrapper.ts";
@@ -198,6 +199,19 @@ async function main() {
         agentAccount.signAndSendTransaction({
           receiverId: d.vault,
           actions: [actions.functionCall("set_signer_public_key", { signer_public_key: KeyPair.fromRandom("ed25519").getPublicKey().toString() }, 30_000_000_000_000n, 0n)],
+          throwOnFailure: false,
+        }),
+    });
+
+    // g) Call a different contract: move the vault's USDC with the token's own ft_transfer.
+    attempts.push({
+      // No deposit attached, so the key's receiver (the vault only) is what stops it, not the 1-yocto rule.
+      name: "g. call another contract (USDC ft_transfer to the attacker) with the agent key",
+      expect: /ReceiverMismatch|receiver/i,
+      run: () =>
+        agentAccount.signAndSendTransaction({
+          receiverId: USDC_TESTNET,
+          actions: [actions.functionCall("ft_transfer", { receiver_id: d.accounts.attacker, amount: "1000000" }, 30_000_000_000_000n, 0n)],
           throwOnFailure: false,
         }),
     });

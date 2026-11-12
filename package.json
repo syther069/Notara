@@ -21,10 +21,13 @@
     "test:contracts": "cargo test",
     "web:install": "npm --prefix web install",
     "web:dev": "npm --prefix web run dev",
-    "web:build": "npm --prefix web run build"
+    "web:build": "npm --prefix web run build",
+    "attest": "tsx scripts/attest.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "1.2.0",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
     "borsh": "2.0.0",
     "near-api-js": "7.4.0",
     "near-sign-verify": "0.4.5"

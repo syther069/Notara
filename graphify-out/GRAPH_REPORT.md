@@ -1,17 +1,17 @@
 # Graph Report - near  (2026-11-12)
 
 ## Corpus Check
-- 159 files · ~205,584 words
+- 163 files · ~211,146 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 10 file(s) not represented in the graph (top: .css 4, (none) 2, .wasm 2)
 
 ## Summary
-- 3953 nodes · 9677 edges · 204 communities (168 shown, 36 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 318 edges (avg confidence: 0.87)
+- 3983 nodes · 9765 edges · 215 communities (179 shown, 36 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 321 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b2e7d162`
+- Built from commit: `cd3112dd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,18 +19,18 @@
 - Vault
 - registry/src/lib.rs
 - tests.rs
-- vaults.ts
+- demo.ts
 - 4. Core components
 - package.json
 - web/package.json
 - lib
 - 17. Source and evidence register
-- Send.tsx
+- Dashboard.tsx
 - lib/wallet.tsx
 - README.md
 - linkKey.ts
 - Phase B: build for real use
-- demo.ts
+- agent.ts
 - signals/index.ts
 - server/index.ts
 - assets/effects/fx.js
@@ -38,7 +38,7 @@
 - VaultConsole.tsx
 - clamp
 - Photographs
-- evm.ts
+- DocsPage.tsx
 - scripts
 - compilerOptions
 - Build plan: trusted payment links on NEAR
@@ -65,7 +65,7 @@
 - UX Guide: Universal Principles for Interface Behavior, Feedback and Trust
 - deploy-contracts.sh
 - 2. Laws and principles, precisely
-- GetPaid.tsx
+- Send.tsx
 - UI Guide: Universal Principles for Visual Composition, Components and Motion
 - 7. Interaction feedback, errors, forms and reversibility
 - copy-lint.mjs
@@ -107,7 +107,7 @@
 - gate.mjs
 - kit.tsx
 - photo.js
-- smooth-button/index.tsx
+- app/ui.tsx
 - cn
 - moments.mjs
 - _demo/shoot.mjs
@@ -126,11 +126,11 @@
 - assets/moments/lib.js
 - check.mjs
 - assets/motion/motion.js
-- scripts
+- scroll.tsx
 - photoGL
 - norm
 - runWidth
-- Big scenes
+- vaults.ts
 - make-posters.mjs
 - sleep
 - deal.mjs
@@ -147,10 +147,11 @@
 - Cards
 - 4. Place
 - System
-- scenes.js
-- lerp
+- evm.ts
+- .render
 - pick.js
 - Effects beyond backgrounds
+- Notara: Architecture
 - Copy moves
 - die
 - Features
@@ -158,6 +159,7 @@
 - readJson
 - s
 - Layout: one section per screen, equal edges, heroes, type
+- Big scenes
 - Sections for a kind of content
 - Copy
 - Copy voice
@@ -169,10 +171,14 @@
 - Diagrams
 - Closes
 - Photographs, rooms, services and people
+- smooth-button/index.tsx
+- 2. Components
 - photo-dither/object.js
+- scenes.js
 - Copy tells
-- check.ts
+- vaults.ts
 - Moments
+- Run it locally
 - browserChecks
 - Effects
 - _print-core/auto.js
@@ -181,6 +187,7 @@
 - applyFlags
 - staticChecks
 - opt
+- 4. Main flows
 - picture-develops/moment.js
 - Price and questions
 - Footers
@@ -188,9 +195,13 @@
 - Navigation
 - About this guide
 - Performance budget
+- lerp
+- Hackathon tracks and requirements
+- scripts
 - manifest.json
 - 18. Provenance and method
 - photo-chapters/moment.js
+- On-chain evidence
 - word-highlight/moment.js
 - sections-library.md
 - { color, normalizePalette, readPalette, GLSL_LIB }
@@ -210,21 +221,21 @@
 10. `inFixed()` - 42 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `AI Security & Defense (`security`)` --references--> `interactionSignal()`  [INFERRED]
+  README.md → passport/src/signals/index.ts
 - `Software` --references--> `chat()`  [INFERRED]
   .claude/skills/design-taste-frontend/references/sections-library.md → agent/src/agent.ts
 - `1. First real payment through a link [S] 💰` --references--> `ensureUsdcStorage()`  [INFERRED]
   IMPLEMENTATION.md → server/sends.ts
 - `3.0 Theme: premium fintech, forest and cream (redesign, 2026-11-10)` --references--> `surface()`  [INFERRED]
   design.md → .claude/skills/design-taste-frontend/scripts/consistency.mjs
-- `6. Database instead of JSON files [M] 🗄️` --references--> `createInvoice()`  [INFERRED]
-  IMPLEMENTATION.md → server/invoices.ts
-- `10. Implementation notes` --references--> `MarketingShell()`  [INFERRED]
-  design.md → web/src/components/shell/MarketingShell.tsx
+- `2. Real wallet signature on a payment link + smoother network switch [S] 💰` --references--> `ensureNetwork()`  [INFERRED]
+  IMPLEMENTATION.md → web/src/lib/wallet.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (204 total, 36 thin omitted)
+## Communities (215 total, 36 thin omitted)
 
 ### Community 0 - "Vault"
 Cohesion: 0.06
@@ -238,9 +249,9 @@ Nodes (35): acc(), bond_required(), cannot_self_report(), Category, Impersonatio
 Cohesion: 0.20
 Nodes (44): acc(), agent_cannot_approve_its_own_warn(), agent_cannot_be_proposed_as_owner(), agent_cannot_propose_owner(), agent_cannot_raise_caps(), agent_cannot_swap_signer_key(), allow_executes_and_reserves_daily(), attacker() (+36 more)
 
-### Community 3 - "vaults.ts"
-Cohesion: 0.15
-Nodes (20): fetchTx(), rpc(), agent(), createVisitorVault(), factory(), getVisitorVault(), isAccountId(), isVisitorVault() (+12 more)
+### Community 3 - "demo.ts"
+Cohesion: 0.12
+Nodes (28): buildWallet(), deployment(), explorerTx(), main(), network, renderDoc(), Row, GuardedPayments (+20 more)
 
 ### Community 4 - "4. Core components"
 Cohesion: 0.06
@@ -262,17 +273,17 @@ Nodes (135): lib(), add(), arrive(), audit(), backdrop(), barRoot(), beneath(), 
 Cohesion: 0.07
 Nodes (30): 10. The Role of Animation and Motion in UX: Nielsen Norman Group, 11. Response Times: The Three Important Limits: Nielsen Norman Group, 12. Product Page UX: Provide at Least One In-Scale Image: Baymard, 13. Use Delivery Date, Not Shipping Speed: Baymard, 14. The Effect of Electronic Word of Mouth on Sales: A Meta-Analytic Review, 15. Final Rule Banning Fake Reviews and Testimonials: FTC Announcement, 16. WCAG 2.2 SC 2.5.8: Target Size (Minimum): W3C, 17. Source and evidence register (+22 more)
 
-### Community 9 - "Send.tsx"
+### Community 9 - "Dashboard.tsx"
 Cohesion: 0.08
-Nodes (81): FlowChart(), money(), path(), Sparkline(), EmptyArt(), STATUS_HINT, StatusChip(), STATUSES (+73 more)
+Nodes (74): @base-ui/react, FlowChart(), money(), path(), Sparkline(), PreviewCheck, useDebounced(), usePrefs() (+66 more)
 
 ### Community 10 - "lib/wallet.tsx"
-Cohesion: 0.06
-Nodes (32): AppProviders(), Ctx, EVM_WALLET_ID, EXCLUDED, failureReason(), FEATURES, friendlyWalletError(), ftBalance() (+24 more)
+Cohesion: 0.05
+Nodes (40): @hot-labs/near-connect, AppProviders(), BalanceCtx, Balances, DeploymentCtx, ThemeChoice, Toast, ToastCtx (+32 more)
 
 ### Community 11 - "README.md"
-Cohesion: 0.04
-Nodes (45): 10. Future work (not in v1), 1. The big picture, 2.1 Vault contract (`contracts/vault`, Rust, near-sdk 5.30), 2.2 Registry contract (`contracts/registry`, Rust), 2.3 Notara (`passport/src`, TypeScript), 2.5 Website (`web/`, built), 2.6 Backend (`server/`, built), 2. Components (+37 more)
+Cohesion: 0.14
+Nodes (13): Account check: signals and their limits, Contents, How the agent vault enforces a decision, Limits, Live deployment, Payment links people can trust, and a spending vault AI agents can't talk their way out of., Recent changes, Repository layout (+5 more)
 
 ### Community 12 - "linkKey.ts"
 Cohesion: 0.20
@@ -280,19 +291,19 @@ Nodes (14): usdc(), fromFragment(), fromSecret(), isValidNewName(), LinkKey, new
 
 ### Community 13 - "Phase B: build for real use"
 Cohesion: 0.11
-Nodes (18): 10. Security page [S], 11. Lock, fresh-clone test, docs [S] 💰, 1. First real payment through a link [S] 💰, 2. Real wallet signature on a payment link + smoother network switch [S] 💰, 3. Pay directly from a NEAR wallet [M], 4. Real Send-by-link test [S] 💰, 5. Mainnet report registry + "Report this link" [M] 💰, 8. New home page [M] (+10 more)
+Nodes (17): 10. Security page [S], 11. Lock, fresh-clone test, docs [S] 💰, 1. First real payment through a link [S] 💰, 2. Real wallet signature on a payment link + smoother network switch [S] 💰, 3. Pay directly from a NEAR wallet [M], 4. Real Send-by-link test [S] 💰, 5. Mainnet report registry + "Report this link" [M] 💰, 8. New home page [M] (+9 more)
 
-### Community 14 - "demo.ts"
-Cohesion: 0.16
-Nodes (28): AgentRun, callPay(), env(), ENV_FILE, llmConfigured(), pickModel(), runAgent(), toolResult() (+20 more)
+### Community 14 - "agent.ts"
+Cohesion: 0.12
+Nodes (26): AgentRun, callPay(), DEFAULT_TEE_MODEL, env(), ENV_FILE, llmConfigured(), pickModel(), runAgent() (+18 more)
 
 ### Community 15 - "signals/index.ts"
 Cohesion: 0.10
-Nodes (39): Policy, AccountTx, AccountTxPage, accountTxs(), AccountView, daysSince(), nsToIso(), postJson() (+31 more)
+Nodes (41): formatAmount(), loadDeployment(), Policy, accountTxs(), daysSince(), nsToIso(), transactions(), evaluate() (+33 more)
 
 ### Community 16 - "server/index.ts"
 Cohesion: 0.06
-Nodes (86): 6. Database instead of JSON files [M] 🗄️, 7. Public mode: no admin keys on a public server [M], listAssets(), resolveAsset(), usdcFor(), createCheckout(), isDone(), oneClick() (+78 more)
+Nodes (84): 6. Database instead of JSON files [M] 🗄️, 7. Public mode: no admin keys on a public server [M], usdcFor(), createCheckout(), isDone(), oneClick(), overallStatus(), payTokens() (+76 more)
 
 ### Community 17 - "assets/effects/fx.js"
 Cohesion: 0.05
@@ -304,7 +315,7 @@ Nodes (17): 10. Timeline, 1. One-line summary, 2. The problem, 3. Who it is for,
 
 ### Community 19 - "VaultConsole.tsx"
 Cohesion: 0.04
-Nodes (133): react-router-dom, InvoiceLines(), CheckResult(), DecisionCard(), Evidence(), EvidenceTable(), ReasonList(), ReasonRow() (+125 more)
+Nodes (117): react-router-dom, InvoiceLines(), CheckResult(), DecisionCard(), Evidence(), EvidenceTable(), ReasonList(), ReasonRow() (+109 more)
 
 ### Community 20 - "clamp"
 Cohesion: 0.19
@@ -314,13 +325,13 @@ Nodes (20): clamp(), cssHex(), filmicInv(), filmicJs(), fromOklab(), gam22(), gr
 Cohesion: 0.18
 Nodes (11): creditsLine(), credits(), A product without photographs (PH-04), Credits and words (PH-38, CO-22), Live search (stand-ins for what the library lacks), Never, Photographs, Pick and fetch (+3 more)
 
-### Community 22 - "evm.ts"
-Cohesion: 0.26
-Nodes (9): ApiError, post(), req(), erc20TransferData(), eth(), evmAccount(), evmPay(), hasEvmWallet() (+1 more)
+### Community 22 - "DocsPage.tsx"
+Cohesion: 0.22
+Nodes (15): DocsPage(), Heading, norm(), Outline(), SearchDialog(), Sidebar(), useOutline(), DocPage (+7 more)
 
 ### Community 23 - "scripts"
-Cohesion: 0.14
-Nodes (14): scripts, agent, check, demo, owner, passport, serve, setup:testnet (+6 more)
+Cohesion: 0.13
+Nodes (15): scripts, agent, attest, check, demo, owner, passport, serve (+7 more)
 
 ### Community 24 - "compilerOptions"
 Cohesion: 0.12
@@ -343,12 +354,12 @@ Cohesion: 0.06
 Nodes (69): ALIAS, argv, byId, cmdPath(), craftFits(), craftOf(), CRAFTS, credit() (+61 more)
 
 ### Community 29 - ".build"
-Cohesion: 0.13
-Nodes (9): axesOf(), clamp(), ease(), geo(), kindOf(), Program(), s(), spread() (+1 more)
+Cohesion: 0.20
+Nodes (5): axesOf(), geo(), kindOf(), Program(), s()
 
 ### Community 30 - "web/package.json"
 Cohesion: 0.07
-Nodes (40): clsx, cmdk, gsap, @gsap/react, @heroui/styles, @hot-labs/near-connect, iconoir-react, lenis (+32 more)
+Nodes (39): clsx, cmdk, gsap, @heroui/styles, iconoir-react, next-themes, qrcode, radix-ui (+31 more)
 
 ### Community 31 - "consistency.mjs"
 Cohesion: 0.03
@@ -364,11 +375,11 @@ Nodes (8): 1. Safety and approvals (hard rules), 2. Honesty rules (what we claim
 
 ### Community 34 - "start.mjs"
 Cohesion: 0.05
-Nodes (45): ALIAS, allTypes, args, axisOrder(), axisVal(), block(), buttonInk(), dealTypes() (+37 more)
+Nodes (46): Product, ALIAS, allTypes, args, axisOrder(), axisVal(), block(), buttonInk() (+38 more)
 
 ### Community 35 - "config.ts"
 Cohesion: 0.11
-Nodes (36): accountFromKey(), hasKey(), KEY_DIR, KeyFile, keyPath(), readKey(), writeKey(), toUnits() (+28 more)
+Nodes (35): accountFromKey(), hasKey(), keyPath(), readKey(), writeKey(), formatUnits(), toUnits(), nearAmount() (+27 more)
 
 ### Community 36 - "NEAR Hackathon: rules we build against"
 Cohesion: 0.50
@@ -376,11 +387,11 @@ Nodes (3): NEAR Hackathon: rules we build against, Submission requirements, Team
 
 ### Community 39 - "profile.tsx"
 Cohesion: 0.07
-Nodes (55): @heroui/react, FundsPanel(), LINK_ICON, LINK_PLACEHOLDER, LinkChip(), ProfileEditor(), SectionTitle(), squareImage() (+47 more)
+Nodes (59): @heroui/react, FundsPanel(), LINK_ICON, LINK_PLACEHOLDER, LinkChip(), ProfileEditor(), SectionTitle(), squareImage() (+51 more)
 
 ### Community 45 - "invoices.ts"
-Cohesion: 0.06
-Nodes (46): AssetInfo, formatAmount(), formatUnits(), getAsset(), linkNetwork(), USDC_MAINNET, USDC_TESTNET, SignalResult (+38 more)
+Cohesion: 0.08
+Nodes (35): AssetInfo, getAsset(), linkNetwork(), listAssets(), resolveAsset(), USDC_MAINNET, USDC_TESTNET, DONE (+27 more)
 
 ### Community 46 - "bake.mjs"
 Cohesion: 0.05
@@ -402,9 +413,9 @@ Nodes (16): 16. Evidence gaps and open questions, 6. Understanding, confidence a
 Cohesion: 0.13
 Nodes (15): 2. Laws and principles, precisely, Autonomy, competence and intrinsic motivation, Fitts's Law: target acquisition in context, Gamification: element-specific and context-specific, Habit formation and voluntary return cues, Hick-Hyman Law: response uncertainty, not a universal item limit, Jakob's Law: familiarity without cloning, Labor illusion: visible genuine effort can affect perceived value (+7 more)
 
-### Community 53 - "GetPaid.tsx"
-Cohesion: 0.09
-Nodes (52): AmountInput(), DeviceStage(), DrawnCheck(), PagePreview(), PreviewCheck, useDebounced(), exportCsv(), CharCount() (+44 more)
+### Community 53 - "Send.tsx"
+Cohesion: 0.11
+Nodes (54): DeviceStage(), DrawnCheck(), EASE, Notice(), Segmented(), TextArea(), TextInput(), coverageLine() (+46 more)
 
 ### Community 54 - "UI Guide: Universal Principles for Visual Composition, Components and Motion"
 Cohesion: 0.15
@@ -563,20 +574,20 @@ Cohesion: 0.05
 Nodes (37): args, base, children, dot, FAMILY, files, fp, gateDir (+29 more)
 
 ### Community 93 - "kit.tsx"
-Cohesion: 0.16
-Nodes (61): A(), Account(), accountUrl(), Anchor(), C(), CALLOUT, Callout(), CardGrid() (+53 more)
+Cohesion: 0.18
+Nodes (59): A(), Account(), accountUrl(), Anchor(), C(), CALLOUT, Callout(), CardGrid() (+51 more)
 
 ### Community 94 - "photo.js"
 Cohesion: 0.07
 Nodes (39): fx, analyse(), analyses, BASE, bestSrc(), clamp(), creditsBlock(), escHTML() (+31 more)
 
-### Community 95 - "smooth-button/index.tsx"
-Cohesion: 0.36
-Nodes (7): class-variance-authority, class-variance-authority@^0.7.1, mergeRefs(), SmoothButton(), SmoothButtonProps, smoothButtonVariants, Spinner()
+### Community 95 - "app/ui.tsx"
+Cohesion: 0.08
+Nodes (36): BTN, buttonClass(), ButtonOwn, ButtonVariant, CopyChip(), EASE_EXIT, Eyebrow(), FloatInput() (+28 more)
 
 ### Community 96 - "cn"
-Cohesion: 0.04
-Nodes (121): @base-ui/react, motion, react, @base-ui/react@^1.9.0, BTN, Button(), buttonClass(), ButtonOwn (+113 more)
+Cohesion: 0.06
+Nodes (77): 10. Implementation notes, motion, react, AmountInput(), PagePreview(), Button(), Reveal(), RevealItem() (+69 more)
 
 ### Community 97 - "moments.mjs"
 Cohesion: 0.09
@@ -591,12 +602,12 @@ Cohesion: 0.08
 Nodes (31): analyse(), args, B, child, count(), cpuSnap(), die(), exited (+23 more)
 
 ### Community 100 - "diagram.js"
-Cohesion: 0.11
-Nodes (22): api, CAPS, cleanName(), h(), iconCache, iconMeta, iconSource(), inkify() (+14 more)
+Cohesion: 0.10
+Nodes (23): api, CAPS, cleanName(), h(), iconCache, iconMeta, iconSource(), inkify() (+15 more)
 
 ### Community 101 - "split-reveal/object.js"
-Cohesion: 0.18
-Nodes (29): DEFAULT_SEQUENCE, mount(), cutOut(), finish(), DEFAULT_PHOTO, lin(), LUT, mount() (+21 more)
+Cohesion: 0.19
+Nodes (28): DEFAULT_SEQUENCE, mount(), cutOut(), DEFAULT_PHOTO, lin(), LUT, mount(), build() (+20 more)
 
 ### Community 102 - "system.js"
 Cohesion: 0.11
@@ -615,8 +626,8 @@ Cohesion: 0.09
 Nodes (22): tilesMod, args, call(), child, defaultProfile(), guard, HEIGHTS, jumpTo() (+14 more)
 
 ### Community 106 - "animation.ts"
-Cohesion: 0.09
-Nodes (22): DURATION, DURATION_INSTANT, EASE_IN_OUT, EASE_LINEAR, EASE_OUT, EasingCurve, FOCUS_RING_TRANSITION, LOOP_CLASS (+14 more)
+Cohesion: 0.08
+Nodes (23): DURATION, DURATION_INSTANT, EASE_IN_OUT, EASE_LINEAR, EASE_OUT, EasingCurve, FOCUS_RING_TRANSITION, LOOP_CLASS (+15 more)
 
 ### Community 107 - "kit.js"
 Cohesion: 0.08
@@ -642,9 +653,9 @@ Nodes (19): args, child, chrome, defaultProfile(), guard, here, { heroes }, kill
 Cohesion: 0.19
 Nodes (19): boxOf(), counts(), enter(), enterSteps(), fontsIn(), hostOf(), init(), jump() (+11 more)
 
-### Community 115 - "scripts"
-Cohesion: 0.50
-Nodes (4): scripts, build, dev, preview
+### Community 115 - "scroll.tsx"
+Cohesion: 0.18
+Nodes (14): @gsap/react, lenis, @gsap/react@^2.1.2, lenis@^1.3.27, CardStack(), FrameZoom(), reducedMotion(), RememberRow() (+6 more)
 
 ### Community 116 - "photoGL"
 Cohesion: 0.19
@@ -658,9 +669,9 @@ Nodes (18): addressMod, areaMod, basicsMod, CDP, copyChecks(), copyTerms(), hold
 Cohesion: 0.12
 Nodes (23): auditFindings(), bySev(), clean(), clusterLooks(), extrasFindings(), groupLike(), groupSame(), invertedLook() (+15 more)
 
-### Community 119 - "Big scenes"
-Cohesion: 0.28
-Nodes (8): css(), hold(), Big scenes, Check it, Its height (rule 3), Put one on the page, Rules, Who gets one
+### Community 119 - "vaults.ts"
+Cohesion: 0.07
+Nodes (39): KEY_DIR, KeyFile, NETWORKS, ROOT, FILE, Store, near-api-js, @neondatabase/serverless (+31 more)
 
 ### Community 120 - "make-posters.mjs"
 Cohesion: 0.12
@@ -683,8 +694,8 @@ Cohesion: 0.12
 Nodes (15): 0. The model's default (the one to avoid), 10. Refusal and narrowness, 11. The product as the hero, 12. Hurried and conversational, 1. Facts only, 2. Technical and dry, with proof, 3. The founder's letter, 4. Self-aware and playful (+7 more)
 
 ### Community 125 - "share-sheet.tsx"
-Cohesion: 0.18
-Nodes (16): react-dom, react-dom@19.3.1, Brand(), channels, getClientMountSnapshot(), getServerMountSnapshot(), Icon(), IconName (+8 more)
+Cohesion: 0.22
+Nodes (14): Brand(), channels, getClientMountSnapshot(), getServerMountSnapshot(), Icon(), IconName, lockBodyScroll(), QrArt() (+6 more)
 
 ### Community 126 - "product-render/auto.js"
 Cohesion: 0.21
@@ -726,13 +737,13 @@ Nodes (13): 1. Plan in screens, 2. The deal, 3. The plans, 4. Place, 5. Visuals,
 Cohesion: 0.14
 Nodes (13): Access, Base, Cards, lists and forms, Colour, Footer, Forms, Head, Motion (+5 more)
 
-### Community 136 - "scenes.js"
-Cohesion: 0.38
-Nodes (5): BASE, linked, mount(), mountAll(), start()
+### Community 136 - "evm.ts"
+Cohesion: 0.26
+Nodes (9): ApiError, post(), req(), erc20TransferData(), eth(), evmAccount(), evmPay(), hasEvmWallet() (+1 more)
 
-### Community 137 - "lerp"
-Cohesion: 0.40
-Nodes (4): destroy(), damp(), lerp(), track()
+### Community 137 - ".render"
+Cohesion: 0.32
+Nodes (4): clamp(), ease(), spread(), unease()
 
 ### Community 138 - "pick.js"
 Cohesion: 0.28
@@ -741,6 +752,10 @@ Nodes (12): clashes(), dealable(), filterEffects(), fitsKind(), kindOf(), KINDS,
 ### Community 139 - "Effects beyond backgrounds"
 Cohesion: 0.15
 Nodes (12): A photograph with copy (`fx-photo`), Colour, Cost: light enough for a laptop's integrated GPU, Effects beyond backgrounds, Feature cards with inset panels (`fx-feature-card`), Objects in dither (`fx-dither-object`), Picking the effect, Street map of the place (`fx-map`) (+4 more)
+
+### Community 140 - "Notara: Architecture"
+Cohesion: 0.18
+Nodes (10): 10. Future work (not in v1), 1. The big picture, 3. API (server), 5. Signed verdict format, 6. Keys and trust, 7. Data sources, 8. Repository layout, 9. Deployment (+2 more)
 
 ### Community 141 - "Copy moves"
 Cohesion: 0.17
@@ -765,6 +780,10 @@ Nodes (11): activeIn(), applyWaivers(), below(), dotOf(), findProject(), lastTou
 ### Community 147 - "Layout: one section per screen, equal edges, heroes, type"
 Cohesion: 0.20
 Nodes (9): 1. What the good sites do, 2. One section per screen, 3. The hero, 4. Equal edges and the grid, 5. Type, 6. The check, Layout: one section per screen, equal edges, heroes, type, The eleven heroes (+1 more)
+
+### Community 148 - "Big scenes"
+Cohesion: 0.28
+Nodes (8): css(), hold(), Big scenes, Check it, Its height (rule 3), Put one on the page, Rules, Who gets one
 
 ### Community 149 - "Sections for a kind of content"
 Cohesion: 0.29
@@ -791,8 +810,8 @@ Cohesion: 0.22
 Nodes (9): attrs(), cssRefs(), jsRefs(), kindOf(), local(), metas(), refsOf(), stripRef() (+1 more)
 
 ### Community 155 - "merchants.ts"
-Cohesion: 0.05
-Nodes (38): dependencies, borsh@2.0.0, near-api-js@7.4.0, near-sign-verify@0.4.5, @neondatabase/serverless@1.2.0, borsh, near-sign-verify, @neondatabase/serverless (+30 more)
+Cohesion: 0.07
+Nodes (31): dependencies, borsh@2.0.0, near-api-js@7.4.0, near-sign-verify@0.4.5, @neondatabase/serverless@1.2.0, borsh, near-sign-verify, LOCAL (+23 more)
 
 ### Community 156 - "r1"
 Cohesion: 0.54
@@ -810,21 +829,37 @@ Nodes (4): close-photo, close-type, close-word, Closes
 Cohesion: 0.25
 Nodes (8): line-up, peek-list, people-row, photo-band, photo-pair, Photographs, rooms, services and people, rooms-list, services-list
 
+### Community 160 - "smooth-button/index.tsx"
+Cohesion: 0.36
+Nodes (7): class-variance-authority, class-variance-authority@^0.7.1, mergeRefs(), SmoothButton(), SmoothButtonProps, smoothButtonVariants, Spinner()
+
+### Community 161 - "2. Components"
+Cohesion: 0.29
+Nodes (7): 2.1 Vault contract (`contracts/vault`, Rust, near-sdk 5.30), 2.2 Registry contract (`contracts/registry`, Rust), 2.3 Notara (`passport/src`, TypeScript), 2.4 Agent (`agent/src`, TypeScript), 2.5 Website (`web/`, built), 2.6 Backend (`server/`, built), 2. Components
+
 ### Community 162 - "photo-dither/object.js"
 Cohesion: 0.43
 Nodes (6): FLAT, inks(), mount(), params, blueNoise(), photoPalette()
+
+### Community 163 - "scenes.js"
+Cohesion: 0.38
+Nodes (5): BASE, linked, mount(), mountAll(), start()
 
 ### Community 164 - "Copy tells"
 Cohesion: 0.29
 Nodes (6): Copy tells, First generation: the old tells (mostly avoided now; still checked), Not tells (leave them alone), Over-correction: what the rules themselves produce, Second generation: the tells now, Why it happens
 
-### Community 165 - "check.ts"
-Cohesion: 0.08
-Nodes (37): GuardedPayments, WrapperOptions, wallet(), 2.4 Agent (`agent/src`, TypeScript), Commands, How they sit, Icons, The violet rule (a judgement, stated) (+29 more)
+### Community 165 - "vaults.ts"
+Cohesion: 0.11
+Nodes (24): Commands, How they sit, Icons, The violet rule (a judgement, stated), Where they come from, Which one, buildReport(), check() (+16 more)
 
 ### Community 166 - "Moments"
 Cohesion: 0.29
 Nodes (6): Check it, Moments, Put one on the page, Rules, The still rule (every moment, no exception), Where each fits
+
+### Community 167 - "Run it locally"
+Cohesion: 0.29
+Nodes (7): API, Demo, Owner commands (human only, local key), Read-only check of a real mainnet account (no keys), Run it locally, Testnet deployment (one time, about 7.5 testnet NEAR), Tests
 
 ### Community 168 - "browserChecks"
 Cohesion: 0.33
@@ -858,6 +893,10 @@ Nodes (6): codeOnly(), hashOf(), kitIndex(), kitTwin(), norm(), staticChecks()
 Cohesion: 0.33
 Nodes (6): freshProfile(), inProject(), opt(), profileBase(), roundsArg(), str()
 
+### Community 176 - "4. Main flows"
+Cohesion: 0.33
+Nodes (6): 4.1 Check an account (website), 4.2 Agent pays an invoice, 4.3 Human approves a WARN payment, 4.3b Handing the vault to the human's wallet, 4.4 Attacker bypasses the wrapper, 4. Main flows
+
 ### Community 178 - "Price and questions"
 Cohesion: 0.40
 Nodes (5): comparison-table, faq, Price and questions, pricing-three, pricing-two
@@ -867,8 +906,8 @@ Cohesion: 0.40
 Nodes (5): footer-columns, footer-dark, footer-statement, footer-visit, Footers
 
 ### Community 180 - "Page plans"
-Cohesion: 0.33
-Nodes (6): Gaming, Page plans, Place, Product, Service, Software
+Cohesion: 0.40
+Nodes (5): Gaming, Page plans, Place, Service, Software
 
 ### Community 181 - "Navigation"
 Cohesion: 0.40
@@ -882,6 +921,18 @@ Nodes (5): About this guide, Evidence labels, How to read and apply the guide, P
 Cohesion: 0.50
 Nodes (3): Every visual renders, Performance budget, Usual fixes
 
+### Community 184 - "lerp"
+Cohesion: 0.40
+Nodes (4): destroy(), damp(), lerp(), track()
+
+### Community 185 - "Hackathon tracks and requirements"
+Cohesion: 0.40
+Nodes (5): AI Security & Defense (`security`), General submission rules, Hackathon tracks and requirements, Open Innovation (`open`), Real-World Money (`realworld`)
+
+### Community 186 - "scripts"
+Cohesion: 0.50
+Nodes (4): scripts, build, dev, preview
+
 ### Community 187 - "manifest.json"
 Cohesion: 0.50
 Nodes (3): manifest_version, name, version
@@ -890,33 +941,37 @@ Nodes (3): manifest_version, name, version
 Cohesion: 0.50
 Nodes (4): 18. Provenance and method, Consolidation method, How to interpret this edition, Research lineage
 
+### Community 190 - "On-chain evidence"
+Cohesion: 0.67
+Nodes (3): Attack demo on testnet, Mainnet NEAR Intents payment (2026-11-09), On-chain evidence
+
 ### Community 205 - "sections-library.md"
 Cohesion: 0.25
 Nodes (7): customer-proof-row, Heroes, logo-row, Proof, quote-stat, Section library, What every recipe assumes
 
 ### Community 212 - "icons.tsx"
-Cohesion: 0.06
-Nodes (65): 10. Implementation notes, SpinThemeToggle(), Sheet(), WalletModal(), ArrowLeft, BadgeCheck, Bell, Building (+57 more)
+Cohesion: 0.05
+Nodes (62): SpinThemeToggle(), Hint(), IconButton(), Sheet(), WalletChip(), BadgeCheck, Bell, Book (+54 more)
 
 ## Knowledge Gaps
 - **21 isolated node(s):** `Allow`, `Block`, `Warn`, `Executed`, `Executing` (+16 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1595 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1603 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `near-api-js` connect `config.ts` to `vaults.ts`, `package.json`, `check.ts`, `linkKey.ts`, `invoices.ts`, `demo.ts`, `server/index.ts`, `VaultConsole.tsx`, `merchants.ts`, `web/package.json`?**
-  _High betweenness centrality (0.222) - this node is a cross-community bridge._
+- **Why does `near-api-js` connect `vaults.ts` to `demo.ts`, `config.ts`, `package.json`, `vaults.ts`, `linkKey.ts`, `agent.ts`, `server/index.ts`, `VaultConsole.tsx`, `merchants.ts`, `web/package.json`?**
+  _High betweenness centrality (0.206) - this node is a cross-community bridge._
 - **Are the 51 inferred relationships involving `lib()` (e.g. with `arrive()` and `audit()`) actually correct?**
   _`lib()` has 51 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Allow`, `Block`, `Warn` to the rest of the system?**
   _21 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Vault` be split into smaller, more focused modules?**
   _Cohesion score 0.0625694187338023 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `cn` to `profile.tsx`, `Send.tsx`, `animation.ts`, `lib/wallet.tsx`, `VaultConsole.tsx`, `icons.tsx`, `GetPaid.tsx`, `kit.tsx`, `share-sheet.tsx`, `web/package.json`, `smooth-button/index.tsx`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Why does `lib()` connect `lib` to `consistency.mjs`?**
+  _High betweenness centrality (0.069) - this node is a cross-community bridge._
 - **Should `registry/src/lib.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.09322033898305085 - nodes in this community are weakly interconnected._
-- **Why does `chat()` connect `Features` to `Page plans`, `demo.ts`?**
-  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `react` connect `cn` to `smooth-button/index.tsx`, `profile.tsx`, `Dashboard.tsx`, `lib/wallet.tsx`, `animation.ts`, `VaultConsole.tsx`, `icons.tsx`, `Send.tsx`, `scroll.tsx`, `DocsPage.tsx`, `kit.tsx`, `share-sheet.tsx`, `web/package.json`, `app/ui.tsx`?**
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._

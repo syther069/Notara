@@ -130,6 +130,7 @@ const TESTS: Row[] = [
   { id: "3d", attack: "Reuses a genuine ALLOW for the merchant to pay the attacker", expect: "Verdict is for a different recipient", hash: "6tCuNKaBaB3TAQHGmaxvS3iRZmatLZagHi3YE3TeNquo", result: "refused" },
   { id: "3e", attack: "Sends NEAR directly with the agent's key (even 1 yoctoNEAR)", expect: "Rejected by the protocol: Access key requires full access", noTx: "No transaction: rejected before inclusion" },
   { id: "3f", attack: "Calls an owner method (swap the Notara signer key) with the agent's key", expect: "Rejected by the protocol: method not allowed by the key", noTx: "No transaction: rejected before inclusion" },
+  { id: "3g", attack: "Calls another contract (USDC ft_transfer to the attacker) with the agent's key. Added 12 November 2026", expect: "Rejected by the protocol: the key only works on the vault", noTx: "No transaction: rejected before inclusion" },
   { id: "4", attack: "First invoice from an unknown new shop", expect: "WARN. Parked as payment #21, then approved by the owner and paid", hash: "41UpfgoS7tBNub92kcY5s2hEtaqEKpw3KdVGkKC42wmg", result: "ok" },
 ];
 
@@ -158,7 +159,21 @@ export function AttackTests() {
       <Proof
         title="Testnet, 9 November 2026"
         items={TESTS.filter((t) => t.hash).map((t) => ({ net: "testnet" as const, hash: t.hash!, result: t.result, label: `${t.id}. ${t.attack}`, shows: t.expect }))}
-        note={<>Checks 2b, 3e and 3f have no transaction to show. 2b is stopped before anything is signed. In 3e and 3f the NEAR protocol rejects the request before it can be included in a block.</>}
+        note={<>Checks 2b, 3e, 3f and 3g have no transaction to show. 2b is stopped before anything is signed. In 3e, 3f and 3g the NEAR protocol rejects the request before it can be included in a block. 3g was added on 12 November 2026, so it has no 9 November run.</>}
+      />
+      <H2>Re-run after locking the vault (12 November 2026)</H2>
+      <P>
+        On 12 November 2026 the demo vault's full-access key was deleted (<A href="https://testnet.nearblocks.io/txns/BKYAA6TskXprBX8ovMYcjBCTpnMWKFWpW7KHzaCLjcJ1">transaction</A>), so its only key is now the agent's. The attack checks were then run again: all seven, 3a to 3g, were refused.
+      </P>
+      <Proof
+        title="Testnet, 12 November 2026, vault locked"
+        items={[
+          { net: "testnet", hash: "J4DoW2RjK5RwndieCjV4eucYxexekuCBbrSNAeucczp9", result: "refused", label: "3a. Submit the signed BLOCK verdict anyway", shows: "Notara verdict is BLOCK: payment refused" },
+          { net: "testnet", hash: "6DyHLU5kvqkSCKF3FkYF3jrHLrQqJPbJqqHywQ7kgKk8", result: "refused", label: "3b. Rewrite BLOCK to ALLOW", shows: "Invalid verdict signature" },
+          { net: "testnet", hash: "D9C5jYkaPf6s78aM6RJ8gPoAQN14rcTETiCFXbAehymW", result: "refused", label: "3c. Forge an ALLOW with an attacker key", shows: "Invalid verdict signature" },
+          { net: "testnet", hash: "aroY4YHyeQGuNqJsLzWWXDC1NTgKnoVx89eFrmeurqw", result: "refused", label: "3d. Reuse a merchant ALLOW for the attacker", shows: "Verdict is for a different recipient" },
+        ]}
+        note={<>3e, 3f and 3g were rejected by the protocol before inclusion: Access key requires full access; does not allow method set_signer_public_key; receiver doesn't match the transaction's receiver.</>}
       />
       <Proof
         title="The owner approves the parked payment (check 4)"
@@ -195,7 +210,7 @@ export function FunctionCallKeys() {
         <li>
           Calls to one contract, the vault, and one method, <C>request_payment</C>.
         </li>
-        <li>Gas paid from a fixed allowance of 0.5 NEAR set at setup. When it runs out, the key stops working.</li>
+        <li>Gas paid from a fixed allowance. Setup gives 0.5 NEAR; on 12 November 2026 the demo vault's agent key was replaced with one holding 2 NEAR, just before the vault was locked, because a locked vault can't get a new key. When the allowance runs out, the key stops working.</li>
       </UL>
 
       <H2>What the key can't do</H2>
@@ -205,9 +220,10 @@ export function FunctionCallKeys() {
           Pay NEP-141 tokens directly. <C>ft_transfer</C> needs exactly 1 yoctoNEAR attached, so the vault attaches it from its own balance.
         </li>
         <li>Call owner methods such as approve, withdraw or setting the Notara signer key.</li>
+        <li>Call any other contract, for example the USDC token's <C>ft_transfer</C>. The key works only on the vault.</li>
       </UL>
       <P>
-        Checks 3e and 3f on the <A href="/docs/attack-tests">attack tests</A> page show both rejections.
+        Checks 3e, 3f and 3g on the <A href="/docs/attack-tests">attack tests</A> page show these rejections.
       </P>
 
       <H2>What the key doesn't protect</H2>
@@ -216,10 +232,64 @@ export function FunctionCallKeys() {
           The key doesn't judge the recipient. On a naive payment contract, a function-call key could still pay anyone. The safety comes from the vault's checks, not from the key alone.
         </p>
         <p>
-          Whoever holds the vault account's full-access key can still change or drain it. Setup keeps that key during development; <C>npm run owner -- lock-vault</C> deletes it, after which the vault changes only through its own methods.
+          Whoever holds the vault account's full-access key can still change or drain it. Setup keeps that key during development; <C>npm run owner -- lock-vault</C> deletes it, after which the vault changes only through its own methods. The demo vault <Account id={VAULT} /> was locked on 12 November 2026 (<A href="https://testnet.nearblocks.io/txns/BKYAA6TskXprBX8ovMYcjBCTpnMWKFWpW7KHzaCLjcJ1">transaction</A>). Before locking, run <C>npm run owner -- rotate-agent-key</C> to give the agent a key with enough gas allowance: after locking, no key can be added.
           Visitor vaults never have one.
         </p>
       </Callout>
+    </>
+  );
+}
+
+const TEE_LOG = `[tee] Qwen/Qwen3.8-27B: VERIFIED
+[tee]   ok   Model runs in TEE nodes (1 node(s))
+[tee]   ok   Gateway echoes our fresh nonce
+[tee]   ok   Every model node echoes our fresh nonce
+[tee]   ok   NVIDIA verifies the GPU evidence of every node
+[tee]   not checked: Intel TDX quote (needs a DCAP verifier such as dcap-qvl)
+[tee]   not checked: Event log replay (RTMR3)
+[tee]   ok   Reply signed inside an attested TEE (0x835ab53d20294ef795906dff21ae4c045336aa26)`;
+
+export function TeeModel() {
+  return (
+    <>
+      <Lead>The agent reads untrusted invoices with an AI model. Before it uses the model, Notara checks that the model runs inside a trusted execution environment (TEE) on NEAR AI Cloud, and then checks that each reply was signed inside it.</Lead>
+
+      <H2>What is checked</H2>
+      <P>The checks follow NEAR's own verification example, and run every time the agent starts on NEAR AI Cloud:</P>
+      <OL>
+        <li>
+          Notara asks NEAR AI Cloud for the model's attestation report (<C>GET /v1/attestation/report</C>) with a fresh random nonce.
+        </li>
+        <li>The gateway and every TEE node serving the model must echo that nonce, so the evidence was made for this request, not replayed.</li>
+        <li>
+          Each node's GPU evidence goes to NVIDIA's attestation service. It must pass, and NVIDIA's answer must carry the same nonce.
+        </li>
+        <li>
+          After each reply, Notara fetches its signature (<C>GET /v1/signature/{"{id}"}</C>). The signed text must be the model name plus the SHA-256 of the exact request and reply, and the signature must recover to one of the TEE signing addresses from the
+          report.
+        </li>
+      </OL>
+      <Code title="From a demo run on 12 November 2026">{TEE_LOG}</Code>
+
+      <H2>Run it</H2>
+      <P>
+        <C>npm run attest</C> checks the default model, Qwen/Qwen3.8-27B, and <C>npm run attest -- other/model</C> checks another. <C>npm run demo</C> runs the same checks for the agent's model before the scenarios. The agent uses Qwen/Qwen3.8-27B on NEAR AI Cloud unless{" "}
+        <C>AGENT_LLM_MODEL</C> says otherwise.
+      </P>
+      <P>
+        Some models on NEAR AI Cloud are relayed to other providers and don't run in a TEE, for example <C>anthropic/claude-fable-5</C>, which the 9 November demo run used. For those the log says there is nothing to attest, and the demo still runs.
+      </P>
+
+      <H2>What this does and doesn't prove</H2>
+      <Callout kind="limit">
+        <p>
+          It proves the model's GPUs passed NVIDIA's attestation for this request, and that each reply was signed by a key the attested TEE reported. Two checks from NEAR's docs are not done yet: verifying the Intel TDX quote itself (with a DCAP verifier such as
+          dcap-qvl) and replaying the event log. Instances of the same model share a signing key, so a matching signature doesn't prove which instance answered.
+        </p>
+      </Callout>
+      <P>
+        This is about the AI model. Notara's own verdict-signing key is not in a TEE yet: on the public deploy it is an environment variable. Moving it into a TEE is planned; see <A href="/docs/security">Security</A>.
+      </P>
     </>
   );
 }

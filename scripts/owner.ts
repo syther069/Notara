@@ -6,7 +6,8 @@
 //   npm run owner -- reject <id>
 //   npm run owner -- show <id>            payment + Notara report hash it was based on
 //   npm run owner -- pause | unpause
-//   npm run owner -- lock-vault           delete the vault's full-access key (irreversible: no more upgrades)
+//   npm run owner -- rotate-agent-key [2] new agent key with a bigger gas allowance (in NEAR), old one removed
+//   npm run owner -- lock-vault           delete the vault's full-access key (irreversible: no more upgrades or new keys)
 //   npm run owner -- enable-usdc          USDC cap on the vault + token registration for vault/merchant/newshop
 //   npm run owner -- fund-usdc <amount>   move testnet USDC from the owner to the vault (get it at faucet.circle.com)
 //   npm run owner -- balances             NEAR and USDC balances of owner, vault and demo accounts
@@ -93,9 +94,33 @@ async function main() {
       console.log(`[owner] ${cmd}d: ${link(r.transaction.hash)}`);
       break;
     }
+    case "rotate-agent-key": {
+      // A fresh function-call key for the agent (request_payment only) with a bigger gas allowance, then
+      // the old key is removed. Run this before lock-vault: after locking, no key can be added again.
+      const allowance = id ?? "2";
+      if (!/^\d+(\.\d+)?$/.test(allowance) || Number(allowance) <= 0 || Number(allowance) > 5) throw new Error("Allowance in NEAR, more than 0 and at most 5");
+      const admin = accountFromKey(network, "vault-admin");
+      const old = readKey("agent-fc");
+      const kp = KeyPair.fromRandom("ed25519");
+      const add: any = await admin.addFunctionCallAccessKey({ publicKey: kp.getPublicKey().toString(), contractId: dep.vault, methodNames: ["request_payment"], allowance: BigInt(toUnits(allowance, { symbol: "NEAR", decimals: 24 } as any)) });
+      console.log(`[owner] added agent key ${kp.getPublicKey().toString()} (request_payment only, ${allowance} NEAR gas allowance): ${link(add.transaction.hash)}`);
+      writeKey("agent-fc.prev", old);
+      writeKey("agent-fc", { account_id: dep.vault, public_key: kp.getPublicKey().toString(), secret_key: kp.toString() as KeyPairString, note: `Function-call key on the vault, method request_payment only, ${allowance} NEAR gas allowance. The only key the agent loads.` });
+      const del: any = await admin.deleteKey(old.public_key);
+      console.log(`[owner] removed the old agent key ${old.public_key}: ${link(del.transaction.hash)}`);
+      break;
+    }
     case "lock-vault": {
       const admin = accountFromKey(network, "vault-admin");
       const k = readKey("vault-admin");
+      // After this no key can be added, so the agent's gas allowance is all it will ever have.
+      const q: any = await fetch(NETWORKS[network].rpc, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "view_access_key", finality: "final", account_id: dep.vault, public_key: readKey("agent-fc").public_key } }),
+      }).then((r) => r.json());
+      const left = BigInt(q?.result?.permission?.FunctionCall?.allowance ?? 0);
+      if (left < 10n ** 24n) throw new Error(`The agent key has ${nearAmount(left.toString())} NEAR of gas allowance left. Run rotate-agent-key first: after locking, it can't be topped up.`);
       const r: any = await admin.deleteKey(k.public_key);
       console.log(`[owner] deleted vault full-access key ${k.public_key}: ${link(r.transaction.hash)}`);
       console.log("[owner] The vault can now only change through its own contract methods.");
