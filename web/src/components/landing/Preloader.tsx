@@ -3,7 +3,7 @@
 // into the page. Uses Manrope (font-sans) to match Notara's typography across the site.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { SealMark } from "@/components/Layout";
+import { NotaraMark } from "@/components/Layout";
 import { Link2, ShieldCheck, Wallet } from "@/components/icons";
 
 const COOKIE = "notara_intro";
@@ -127,7 +127,7 @@ export function Preloader({ onDone }: { onDone?: () => void }) {
           <span className="absolute right-0 top-0 size-3.5 border-r-2 border-t-2 border-highlight" />
           <span className="absolute bottom-0 left-0 size-3.5 border-b-2 border-l-2 border-highlight" />
           <span className="absolute bottom-0 right-0 size-3.5 border-b-2 border-r-2 border-highlight" />
-          <span className="absolute inset-0 flex items-center justify-center">{Glyph ? <Glyph size={24} strokeWidth={1.6} /> : <SealMark className="size-7" tick="var(--background)" />}</span>
+          <span className="absolute inset-0 flex items-center justify-center">{Glyph ? <Glyph size={24} strokeWidth={1.6} /> : <NotaraMark className="size-7" />}</span>
         </motion.div>
 
         <p className="flex w-fit max-w-full flex-col text-[clamp(20px,3.2vw,36px)] font-extrabold leading-[1.2] tracking-[-0.03em]">

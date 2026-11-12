@@ -100,6 +100,14 @@ export function docs<T>(table: Table) {
       await e.run(`update ${table} set doc = json_patch(doc, ?) where id = ?`, [p, id]);
       return this.get(id);
     },
+    /** Like merge, but only while doc[field] isn't `value` (one statement). Undefined if it was. */
+    async mergeUnless(id: string, patch: Partial<T>, field: string, value: string): Promise<T | undefined> {
+      const e = await getEngine();
+      const p = JSON.stringify(patch);
+      if (e.pg) return (await e.q(`update ${table} set doc = doc || $2::jsonb where id = $1 and doc->>$3 is distinct from $4 returning doc`, [id, p, field, value]))[0]?.doc;
+      const n = await e.run(`update ${table} set doc = json_patch(doc, ?) where id = ? and coalesce(json_extract(doc, ?), '') <> ?`, [p, id, `$.${field}`, value]);
+      return n ? this.get(id) : undefined;
+    },
     /** Sets doc[field] = value only if it isn't set yet. True if this call set it. */
     async setOnce(id: string, field: string, value: string): Promise<boolean> {
       const e = await getEngine();

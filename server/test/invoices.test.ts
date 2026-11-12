@@ -62,6 +62,20 @@ test("set-once flags: only the first caller wins, and a flag can be cleared to r
   assert.equal(await inv.setInvoiceFlag(i.id, "linkFundedAt"), true);
 });
 
+test("a paid invoice never moves back to an earlier status", async () => {
+  const i = await inv.createInvoice({ merchant: "m.testnet", description: "race", amount: NEAR });
+  await inv.updateInvoice(i.id, { status: "processing" });
+  await inv.updateInvoice(i.id, { status: "paid", txHash: "PAID" });
+  // A slow checkout poll that read the invoice before it was paid reports its older reading.
+  const after = await inv.updateInvoice(i.id, { status: "unpaid", txHash: undefined, checkouts: [] });
+  assert.equal(after.status, "paid");
+  assert.equal(after.txHash, "PAID");
+  for (const s of ["processing", "pending_approval", "failed", "refused"] as const) assert.equal((await inv.updateInvoice(i.id, { status: s })).status, "paid");
+  // Moves forward still work, and unrelated fields still merge.
+  assert.equal((await inv.updateInvoice(i.id, { claimedTo: "x.testnet" })).claimedTo, "x.testnet");
+  assert.equal((await inv.updateInvoice(i.id, { status: "refunded" })).status, "refunded");
+});
+
 test("updates merge fields in place instead of overwriting the whole record", async () => {
   const i = await inv.createInvoice({ merchant: "m.testnet", description: "merge", amount: NEAR });
   await inv.setInvoiceFlag(i.id, "linkFundedAt", "2026-11-09T00:00:00.000Z");

@@ -29,12 +29,15 @@ export function PayPage() {
   const [tokens, setTokens] = useState<PayToken[]>([]);
   const [token, setToken] = useState("");
   const [refundTo, setRefundTo] = useState("");
-  const [busy, setBusy] = useState(false);
+  /**
+   * The one payment action in flight, if any. A single value (not one flag per button) so the page can
+   * never run two payment paths at once, e.g. a wallet transfer and an any-chain deposit for one link.
+   */
+  const [paying, setPaying] = useState<"near" | "agent" | "address" | "recheck" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [failure, setFailure] = useState<{ txUrl: string | null; raw: string } | null>(null);
   const wallet = useWallet();
   const { dep } = useDeployment();
-  const [nearBusy, setNearBusy] = useState(false);
   const [evmTx, setEvmTx] = useState<string | null>(null);
   // Errors are kept per region: a failed token list or safety check must not read as a failed payment.
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -46,11 +49,10 @@ export function PayPage() {
    * offers a status check first instead of the pay button.
    */
   const [unconfirmed, setUnconfirmed] = useState<{ txHash?: string; signerId?: string; why: "wallet" | "report"; detail: string } | null>(null);
-  const [rechecking, setRechecking] = useState(false);
 
   async function payFromNear() {
-    if (!inv) return;
-    setNearBusy(true);
+    if (!inv || paying) return;
+    setPaying("near");
     setError(null);
     setFailure(null);
     setUnconfirmed(null);
@@ -66,14 +68,14 @@ export function PayPage() {
         if (err instanceof TxFailedError) setFailure({ txUrl: err.txUrl, raw: err.raw });
       }
     } finally {
-      setNearBusy(false);
+      setPaying(null);
     }
   }
 
   /** Asks Notara again: re-reports a known transaction (the server refuses to count one twice), or re-reads the link. */
   async function recheck() {
-    if (!inv || !unconfirmed) return;
-    setRechecking(true);
+    if (!inv || !unconfirmed || paying) return;
+    setPaying("recheck");
     try {
       const next = unconfirmed.txHash && unconfirmed.signerId ? await api.nearTx(inv.id, { txHash: unconfirmed.txHash, signerId: unconfirmed.signerId }) : await api.invoice(inv.id);
       setInv(next);
@@ -82,7 +84,7 @@ export function PayPage() {
     } catch (err: any) {
       setUnconfirmed({ ...unconfirmed, detail: err.message });
     } finally {
-      setRechecking(false);
+      setPaying(null);
     }
   }
 
@@ -116,10 +118,10 @@ export function PayPage() {
   useEffect(() => {
     if (asset && net === "mainnet") loadTokens();
   }, [asset, net, loadTokens]);
-  const [agentBusy, setAgentBusy] = useState(false);
   /** Testnet only: the demo AI agent pays through Notara and the spending vault. */
   async function payWithAgent() {
-    setAgentBusy(true);
+    if (paying) return;
+    setPaying("agent");
     setError(null);
     try {
       await api.payInvoice(id);
@@ -127,7 +129,7 @@ export function PayPage() {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setAgentBusy(false);
+      setPaying(null);
     }
   }
   const runCheck = useCallback(() => {
@@ -161,14 +163,15 @@ export function PayPage() {
       document.getElementById("refund")?.focus();
       return;
     }
-    setBusy(true);
+    if (paying) return;
+    setPaying("address");
     setError(null);
     try {
       setInv(await api.quote(id, { originAsset: token, refundTo: refundTo.trim() }));
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setBusy(false);
+      setPaying(null);
     }
   }
 
@@ -286,8 +289,8 @@ export function PayPage() {
           )}
           <p className="small muted">{unconfirmed.detail}</p>
           <div className="row" style={{ marginTop: 8 }}>
-            <button type="button" className="btn btn-primary btn-sm" onClick={recheck} disabled={rechecking} aria-busy={rechecking}>
-              {rechecking && <LoaderCircle size={14} className="spin" aria-hidden />} {rechecking ? "Checking…" : "Check payment status"}
+            <button type="button" className="btn btn-primary btn-sm" onClick={recheck} disabled={!!paying} aria-busy={paying === "recheck"}>
+              {paying === "recheck" && <LoaderCircle size={14} className="spin" aria-hidden />} {paying === "recheck" ? "Checking…" : "Check payment status"}
             </button>
             {!unconfirmed.txHash && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setUnconfirmed(null)}>
@@ -341,10 +344,10 @@ export function PayPage() {
               )}
             </p>
             <div>
-              <button type="button" className="btn btn-primary" onClick={payFromNear} disabled={nearBusy}>
-                {nearBusy && <LoaderCircle size={16} className="spin" aria-hidden />} Pay {formatAsset(inv.amount, inv.asset)} with NEAR wallet
+              <button type="button" className="btn btn-primary" onClick={payFromNear} disabled={!!paying}>
+                {paying === "near" && <LoaderCircle size={16} className="spin" aria-hidden />} Pay {formatAsset(inv.amount, inv.asset)} with NEAR wallet
               </button>
-              {nearBusy && (
+              {paying === "near" && (
                 <p className="small muted" role="status" style={{ margin: "8px 0 0" }}>
                   Waiting for your wallet. Approve or reject the request there (for an extension, click its icon in the toolbar).
                 </p>
@@ -360,8 +363,8 @@ export function PayPage() {
                     The demo agent asks Notara first, then pays from its spending vault. Big or unusual payments wait for the vault owner to approve.
                   </p>
                   <div>
-                    <button type="button" className="btn btn-secondary" onClick={payWithAgent} disabled={agentBusy}>
-                      {agentBusy && <LoaderCircle size={16} className="spin" aria-hidden />} Pay with the demo AI agent
+                    <button type="button" className="btn btn-secondary" onClick={payWithAgent} disabled={!!paying}>
+                      {paying === "agent" && <LoaderCircle size={16} className="spin" aria-hidden />} Pay with the demo AI agent
                     </button>
                   </div>
                 </>
@@ -426,8 +429,8 @@ export function PayPage() {
               </span>
             </div>
             <div>
-              <button className="btn btn-primary" disabled={busy || !token} aria-busy={busy}>
-                {busy && <LoaderCircle size={16} className="spin" aria-hidden />} {busy ? "Getting an address…" : "Get payment address"}
+              <button className="btn btn-primary" disabled={!!paying || !token} aria-busy={paying === "address"}>
+                {paying === "address" && <LoaderCircle size={16} className="spin" aria-hidden />} {paying === "address" ? "Getting an address…" : "Get payment address"}
               </button>
             </div>
           </form>

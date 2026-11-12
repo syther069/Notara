@@ -51,16 +51,21 @@ const BalanceCtx = createContext<Balances>({ usdc: undefined, near: undefined, r
 /** The connected wallet's balances, read live from NEAR. */
 export const useBalances = () => useContext(BalanceCtx);
 
-/** Notara's mark: a notary seal, a notched ring around a check. */
-export function SealMark({ className = "size-7", tick = "var(--background)" }: { className?: string; tick?: string }) {
+/**
+ * Notara's mark: two mirrored brackets drawn as one line, their diagonals meeting at a gold centre: two
+ * parties, one signed agreement between them. The outline takes the text colour, so it reads on cream
+ * and on canopy; the centre is always gold.
+ */
+export function NotaraMark({ className = "size-7" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden>
       <path
-        d="M16 2.5l2.6 1.9 3.2-.3 1.3 2.9 2.9 1.3-.3 3.2 1.9 2.6-1.9 2.6.3 3.2-2.9 1.3-1.3 2.9-3.2-.3L16 26.5l-2.6-1.9-3.2.3-1.3-2.9-2.9-1.3.3-3.2L4.4 15l1.9-2.6-.3-3.2 2.9-1.3 1.3-2.9 3.2.3z"
-        fill="currentColor"
+        d="M16 13 10.5 7.5H6.2A2.2 2.2 0 0 0 4 9.7v12.6a2.2 2.2 0 0 0 2.2 2.2h4.3L16 19l5.5 5.5h4.3a2.2 2.2 0 0 0 2.2-2.2V9.7a2.2 2.2 0 0 0-2.2-2.2h-4.3z"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinejoin="round"
       />
-      <path d="M11 15.2l3.3 3.3 6.6-6.8" stroke={tick} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M11.5 26.5l-1.8 4 3.1-.9 1.6 2.4.9-4M20.5 26.5l1.8 4-3.1-.9-1.6 2.4-.9-4" fill="currentColor" opacity=".55" />
+      <path d="M16 13v6" stroke="var(--color-gold, #c8a96a)" strokeWidth="2.2" strokeLinecap="round" />
     </svg>
   );
 }

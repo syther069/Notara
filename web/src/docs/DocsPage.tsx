@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { SealMark } from "@/components/Layout";
+import { NotaraMark } from "@/components/Layout";
 import { SpinThemeToggle } from "@/components/app/SpinThemeToggle";
 import { ArrowLeft, ArrowRight, ChevronDown, Github, Menu, Pencil, Search, X } from "@/components/icons";
 import { EASE } from "@/components/app/ui";
@@ -251,7 +251,7 @@ export function DocsPage() {
             <Menu size={20} />
           </button>
           <Link to="/" className="flex min-h-11 items-center gap-2.5" aria-label="Notara home">
-            <SealMark className="size-7 text-accent" />
+            <NotaraMark className="size-7 text-accent" />
             <span className="text-[18px] font-extrabold tracking-[-0.04em]">Notara</span>
           </Link>
           <span aria-hidden className="h-5 w-px bg-border" />

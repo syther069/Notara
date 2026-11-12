@@ -1,4 +1,4 @@
-/* Notary Seal: layout, components and states. Tokens live in tokens.css. */
+/* Notara: layout, components and states. Tokens live in tokens.css. */
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: 88px; }

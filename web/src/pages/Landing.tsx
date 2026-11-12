@@ -31,7 +31,7 @@ import { SmoothScroll } from "@/components/skiper/scroll";
 import { ExpandGroup } from "@/components/skiper/expand";
 import { PagePreview } from "@/components/app/preview";
 import { Button, EASE, Reveal, RevealItem } from "@/components/app/ui";
-import { SealMark } from "@/components/Layout";
+import { NotaraMark } from "@/components/Layout";
 
 const WRAP = "mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-[72px]";
 const H2 = "text-[clamp(30px,2.4vw+18px,52px)] font-extrabold leading-[1.05] tracking-[-0.04em] [text-wrap:balance]";
@@ -784,7 +784,7 @@ function FaqAndClose() {
           <div className={cn(WRAP, "relative grid gap-14 py-20 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:py-28")}>
             <Reveal>
               <RevealItem>
-                <SealMark className="size-10 text-mint" tick="var(--color-canopy)" />
+                <NotaraMark className="size-10 text-mint" />
               </RevealItem>
               <RevealItem as="h2" className="mt-8 text-[clamp(36px,3.6vw+14px,68px)] font-extrabold leading-[1.02] tracking-[-0.045em] [text-wrap:balance]">
                 <span id="close-h">Send your next invoice as a link.</span>

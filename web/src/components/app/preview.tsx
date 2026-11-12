@@ -5,7 +5,7 @@ import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/reac
 import { cn } from "@/lib/utils";
 import { CircleCheck, CircleX, Clock, Laptop, Lock, Phone } from "@/components/icons";
 import { AnimatedNumber } from "@/components/vengeance/animated-number";
-import { SealMark } from "@/components/Layout";
+import { NotaraMark } from "@/components/Layout";
 import { Segmented } from "./ui";
 
 /** The value, 150ms after it last changed. */
@@ -94,7 +94,7 @@ export function PagePreview({ path, host, who, website, forText, emptyFor, amoun
         </div>
         <div className="flex flex-col gap-3.5 px-5 pb-6 pt-5">
           <div className="flex items-center gap-2 text-[12px] font-extrabold tracking-[-0.03em]">
-            <SealMark className="size-4 text-accent" /> Notara
+            <NotaraMark className="size-4 text-accent" /> Notara
           </div>
           <div>
             <p className="text-[11px] font-semibold text-muted">Pay</p>

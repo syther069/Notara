@@ -6,7 +6,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useWallet } from "@/lib/wallet";
-import { SealMark } from "@/components/Layout";
+import { NotaraMark } from "@/components/Layout";
 import { ArrowRight, Github, Menu, Play, X } from "@/components/icons";
 import { GlassDock } from "@/components/vengeance/glass-dock";
 import { LineHoverLink } from "@/components/vengeance/line-hover-link";
@@ -126,7 +126,7 @@ export function MarketingShell() {
             )}
           >
             <Link to="/" aria-label="Notara home" className="flex min-h-11 shrink-0 items-center gap-2.5 text-[20px] font-extrabold leading-none tracking-[-0.04em]">
-              <SealMark className={cn("text-highlight transition-[width,height] duration-500", scrolled ? "size-6" : "size-7")} tick="var(--background)" /> Notara
+              <NotaraMark className={cn("text-highlight transition-[width,height] duration-500", scrolled ? "size-6" : "size-7")} /> Notara
             </Link>
 
             <div className="hidden min-w-0 xl:block">
@@ -235,7 +235,7 @@ export function MarketingShell() {
             <div className="flex flex-wrap items-start justify-between gap-10">
               <div className="max-w-sm">
                 <p className="flex items-center gap-2.5 text-[22px] font-extrabold leading-none tracking-[-0.04em]">
-                  <SealMark className="size-7 text-highlight" tick="var(--background)" /> Notara
+                  <NotaraMark className="size-7 text-highlight" /> Notara
                 </p>
                 <p className="mt-3 text-[15px] text-muted">
                   Wallet-signed USDC payment links and an on-chain AI agent vault that checks 6 live signals before a payment can move. Built on NEAR.

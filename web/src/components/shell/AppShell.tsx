@@ -10,7 +10,7 @@ import { AccountDataProvider, useAccountData } from "@/lib/data";
 import { GUIDES } from "@/lib/guide";
 import { useLocal } from "@/lib/local";
 import { formatAsset, timeAgo, validAccount } from "@/lib/format";
-import { SealMark } from "@/components/Layout";
+import { NotaraMark } from "@/components/Layout";
 import Combobox, { type ComboboxOption } from "@/components/smoothui/combobox";
 import { Bell, Book, Bot, ChevronDown, ChevronRight, Dashboard, ArrowUpRight, Link2, LogOut, Menu, Page, SidebarCollapse, SidebarExpand, Search, Send, Settings2, ShieldCheck, TriangleAlert, User, Wallet, X } from "@/components/icons";
 import { Button, EASE, Hint, IconButton, Sheet } from "@/components/app/ui";
@@ -327,7 +327,7 @@ function Frame({ children }: { children: ReactNode }) {
           )}
         >
           <Link to="/dashboard" aria-label="Notara, to your dashboard" className="flex h-[68px] shrink-0 items-center gap-3 overflow-hidden border-b border-border/70 px-[22px]">
-            <SealMark className="size-7 shrink-0 text-accent" />
+            <NotaraMark className="size-7 shrink-0 text-accent" />
             {railOpen && <span className="text-[19px] font-extrabold tracking-[-0.04em]">Notara</span>}
           </Link>
           <Rail pinned={railOpen} />
@@ -347,7 +347,7 @@ function Frame({ children }: { children: ReactNode }) {
               >
                 <div className="flex h-[68px] items-center justify-between border-b border-border/70 px-5">
                   <span className="flex items-center gap-2.5 text-[19px] font-extrabold tracking-[-0.04em]">
-                    <SealMark className="size-7 text-accent" /> Notara
+                    <NotaraMark className="size-7 text-accent" /> Notara
                   </span>
                   <button type="button" aria-label="Close menu" onClick={closeDrawer} className="inline-flex size-10 items-center justify-center rounded-full hover:bg-default">
                     <X size={19} />

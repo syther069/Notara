@@ -102,8 +102,18 @@ export async function createInvoice(input: { merchant: string; description: stri
   throw new Error("Couldn't pick an invoice id, try again");
 }
 
+/**
+ * Status flow: unpaid -> processing | pending_approval -> paid | refused | failed, and paid -> refunded.
+ * "paid" means money arrived, so only "paid" or "refunded" may follow it. Several readers (checkout
+ * polls, vault reads, wallet reports) race on one invoice; a slow one holding an older reading must
+ * not move a paid invoice back, so that patch is dropped in the same statement that would apply it.
+ */
+const AFTER_PAID: ReadonlySet<InvoiceStatus> = new Set(["paid", "refunded"]);
+
 export async function updateInvoice(id: string, patch: Partial<Invoice>): Promise<Invoice> {
-  const next = await store.merge(id, { ...patch, updatedAt: new Date().toISOString() });
+  const stamped = { ...patch, updatedAt: new Date().toISOString() };
+  const guarded = patch.status !== undefined && !AFTER_PAID.has(patch.status);
+  const next = guarded ? ((await store.mergeUnless(id, stamped, "status", "paid")) ?? (await store.get(id))) : await store.merge(id, stamped);
   if (!next) throw new Error(`Unknown invoice ${id}`);
   // Alert once, even if several servers see the payment at the same moment.
   if (next.status === "paid" && (await store.setOnce(id, "paidNotifiedAt", new Date().toISOString()))) notifyPaid(next);
