@@ -12,7 +12,7 @@ import { useLocal } from "@/lib/local";
 import { formatAsset, timeAgo, validAccount } from "@/lib/format";
 import { SealMark } from "@/components/Layout";
 import Combobox, { type ComboboxOption } from "@/components/smoothui/combobox";
-import { Bell, Book, Bot, ChevronDown, ChevronRight, Dashboard, Link2, LogOut, Menu, Page, Search, Send, Settings2, ShieldCheck, TriangleAlert, User, Wallet, X } from "@/components/icons";
+import { Bell, Book, Bot, ChevronDown, ChevronRight, Dashboard, ArrowUpRight, Link2, LogOut, Menu, Page, SidebarCollapse, SidebarExpand, Search, Send, Settings2, ShieldCheck, TriangleAlert, User, Wallet, X } from "@/components/icons";
 import { Button, EASE, Hint, IconButton, Sheet } from "@/components/app/ui";
 import { WalletChip, WalletModal } from "@/components/app/wallet";
 import { SpinThemeToggle } from "@/components/app/SpinThemeToggle";
@@ -63,7 +63,9 @@ function Rail({ onNavigate, pinned }: { onNavigate?: () => void; pinned?: boolea
     if (inAgents) setAgentsOpen(true);
   }, [inAgents]);
   const reduce = useReducedMotion();
-  const label = cn("whitespace-nowrap text-[14.5px] font-semibold transition-opacity duration-200", !pinned && "opacity-0 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100");
+  // Closed rail: icons only, each named on hover (title) and for screen readers (sr-only label).
+  const label = cn("whitespace-nowrap text-[14.5px] font-semibold", !pinned && "sr-only");
+  const tip = (t: string) => (pinned ? undefined : t);
   const row = "relative flex h-11 items-center gap-3.5 rounded-xl px-[13px] text-foreground/75 transition-colors duration-200 hover:bg-default hover:text-foreground";
   const active = "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground";
   return (
@@ -71,17 +73,17 @@ function Rail({ onNavigate, pinned }: { onNavigate?: () => void; pinned?: boolea
       {NAV.map((item) =>
         item.children ? (
           <div key={item.to}>
-            <button type="button" aria-expanded={agentsOpen} aria-controls="rail-agents" onClick={() => setAgentsOpen((o) => !o)} className={cn(row, "w-full", inAgents && !agentsOpen && active)}>
+            <button type="button" aria-expanded={agentsOpen} aria-controls="rail-agents" onClick={() => setAgentsOpen((o) => !o)} title={tip(item.label)} className={cn(row, "w-full", inAgents && !agentsOpen && active)}>
               <item.icon size={20} className="shrink-0" aria-hidden />
               <span className={cn(label, "flex-1 text-left")}>{item.label}</span>
-              <ChevronDown size={15} aria-hidden className={cn("shrink-0 transition-transform duration-300", agentsOpen && "rotate-180", !pinned && "opacity-0 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100")} />
+              <ChevronDown size={15} aria-hidden className={cn("shrink-0 transition-transform duration-300", agentsOpen && "rotate-180", !pinned && "hidden")} />
             </button>
             <AnimatePresence initial={false}>
               {agentsOpen && (
                 <motion.div id="rail-agents" initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: EASE }} className="overflow-hidden">
                   <div className="mt-1 flex flex-col gap-1">
                     {item.children.map((c) => (
-                      <NavLink key={c.to} to={c.to} onClick={onNavigate} className={({ isActive }) => cn(row, "h-10", isActive && active)}>
+                      <NavLink key={c.to} to={c.to} onClick={onNavigate} title={tip(c.label)} className={({ isActive }) => cn(row, "h-10", isActive && active)}>
                         <c.icon size={17} className="ml-[1.5px] shrink-0" aria-hidden />
                         <span className={cn(label, "text-[14px]")}>{c.label}</span>
                       </NavLink>
@@ -92,18 +94,21 @@ function Rail({ onNavigate, pinned }: { onNavigate?: () => void; pinned?: boolea
             </AnimatePresence>
           </div>
         ) : (
-          <NavLink key={item.to} to={item.to} onClick={onNavigate} className={({ isActive }) => cn(row, isActive && active)}>
+          <NavLink key={item.to} to={item.to} onClick={onNavigate} title={tip(item.label)} className={({ isActive }) => cn(row, isActive && active)}>
             <item.icon size={20} className="shrink-0" aria-hidden />
             <span className={label}>{item.label}</span>
           </NavLink>
         ),
       )}
-      {/* Pinned to the bottom of the rail: the docs, in the same row style as the pages above. */}
+      {/* Pinned to the bottom of the rail: the docs, a separate section of the site, opened in a new tab. */}
       <div className="mt-auto border-t border-border/70 pt-2">
-        <NavLink to="/docs" onClick={onNavigate} className={row} aria-label="Docs">
+        <a href="/docs" target="_blank" rel="noopener" onClick={onNavigate} title={tip("Docs (opens in a new tab)")} className={row}>
           <Book size={20} className="shrink-0" aria-hidden />
-          <span className={label}>Docs</span>
-        </NavLink>
+          <span className={cn(label, "flex-1")}>
+            Docs<span className="sr-only"> (opens in a new tab)</span>
+          </span>
+          {pinned && <ArrowUpRight size={14} className="shrink-0 text-muted" aria-hidden />}
+        </a>
       </div>
     </nav>
   );
@@ -209,9 +214,9 @@ function GuideSheet({ open, onClose, page }: { open: boolean; onClose: () => voi
       onClose={onClose}
       title={`Guide: ${guide.name}`}
       footer={
-        <Link to="/docs" onClick={onClose} className="inline-flex items-center gap-1.5 text-[14px] font-semibold underline underline-offset-4">
+        <a href="/docs" target="_blank" rel="noopener" onClick={onClose} className="inline-flex items-center gap-1.5 text-[14px] font-semibold underline underline-offset-4">
           <Book size={15} aria-hidden /> Read the full documentation
-        </Link>
+        </a>
       }
     >
       <ol className="flex flex-col gap-2">
@@ -273,6 +278,8 @@ function Frame({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [search, setSearch] = useState(false);
+  // Desktop sidebar: open (icons and labels) or closed (icons only). The page makes room for it either way.
+  const [railOpen, setRailOpen] = useLocal<boolean>("notara-rail-open", true);
   const [notice, setNotice] = useState(() => {
     try {
       return sessionStorage.getItem("notice") !== "hidden";
@@ -311,13 +318,19 @@ function Frame({ children }: { children: ReactNode }) {
           Skip to content
         </a>
 
-        {/* Left rail: icons at rest, labels on hover or keyboard focus. */}
-        <aside className="app-rail group/rail fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col border-r border-border/70 bg-background text-foreground transition-[width,box-shadow] duration-300 ease-enter hover:w-[236px] hover:shadow-pop focus-within:w-[236px] focus-within:shadow-pop lg:flex">
+        {/* Left rail: open (icons and labels) or closed (icons only), toggled from the top bar. */}
+        <aside
+          aria-label="Sidebar"
+          className={cn(
+            "app-rail fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-border/70 bg-background text-foreground transition-[width] duration-300 ease-enter lg:flex",
+            railOpen ? "w-[236px]" : "w-[72px]",
+          )}
+        >
           <Link to="/dashboard" aria-label="Notara, to your dashboard" className="flex h-[68px] shrink-0 items-center gap-3 overflow-hidden border-b border-border/70 px-[22px]">
             <SealMark className="size-7 shrink-0 text-accent" />
-            <span className="text-[19px] font-extrabold tracking-[-0.04em] opacity-0 transition-opacity duration-200 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">Notara</span>
+            {railOpen && <span className="text-[19px] font-extrabold tracking-[-0.04em]">Notara</span>}
           </Link>
-          <Rail />
+          <Rail pinned={railOpen} />
         </aside>
 
         {/* The same rail as a drawer on small screens. */}
@@ -346,11 +359,21 @@ function Frame({ children }: { children: ReactNode }) {
           )}
         </AnimatePresence>
 
-        <div className="lg:pl-[72px]">
+        <div className={cn("transition-[padding] duration-300 ease-enter", railOpen ? "lg:pl-[236px]" : "lg:pl-[72px]")}>
           <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl">
             <div className="flex h-[68px] items-center gap-3 px-4 sm:px-6 lg:px-10">
               <button type="button" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)} className="inline-flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-default lg:hidden">
                 <Menu size={20} />
+              </button>
+              <button
+                type="button"
+                aria-label={railOpen ? "Close sidebar" : "Open sidebar"}
+                title={railOpen ? "Close sidebar" : "Open sidebar"}
+                aria-expanded={railOpen}
+                onClick={() => setRailOpen(!railOpen)}
+                className="-ml-2 hidden size-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-default lg:inline-flex"
+              >
+                {railOpen ? <SidebarCollapse size={20} aria-hidden /> : <SidebarExpand size={20} aria-hidden />}
               </button>
               <nav aria-label="Breadcrumb" className="min-w-0 shrink">
                 <ol className="flex items-center gap-1.5 text-[14.5px]">

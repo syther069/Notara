@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/wallet.tsx": {
-    "mtime": 1794329144.814826,
-    "seen": 1794413511.554728,
-    "ast_hash": "1f98aaf2aea54918a1c8c326134cb8fc",
+    "mtime": 1794467125.737451,
+    "seen": 1794467626.6996,
+    "ast_hash": "deea7255bf0f90950d2afaa1ff0363d0",
     "semantic_hash": ""
   },
   "web/src/main.tsx": {
@@ -612,9 +612,9 @@
     "semantic_hash": ""
   },
   "web/src/components/icons.tsx": {
-    "mtime": 1794414827.109425,
-    "seen": 1794414903.4070477,
-    "ast_hash": "e455e8855aefa53dd937b04d29332301",
+    "mtime": 1794467447.8714807,
+    "seen": 1794467626.6996,
+    "ast_hash": "b293446837a5a4760ab2b7973811c2d3",
     "semantic_hash": ""
   },
   "web/src/pages/Dashboard.tsx": {
@@ -732,9 +732,9 @@
     "semantic_hash": ""
   },
   "web/src/components/app/wallet.tsx": {
-    "mtime": 1794415145.6902936,
-    "seen": 1794415205.6576653,
-    "ast_hash": "359e182ff087953a776803a8057bd197",
+    "mtime": 1794467281.9758759,
+    "seen": 1794467626.6996,
+    "ast_hash": "ad2e3f37b268574dae2e154d5edd894e",
     "semantic_hash": ""
   },
   "web/src/components/landing/Preloader.tsx": {
@@ -744,15 +744,15 @@
     "semantic_hash": ""
   },
   "web/src/components/shell/AppShell.tsx": {
-    "mtime": 1794464817.4772227,
-    "seen": 1794464882.6723876,
-    "ast_hash": "41b06454324449b8de00f76e34d1679c",
+    "mtime": 1794467536.5685213,
+    "seen": 1794467626.6996,
+    "ast_hash": "3f6595c830d6beac074a41a52b98873a",
     "semantic_hash": ""
   },
   "web/src/components/shell/MarketingShell.tsx": {
-    "mtime": 1794421497.3266501,
-    "seen": 1794424046.4654565,
-    "ast_hash": "9c454d6f49f3942c792b05fe66901376",
+    "mtime": 1794467536.54035,
+    "seen": 1794467626.6996,
+    "ast_hash": "b3dbed4a547b42af166458ca00a0b641",
     "semantic_hash": ""
   },
   "web/src/components/shell/PublicShell.tsx": {

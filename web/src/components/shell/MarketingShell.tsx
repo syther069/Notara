@@ -134,12 +134,11 @@ export function MarketingShell() {
             </div>
 
             <div className="flex shrink-0 items-center gap-1.5">
+              {/* The docs are their own section of the site and open in a new tab. */}
               <a
                 href="/docs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  go("/docs");
-                }}
+                target="_blank"
+                rel="noopener"
                 className={cn("hidden rounded-full px-3.5 text-[14.5px] font-semibold text-foreground/85 transition-colors hover:bg-foreground/10 hover:text-foreground sm:inline-flex sm:items-center", scrolled ? "h-8" : "h-9")}
               >
                 Docs
@@ -197,16 +196,8 @@ export function MarketingShell() {
                     {s.title}
                   </a>
                 ))}
-                <a
-                  href="/docs"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMenu(false);
-                    go("/docs");
-                  }}
-                  className={mobileLink}
-                >
-                  Docs
+                <a href="/docs" target="_blank" rel="noopener" onClick={() => setMenu(false)} className={mobileLink}>
+                  Docs<span className="sr-only"> (opens in a new tab)</span>
                 </a>
                 <button
                   type="button"
@@ -285,8 +276,12 @@ export function MarketingShell() {
                 </div>
                 <div className="flex flex-col gap-2.5">
                   <p className="text-[13px] font-semibold text-muted">Developers</p>
-                  <LineHoverLink href="/docs">Documentation</LineHoverLink>
-                  <LineHoverLink href="/docs/api">API reference</LineHoverLink>
+                  <LineHoverLink href="/docs" target="_blank" rel="noopener">
+                    Documentation
+                  </LineHoverLink>
+                  <LineHoverLink href="/docs/api" target="_blank" rel="noopener">
+                    API reference
+                  </LineHoverLink>
                   <LineHoverLink href="/llms.txt">API notes (/llms.txt)</LineHoverLink>
                   <LineHoverLink href="https://github.com/syther069/Notara" target="_blank" rel="noreferrer">
                     Source on GitHub
@@ -316,6 +311,14 @@ export function MarketingShell() {
           )}
         </AnimatePresence>
         <WalletModal open={connect} onClose={() => setConnect(false)} />
+        {w.error && !connect && (
+          <div role="status" className="fixed inset-x-3 bottom-4 z-[90] mx-auto flex max-w-[560px] items-start justify-between gap-3 rounded-2xl border border-warning/30 bg-warning-soft px-4 py-3 text-[14px] text-foreground shadow-pop">
+            <p>{w.error}</p>
+            <button type="button" className="shrink-0 font-semibold underline underline-offset-4" onClick={w.clearError}>
+              Dismiss
+            </button>
+          </div>
+        )}
       </div>
     </GoCtx.Provider>
   );

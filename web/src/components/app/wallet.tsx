@@ -1,5 +1,5 @@
 // Connecting a wallet, and the chip that replaces the Connect button once it's connected.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal } from "@heroui/react";
 import { useWallet, type WalletInfo } from "@/lib/wallet";
 import { useBalances } from "@/components/Layout";
@@ -119,11 +119,18 @@ export function WalletModal({ open, onClose }: { open: boolean; onClose: () => v
     return [...w.walletsFor(net)].sort((a, b) => top(b) - top(a) || order(a) - order(b) || a.name.localeCompare(b.name));
   }, [w, net]);
 
+  // Handing off to the wallet closes the picker, so a press on Connect always opens it fresh at the wallet
+  // list: if a wallet never answers (or its window was closed), the person can simply pick again, and the
+  // newer attempt takes over. A failed sign-in shows its reason under the top bar.
   async function pick(info: WalletInfo) {
     setWaiting(info);
-    await w.connect(info.id, net); // resolves when the wallet answers, is closed, or fails (the error shows below)
+    onClose();
+    await w.connect(info.id, net);
     setWaiting(null);
   }
+  useEffect(() => {
+    if (open) setWaiting(null);
+  }, [open]);
   // Closes itself once the wallet is connected.
   if (open && w.accountId && waiting === null && w.network === net) queueMicrotask(onClose);
 
@@ -187,7 +194,6 @@ export function WalletModal({ open, onClose }: { open: boolean; onClose: () => v
                           <button
                             type="button"
                             onClick={() => pick(info)}
-                            disabled={w.busy}
                             className={cn(
                               "flex w-full items-center gap-3.5 rounded-2xl border p-3 text-left transition-colors duration-200 hover:border-border hover:bg-surface",
                               isRec(info) ? "border-border/70 bg-surface" : "border-transparent",

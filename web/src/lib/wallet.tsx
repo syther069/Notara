@@ -154,8 +154,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Each connect attempt gets a number. A newer attempt (the person picked another wallet, or tried again)
+  // takes over: an older one that answers late can't overwrite it or leave "Waiting for your wallet…" on.
+  const attempt = useRef(0);
   const connect = useCallback(async (walletId?: string, net: Net = network) => {
     const c = connectorRef.current;
+    const mine = ++attempt.current;
     // Never a silent no-op: a press with no wallet support loaded says why.
     if (!c) {
       setError("Wallets couldn't load on this page. Reload the page to try again; an ad blocker can also stop the wallet list.");
@@ -168,15 +172,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.setItem("notara-network", net);
       } catch {}
-      const wallet = await c.connect(walletId ? { walletId } : undefined);
-      const accounts = await wallet.getAccounts({ network: net });
-      setAccountId(accounts[0]?.accountId ?? null);
+      // Same 2-minute limit as payments: a wallet that never answers must not keep the button spinning.
+      const wallet = await walletAnswer(c.connect(walletId ? { walletId } : undefined), false);
+      const accounts = await walletAnswer(wallet.getAccounts({ network: net }), false);
+      if (mine !== attempt.current) return;
+      const id = accounts[0]?.accountId ?? null;
+      if (!id) setError(`That wallet has no NEAR ${net} account yet. Create one in the wallet, or pick ${net === "testnet" ? "Intear Wallet" : "HOT Wallet"}.`);
+      setAccountId(id);
     } catch (e: any) {
-      // Closing the picker is not an error worth shouting about.
-      const msg = String(e?.message ?? e);
-      if (!/reject|cancel|closed/i.test(msg)) setError(msg);
+      if (mine !== attempt.current) return;
+      const msg = friendlyWalletError(String(e?.message ?? e), net);
+      if (msg) setError(msg);
     } finally {
-      setBusy(false);
+      if (mine === attempt.current) setBusy(false);
     }
   }, [network, switchTo]);
 
@@ -190,7 +198,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (!c) throw new Error("Wallet not ready");
     const switched = await switchTo(c, net);
     const existing = switched ? null : await c.getConnectedWallet().catch(() => null);
-    const wallet = existing?.wallet ?? (await c.connect());
+    const wallet = existing?.wallet ?? (await walletAnswer(c.connect(), false));
     if (!(wallet as any).manifest?.features?.signMessage)
       throw new Error(
         `${(wallet as any).manifest?.name ?? "This wallet"} can't sign messages, which this step needs (signed payment links, your own vault). ${net === "testnet" ? "On testnet, use Intear Wallet." : "Use HOT, Meteor, Intear or another NEAR wallet."}`,
@@ -320,6 +328,20 @@ function walletAnswer<T>(p: Promise<T>, sends: boolean): Promise<T> {
     );
   });
   return Promise.race([p, timeout]).finally(() => clearTimeout(t));
+}
+
+/**
+ * What to tell the person when connecting fails, in plain words, or null when they simply closed the wallet.
+ * MetaMask refuses a new request while an older one is still open in the extension ("Connection declined").
+ */
+export function friendlyWalletError(msg: string, net: Net): string | null {
+  if (/user (rejected|cancel)|reject|cancel|closed|dismiss/i.test(msg) && !/declined|pending|previous request|already/i.test(msg)) return null;
+  if (/declined|pending|previous request|already processing|-32002/i.test(msg))
+    return "Your wallet still has an earlier request open. Open the wallet (for MetaMask, click its icon in the toolbar), approve or reject that request, then connect again.";
+  if (/popup|blocked/i.test(msg)) return "Your browser blocked the wallet's window. Allow pop-ups for this site, then connect again.";
+  if (/network|chain/i.test(msg) && /unsupported|mismatch|switch/i.test(msg))
+    return `That wallet isn't on NEAR ${net}. Switch it to ${net} in the wallet, or pick ${net === "testnet" ? "Intear Wallet" : "HOT Wallet"}.`;
+  return msg;
 }
 
 /** A transaction that reached NEAR and failed there: the plain reason, plus the tx and NEAR's raw error for details. */
