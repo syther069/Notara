@@ -2,6 +2,7 @@
 // Stored in SQLite (server/db.ts).
 
 import { lookup } from "node:dns/promises";
+import type { LineItem } from "./invoices.ts";
 import { isIP } from "node:net";
 import { verifySigned } from "./nep413.ts";
 import { docs } from "./db.ts";
@@ -30,9 +31,15 @@ export async function verifyLinksProof(proof: unknown, account: string, network:
   if (r.accountId !== account) throw new Error(`Signed by ${r.accountId}, not ${account}`);
 }
 
-/** The exact text the merchant sees and signs in their wallet. */
-export function linkMessage(l: { merchant: string; amount: string; asset: string; description: string }): string {
-  return `Notara payment link\nPay to: ${l.merchant}\nAmount: ${formatAmount(l.amount, l.asset)}\nFor: ${l.description}`;
+/**
+ * The exact text the merchant sees and signs in their wallet. The due date and line items are signed
+ * too when a link has them; links without them sign the same text as before.
+ */
+export function linkMessage(l: { merchant: string; amount: string; asset: string; description: string; dueDate?: string; items?: LineItem[] }): string {
+  let m = `Notara payment link\nPay to: ${l.merchant}\nAmount: ${formatAmount(l.amount, l.asset)}\nFor: ${l.description}`;
+  if (l.dueDate) m += `\nDue: ${l.dueDate}`;
+  if (l.items?.length) m += `\nItems:\n${l.items.map((i) => `- ${i.quantity} x ${i.description} @ ${formatAmount(i.unitAmount, l.asset)}`).join("\n")}`;
+  return m;
 }
 
 /**

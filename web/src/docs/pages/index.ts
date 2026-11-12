@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Networks, Overview, Quickstart } from "./start";
-import { AnyChain, InvoicesCsv, MainnetProof, PaymentLinks, WebsiteProof } from "./getpaid";
+import { AnyChain, Bookkeeping, InvoicesCsv, MainnetProof, PaymentLinks, WebsiteProof } from "./getpaid";
 import { SendLinks } from "./send";
 import { AttackTests, Caps, FunctionCallKeys, Vault } from "./agents";
 import { Signals, Verdicts } from "./check";
@@ -17,6 +17,7 @@ export const PAGES: Record<string, ComponentType> = {
   "mainnet-proof": MainnetProof,
   "website-proof": WebsiteProof,
   "invoices-csv": InvoicesCsv,
+  bookkeeping: Bookkeeping,
   "send-links": SendLinks,
   vault: Vault,
   caps: Caps,

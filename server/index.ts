@@ -45,7 +45,7 @@ import {
   usdcBalance,
 } from "./sends.ts";
 import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, linksMessage, verifyLinkToken, verifyLinksProof } from "./merchants.ts";
-import { INV_ID, clearInvoiceFlag, createInvoice, getInvoice, type Invoice, listInvoices, setInvoiceFlag, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
+import { INV_ID, cleanItems, clearInvoiceFlag, createInvoice, getInvoice, type Invoice, itemsTotal, listInvoices, setInvoiceFlag, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
 import { SCENARIOS, createVisitorVault, getVisitorVault, isVisitorVault, runVisitorScenario } from "./vaults.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -93,6 +93,28 @@ function requireDeployment() {
 const explorerTx = (h: string) => `${NETWORKS[NET].explorer}/txns/${h}`;
 
 /** Decimal amount in the asset's unit ("12.5" USDC) -> smallest units. */
+/**
+ * A link's signed fields from a request body: the same for the message the wallet signs and for the
+ * link that is created, so the two always match. With line items, the amount is their total.
+ */
+function linkFields(b: any, merchant: string, asset: string) {
+  const raw = Array.isArray(b.items) ? b.items : undefined;
+  let items;
+  try {
+    items = cleanItems(raw?.map((i: any) => ({ description: i?.description, quantity: String(i?.quantity ?? ""), unitAmount: toAssetUnits(i?.unitDecimal, asset) })));
+  } catch (e: any) {
+    throw e instanceof HttpError ? e : new HttpError(400, e.message);
+  }
+  return {
+    merchant,
+    description: String(b.description ?? "").trim(),
+    amount: items ? itemsTotal(items).toString() : toAssetUnits(b.amountDecimal ?? b.amountNear, asset),
+    asset,
+    ...(b.dueDate ? { dueDate: String(b.dueDate) } : {}),
+    ...(items ? { items } : {}),
+  };
+}
+
 function toAssetUnits(amount: unknown, assetId = "NEAR"): string {
   const asset = resolveAsset(assetId);
   if (!asset) throw new HttpError(400, `Unsupported asset ${assetId}`);
@@ -430,7 +452,7 @@ async function payInvoiceNow(id: string) {
   let patch: Parameters<typeof updateInvoice>[1];
   switch (out.status) {
     case "paid":
-      patch = { status: "paid", decision: "ALLOW", vaultPaymentId: out.paymentId, txHash: out.txHash, reportHash: out.check.verdict?.report_hash, paidAt: new Date().toISOString(), reasons };
+      patch = { status: "paid", decision: "ALLOW", paidBy: requireDeployment().vault, vaultPaymentId: out.paymentId, txHash: out.txHash, reportHash: out.check.verdict?.report_hash, paidAt: new Date().toISOString(), reasons };
       break;
     case "pending_human_approval":
       patch = { status: "pending_approval", decision: "WARN", vaultPaymentId: out.paymentId, txHash: out.txHash, reportHash: out.check.verdict?.report_hash, reasons };
@@ -623,7 +645,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const got = receivedInTx(tx, inv.asset, inv.merchant, inv.id);
     if (got < BigInt(inv.amount))
       throw new HttpError(400, `The transaction sent ${formatUnits(got.toString(), getAsset(inv.asset)!)} USDC to ${inv.merchant} with memo ${inv.id}, not the ${formatUnits(inv.amount, getAsset(inv.asset)!)} USDC needed`);
-    const paid = await updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, txUrl: `${NETWORKS[net].explorer}/txns/${txHash}`, paidAt: new Date().toISOString() });
+    const paid = await updateInvoice(inv.id, { status: "paid", nearTx: txHash, txHash, paidBy: signerId, txUrl: `${NETWORKS[net].explorer}/txns/${txHash}`, paidAt: new Date().toISOString() });
     return send(res, 200, publicInvoice(paid));
   }
   const sm = path.match(new RegExp(`^/api/sends/(${INV_ID})(/activate|/claim)?$`));
@@ -643,7 +665,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     const b = await readJson(req);
     const asset = resolveAsset(String(b.asset ?? ""))?.id;
     if (!asset) throw new HttpError(400, "Unsupported asset");
-    return send(res, 200, { recipient: SIGN_RECIPIENT, message: linkMessage({ merchant: String(b.merchant ?? ""), description: String(b.description ?? "").trim(), amount: toAssetUnits(b.amountDecimal, asset), asset }) });
+    return send(res, 200, { recipient: SIGN_RECIPIENT, message: linkMessage(linkFields(b, String(b.merchant ?? ""), asset)) });
   }
   const mm = path.match(/^\/api\/merchants\/([a-z0-9._-]{2,64})(\/website)?$/);
   if (mm && m === "GET" && !mm[2]) return send(res, 200, await merchantProfile(mm[1]));
@@ -667,7 +689,14 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (PUBLIC && !merchant) throw new HttpError(400, "Connect your wallet to export your links");
     if (PUBLIC) await requireLinksProof(req, merchant!);
     res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="invoices.csv"' });
-    return res.end(toCsv((await listInvoices()).filter((i) => !merchant || i.merchant === merchant), NETWORKS[NET].explorer, (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u)));
+    const netOf = (a: string) => linkNetwork(a) ?? NET;
+    return res.end(
+      toCsv((await listInvoices()).filter((i) => !merchant || i.merchant === merchant), {
+        network: netOf,
+        explorer: (a) => NETWORKS[netOf(a)].explorer,
+        formatAmount: (u, a) => (getAsset(a) ? formatUnits(u, getAsset(a)!) : u),
+      }),
+    );
   }
   if (m === "POST" && path === "/api/invoices") {
     const b = await readJson(req);
@@ -678,7 +707,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       if (!assetId) throw new HttpError(400, `Unsupported asset ${b.asset}`);
       const net = linkNetwork(assetId);
       if (net && !(await viewAccount(net, merchant))) throw new HttpError(400, `${merchant} does not exist on NEAR ${net}`);
-      const fields = { merchant, description: String(b.description ?? "").trim(), amount: toAssetUnits(b.amountDecimal ?? b.amountNear, assetId), asset: assetId };
+      const fields = linkFields(b, merchant, assetId);
       if (b.signedToken) await verifyLinkToken(String(b.signedToken), fields, true).catch((e) => { throw new HttpError(400, `Signature check failed: ${e.message}`); });
       // Only for wallet-signed links: the signature proves the merchant asked, so nobody can make the
       // sponsor pay USDC storage for arbitrary accounts. Unsigned links still work: the "Pay with NEAR

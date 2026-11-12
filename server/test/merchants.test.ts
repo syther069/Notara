@@ -19,6 +19,16 @@ test("a signature for one link can't be reused for another amount or merchant", 
   await assert.rejects(verifyLinkToken(token, { ...link, merchant: "scammer.near" }, true), /signed text doesn.t match/);
 });
 
+test("the due date and line items are signed too, so nobody can change them after", async () => {
+  const items = [{ description: "Logo", quantity: "2", unitAmount: "25000000" }];
+  const full = { ...link, dueDate: "2026-12-01", items };
+  assert.equal(linkMessage(full), "Notara payment link\nPay to: priya.near\nAmount: 50 USDC\nFor: Logo design\nDue: 2026-12-01\nItems:\n- 2 x Logo @ 25 USDC");
+  const kp = KeyPair.fromRandom("ed25519");
+  const token = await sign(linkMessage(full), { signer: kp.toString(), accountId: "priya.near", recipient: SIGN_RECIPIENT });
+  await assert.rejects(verifyLinkToken(token, { ...full, dueDate: "2027-01-01" }, true), /signed text doesn.t match/);
+  await assert.rejects(verifyLinkToken(token, { ...full, items: [{ ...items[0], quantity: "3" }] }, true), /signed text doesn.t match/);
+});
+
 test("website input becomes a bare public hostname", () => {
   assert.equal(normalizeWebsite("https://Shop.Example.com/about"), "shop.example.com");
   assert.equal(normalizeWebsite("shop.example.com"), "shop.example.com");

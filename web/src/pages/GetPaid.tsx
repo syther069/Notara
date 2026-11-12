@@ -19,6 +19,7 @@ import { AmountInput, DeviceStage, DrawnCheck, PagePreview, useDebounced, type P
 import { Button, Card, CharCount, Chip, CopyChip, EASE, EmptyState, FormField, Hint, LinkButton, Notice, Segmented, Shimmer, TextArea, TextInput } from "@/components/app/ui";
 import { StatusChip, useMoney } from "@/components/app/TxTable";
 import { buildTxs } from "@/lib/tx";
+import { formatDue, fromUnits, lineUnits, PRICE_RE, QTY_RE, rowsTotal, todayIso, toUnits, type ItemRow } from "@/lib/invoice";
 
 const DESC_MAX = 180;
 
@@ -97,6 +98,7 @@ function RecentLinks() {
                   <td className="px-3 py-3">
                     <span className="flex flex-wrap gap-1">
                       <StatusChip status={t.status} />
+                      {t.overdue && <Chip tone="danger" hint="Unpaid and past its due date.">Overdue</Chip>}
                       {t.network === "mainnet" && <Chip tone="gold" hint="A real-money link on NEAR mainnet.">Real</Chip>}
                     </span>
                   </td>
@@ -124,6 +126,11 @@ export function GetPaidPage() {
   const reduce = useReducedMotion();
   const [amount, setAmount] = useState("");
   const [desc, setDesc] = useState("");
+  const [due, setDue] = useState("");
+  // Line items: off by default; when on, the amount is their total.
+  const [itemize, setItemize] = useState(false);
+  const blankRow: ItemRow = { description: "", quantity: "1", unit: "" };
+  const [rows, setRows] = useState<ItemRow[]>([blankRow]);
   const [net, setNet] = useState<"testnet" | "mainnet">("testnet");
   const [opts, setOpts] = useState<string[]>(["sign"]);
   const [payTo, setPayTo] = useState("");
@@ -146,14 +153,32 @@ export function GetPaidPage() {
   }, [receiver]);
 
   const shows = (f: string) => tried || !!touched[f];
-  const amountErr = !amount ? "Enter an amount." : !/^\d+(\.\d{1,6})?$/.test(amount) || Number(amount) <= 0 ? "Enter a number like 25 or 12.50." : null;
+  const decimals = ASSETS[asset].decimals;
+  const total = itemize ? rowsTotal(rows, decimals) : null;
+  // The amount the link is for: typed, or the total of the lines.
+  const amountDec = itemize ? (total !== null ? fromUnits(total, decimals) : "") : amount;
+  const amountErr = itemize
+    ? total === null
+      ? "Fill in every line: what it is, a quantity like 1 or 7.5, and a price."
+      : total <= 0n
+        ? "The total must be more than zero."
+        : null
+    : !amount
+      ? "Enter an amount."
+      : !/^\d+(\.\d{1,6})?$/.test(amount) || Number(amount) <= 0
+        ? "Enter a number like 25 or 12.50."
+        : null;
+  const maxDue = new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10);
+  const dueErr = due && (!/^\d{4}-\d{2}-\d{2}$/.test(due) || due < todayIso() || due > maxDue) ? "Pick a date from today up to a year ahead." : null;
+  const itemsInput = itemize ? rows.map((r) => ({ description: r.description.trim(), quantity: r.quantity.trim(), unitDecimal: r.unit.trim() })) : undefined;
+  const setRow = (n: number, patch: Partial<ItemRow>) => setRows((rs) => rs.map((r, i) => (i === n ? { ...r, ...patch } : r)));
   const descErr = !desc.trim() ? "Say what the payment is for. Your customer sees this." : null;
   const payToErr = !sign && !receiver && (!payTo.trim() ? `Enter the ${net} account that should receive the money.` : !validAccount(payTo.trim()) ? "That isn't a valid NEAR account. Use lowercase letters, digits, - _ and dots." : null);
 
   async function create(e: FormEvent) {
     e.preventDefault();
     setTried(true);
-    const first = amountErr ? "gp-amount" : descErr ? "gp-desc" : payToErr ? "gp-payto" : null;
+    const first = amountErr ? (itemize ? "gp-item-0" : "gp-amount") : descErr ? "gp-desc" : dueErr ? "gp-due" : payToErr ? "gp-payto" : null;
     if (first) return document.getElementById(first)?.focus();
     setFormErr(null);
     setBusy(sign ? "sign" : "create");
@@ -161,10 +186,11 @@ export function GetPaidPage() {
       let inv: Invoice;
       if (sign) {
         // The merchant's own wallet signs the link (a message, not a transaction), so customers can see it's really them.
-        const { token, accountId } = await w.signLink(async (account) => (await api.linkMessage({ merchant: account, description: desc.trim(), amountDecimal: amount, asset })).message, net);
-        inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset, merchant: accountId, signedToken: token });
+        const extra = { dueDate: due || undefined, items: itemsInput };
+        const { token, accountId } = await w.signLink(async (account) => (await api.linkMessage({ merchant: account, description: desc.trim(), amountDecimal: amountDec, asset, ...extra })).message, net);
+        inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amountDec, asset, merchant: accountId, signedToken: token, ...extra });
       } else {
-        inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amount, asset, merchant: receiver ?? payTo.trim() });
+        inv = await api.createInvoice({ description: desc.trim(), amountDecimal: amountDec, asset, merchant: receiver ?? payTo.trim(), dueDate: due || undefined, items: itemsInput });
       }
       setMade(inv);
       setPulse((p) => p + 1);
@@ -179,7 +205,7 @@ export function GetPaidPage() {
   }
 
   const madeUrl = made ? `${location.origin}/pay/${made.id}` : "";
-  const pv = useDebounced({ amount, desc: desc.trim() }, 150);
+  const pv = useDebounced({ amount: amountDec, desc: desc.trim() }, 150);
   const shownAmount = made ? usdcFigure(made.amount) : /^\d+(\.\d+)?$/.test(pv.amount) ? Number(pv.amount).toFixed(2) : "0.00";
   const checks: PreviewCheck[] = [
     made ? (made.signed ? { state: "ok", text: "Signed by this account's wallet" } : { state: "bad", text: "Not signed: the customer can't be sure it's you" }) : sign ? { state: "wait", text: "Signed by your wallet when you create it" } : { state: "bad", text: "Not signed: the customer can't be sure it's you" },
@@ -236,7 +262,7 @@ export function GetPaidPage() {
                   </div>
                 </div>
                 <div>
-                  <Button pulse={pulse} onClick={() => { setMade(null); setDesc(""); setAmount(""); }}>
+                  <Button pulse={pulse} onClick={() => { setMade(null); setDesc(""); setAmount(""); setDue(""); setRows([blankRow]); }}>
                     <Plus size={17} aria-hidden /> Make another link
                   </Button>
                 </div>
@@ -264,8 +290,8 @@ export function GetPaidPage() {
                   </div>
                   <AmountInput
                     id="gp-amount"
-                    value={amount}
-                    onChange={setAmount}
+                    value={itemize ? amountDec : amount}
+                    onChange={(v) => !itemize && setAmount(v)}
                     onBlur={() => setTouched((t) => ({ ...t, amount: true }))}
                     invalid={shows("amount") && !!amountErr}
                     describedBy="gp-amount-note"
@@ -279,7 +305,7 @@ export function GetPaidPage() {
                     }
                   />
                   <p id="gp-amount-note" className={shows("amount") && amountErr ? "text-[13px] font-semibold text-danger" : "text-[13px] text-muted"}>
-                    {shows("amount") && amountErr ? amountErr : net === "testnet" ? "Free test USDC. Use it to try Notara: nothing of value moves." : "Real USDC. Your customer can pay from Ethereum, Base, Solana and more. Prototype, not audited: keep amounts small."}
+                    {shows("amount") && amountErr ? amountErr : itemize ? "The total of the lines below. Change a line to change it." : net === "testnet" ? "Free test USDC. Use it to try Notara: nothing of value moves." : "Real USDC. Your customer can pay from Ethereum, Base, Solana and more. Prototype, not audited: keep amounts small."}
                   </p>
                 </div>
 
@@ -308,6 +334,77 @@ export function GetPaidPage() {
                   error={shows("desc") && descErr ? descErr : undefined}
                 >
                   <TextArea id="gp-desc" value={desc} maxLength={DESC_MAX} placeholder="Logo design, two rounds of changes" onChange={(e) => setDesc(e.target.value)} onBlur={() => setTouched((t) => ({ ...t, desc: true }))} aria-invalid={(shows("desc") && !!descErr) || undefined} />
+                </FormField>
+
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[13.5px] font-semibold">Line items <span className="font-normal text-muted">(optional)</span></span>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      aria-expanded={itemize}
+                      onClick={() => {
+                        setItemize((v) => !v);
+                        setTouched((t) => ({ ...t, amount: false }));
+                      }}
+                    >
+                      {itemize ? "Use one amount instead" : <><Plus size={15} aria-hidden /> Itemise this invoice</>}
+                    </Button>
+                  </div>
+                  {itemize && (
+                    <div className="flex flex-col gap-2.5" role="group" aria-label="Line items">
+                      <div className="hidden grid-cols-[minmax(0,1fr)_76px_112px_96px_36px] gap-2 text-[12px] font-semibold text-muted sm:grid">
+                        <span>What</span>
+                        <span>Qty</span>
+                        <span>Price ({ASSETS[asset].symbol})</span>
+                        <span className="text-right">Line total</span>
+                        <span />
+                      </div>
+                      {rows.map((r, n) => {
+                        const u = toUnits(r.unit.trim(), decimals);
+                        const lineOk = QTY_RE.test(r.quantity.trim()) && u !== null;
+                        const bad = (f: "q" | "p") => shows("amount") && (f === "q" ? !QTY_RE.test(r.quantity.trim()) || Number(r.quantity) <= 0 : !PRICE_RE.test(r.unit.trim()) || Number(r.unit) <= 0);
+                        return (
+                          <div key={n} className="grid grid-cols-[76px_minmax(0,1fr)_36px] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_76px_112px_96px_36px]">
+                            <TextInput
+                              id={`gp-item-${n}`}
+                              aria-label={`Line ${n + 1}: what it is`}
+                              value={r.description}
+                              maxLength={80}
+                              placeholder={n === 0 ? "Logo design" : "Another line"}
+                              onChange={(e) => setRow(n, { description: (e.target as HTMLInputElement).value })}
+                              aria-invalid={(shows("amount") && !r.description.trim()) || undefined}
+                              className="col-span-3 sm:col-span-1"
+                            />
+                            <TextInput aria-label={`Line ${n + 1}: quantity`} value={r.quantity} inputMode="decimal" onChange={(e) => setRow(n, { quantity: (e.target as HTMLInputElement).value })} aria-invalid={bad("q") || undefined} className="tnum" />
+                            <TextInput aria-label={`Line ${n + 1}: price`} value={r.unit} inputMode="decimal" placeholder="0.00" onChange={(e) => setRow(n, { unit: (e.target as HTMLInputElement).value })} aria-invalid={bad("p") || undefined} className="tnum" />
+                            <span className="tnum hidden truncate text-right text-[14px] font-semibold sm:block" aria-label={`Line ${n + 1} total`}>
+                              {lineOk ? fromUnits(lineUnits(r.quantity.trim(), u!), decimals) : "–"}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Remove line ${n + 1}`}
+                              disabled={rows.length === 1}
+                              onClick={() => setRows((rs) => rs.filter((_, i) => i !== n))}
+                              className="inline-flex size-9 items-center justify-center justify-self-end rounded-full text-muted transition-colors hover:bg-default hover:text-foreground disabled:opacity-30"
+                            >
+                              <X size={15} aria-hidden />
+                            </button>
+                          </div>
+                        );
+                      })}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Button size="sm" variant="ghost" disabled={rows.length >= 20} onClick={() => setRows((rs) => [...rs, blankRow])}>
+                          <Plus size={15} aria-hidden /> Add a line
+                        </Button>
+                        <span className="tnum text-[14px] font-bold">Total {total !== null ? fromUnits(total, decimals) : "–"} {ASSETS[asset].symbol}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <FormField label={<>Due date <span className="font-normal text-muted">(optional)</span></>} note={dueErr ?? "Your customer sees it, and the link shows Overdue if it's still unpaid after this day."} error={shows("due") && dueErr ? dueErr : undefined}>
+                  <TextInput id="gp-due" type="date" value={due} min={todayIso()} max={maxDue} onChange={(e) => setDue((e.target as HTMLInputElement).value)} onBlur={() => setTouched((t) => ({ ...t, due: true }))} className="max-w-[220px]" aria-invalid={(shows("due") && !!dueErr) || undefined} />
                 </FormField>
 
                 <fieldset>
@@ -350,6 +447,17 @@ export function GetPaidPage() {
               unit="USDC"
               checks={checks}
               primary={`Pay ${shownAmount} USDC`}
+              due={made?.dueDate ? formatDue(made.dueDate) : due && !dueErr ? formatDue(due) : undefined}
+              items={
+                made?.items
+                  ? made.items.map((i) => ({ label: `${i.quantity} x ${i.description}`, total: fromUnits(lineUnits(i.quantity, BigInt(i.unitAmount)), decimals) }))
+                  : itemize
+                    ? rows.filter((r) => r.description.trim()).map((r) => {
+                        const u = toUnits(r.unit.trim(), decimals);
+                        return { label: `${r.quantity || "?"} x ${r.description.trim()}`, total: u !== null && QTY_RE.test(r.quantity.trim()) ? fromUnits(lineUnits(r.quantity.trim(), u), decimals) : "–" };
+                      })
+                    : undefined
+              }
               secondary={(made ? linkNetwork(made.asset) : net) === "mainnet" ? "Pay from another chain" : undefined}
             />
           </DeviceStage>

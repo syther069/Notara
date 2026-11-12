@@ -11,7 +11,7 @@ Built on NEAR · Payment links signed by your wallet · Account checks before yo
 
 [![Built on NEAR](https://img.shields.io/badge/Built_on-NEAR-0a1f17?style=flat-square)](https://near.org)
 [![Status](https://img.shields.io/badge/status-prototype%2C_not_audited-c8a96a?style=flat-square)](#limits)
-[![Tests](https://img.shields.io/badge/tests-86_TypeScript_%C2%B7_39_Rust-2a4a3a?style=flat-square)](#tests)
+[![Tests](https://img.shields.io/badge/tests-93_TypeScript_%C2%B7_39_Rust-2a4a3a?style=flat-square)](#tests)
 [![Live](https://img.shields.io/badge/live-notara--sable.vercel.app-2a4a3a?style=flat-square)](https://notara-sable.vercel.app)
 
 [**Live app**](https://notara-sable.vercel.app) · [**Documentation**](https://notara-sable.vercel.app/docs) · [**Mainnet proof**](https://notara-sable.vercel.app/docs/mainnet-proof) · [**Architecture**](Architecture.md)
@@ -45,7 +45,7 @@ Built for the NEAR Hackathon, tracks **AI Security & Defense** and **Real-World 
 
 | Product | For | What it does |
 |---|---|---|
-| **Get paid** | Merchants and freelancers | A USDC payment link signed by the merchant's own wallet (NEP-413). The customer pays from a NEAR wallet, or from another chain through NEAR Intents, and the merchant receives exact USDC on NEAR. Notara never holds the money. |
+| **Get paid** | Merchants and freelancers | A USDC payment link signed by the merchant's own wallet (NEP-413), with an optional due date and line items. The customer pays from a NEAR wallet, or from another chain through NEAR Intents, and the merchant receives exact USDC on NEAR. Notara never holds the money. Exports are written for accountants, and there's a [guide for bookkeepers](https://notara-sable.vercel.app/docs/bookkeeping). |
 | **Send** | Anyone | Send USDC to a NEAR account straight from your wallet, after an account check, or as a link someone claims without needing NEAR for gas. |
 | **Agent vault** | People who let AI agents pay | Before an agent pays, Notara checks the recipient and returns **ALLOW**, **WARN** or **BLOCK** with reasons and sources. A NEAR contract enforces that decision, so an agent that skips its own safety code still can't move the money. |
 
@@ -175,7 +175,7 @@ NEAR Intents reports the deposit `SUCCESS` (about $0.1004 of ETH in, 0.1 USDC ou
 
 **Payment links**
 
-- **Signed links:** the merchant's wallet signs who gets paid, how much and for what (NEP-413, verified with `near-sign-verify` and FastNear). The checkout shows whether the signature still checks out.
+- **Signed links:** the merchant's wallet signs who gets paid, how much and for what, plus the due date and every line item when the link has them (NEP-413, verified with `near-sign-verify` and FastNear). Nobody can change a date, quantity or price after signing. With line items, the amount is exactly their total. The checkout shows whether the signature still checks out.
 - **Wallet payments are matched exactly:** a NEAR-wallet payment marks a link paid only if the USDC token's own `ft_transfer` event shows the full amount reaching the merchant with the link's id as the memo. An unrelated transfer to the same merchant can't mark a link paid, one transfer can't pay two links, and a transfer that was refunded doesn't count.
 - **Paid is final:** once a link is paid, only "paid" or "refunded" can follow. A slower request holding an older reading can't move it back, and that check runs in the same database statement as the write.
 - **One payment at a time:** while one payment is in progress on the pay page, every other pay button is disabled, so a customer can't start a wallet payment and an any-chain deposit for the same link.
@@ -218,7 +218,7 @@ Open **https://notara-sable.vercel.app** and press **Open App**. Every page has 
 
 You need a NEAR testnet wallet ([Intear Wallet](https://wallet.intear.tech) is the one we tested end to end), free testnet NEAR from the wallet, and free testnet USDC from [faucet.circle.com](https://faucet.circle.com) (choose **NEAR testnet**).
 
-1. **Payment link:** on **Get Paid**, keep **Test money**, enter the amount and what it's for, and click **Create payment link**. The link is signed by your wallet; the preview on the right is the page your customer will see. If your wallet can't sign messages, untick **Sign the link with my wallet** and enter the account to pay.
+1. **Payment link:** on **Get Paid**, keep **Test money**, enter the amount and what it's for (or press **Itemise this invoice** to add lines: the amount becomes their total), optionally pick a **Due date**, and click **Create payment link**. The link is signed by your wallet; the preview on the right is the page your customer will see. If your wallet can't sign messages, untick **Sign the link with my wallet** and enter the account to pay.
 2. **Pay it:** open the link. Step 1, **Check who's asking**, shows the safety check, the Merchant Passport and whether the link is signed. Then pay with your NEAR wallet (the demo AI agent option runs only locally).
 3. **Report an account:** on any testnet pay or Merchant page, **Report this account** files a report in the registry contract (0.01 testnet NEAR bond). It shows up in the next check.
 4. **Send:** on **Send**, **To an account** pays a NEAR account in USDC from your wallet after an account check; a red verdict can only be overridden by typing the account's name. **As a link** makes a send link: create it, fund it from your wallet, then open it in another browser and claim it to an existing `.testnet` account or a brand-new `name.testnet`.
@@ -262,7 +262,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 86 tests: the policy table (including USDC limits), the signing format, the wrapper, the invoice store and its status flow, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode, the database import, alerts, EVM call encoding and link networks. `cargo test` runs 39 contract unit tests (29 vault, 10 registry), one of which checks a signature made by the TypeScript signer inside the contract. On Windows, set `AWS_LC_SYS_PREBUILT_NASM=1` first.
+`npm test` runs 93 tests: the policy table (including USDC limits), the signing format (including due dates and line items), the wrapper, the invoice store and its status flow, line-item totals, due dates and the accountant CSV, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode, the database import, alerts, EVM call encoding and link networks. `cargo test` runs 39 contract unit tests (29 vault, 10 registry), one of which checks a signature made by the TypeScript signer inside the contract. On Windows, set `AWS_LC_SYS_PREBUILT_NASM=1` first.
 
 ### Read-only check of a real mainnet account (no keys)
 
@@ -335,6 +335,8 @@ If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a s
 ## Recent changes
 
 **2026-11-12**
+- Invoices can have a due date and line items, both covered by the merchant's wallet signature. Unpaid links past their due date show **Overdue**.
+- Both CSV exports are written for accountants: exact amounts (never rounded), due date and overdue, line items, who paid and how, and a link to each payment on the NEAR explorer. A new [guide for bookkeepers](https://notara-sable.vercel.app/docs/bookkeeping) explains them.
 - New Notara logo across the site and favicon.
 - Paid links stay paid: a slower request can't move a paid link back to an earlier status.
 - The pay page allows one payment at a time.
@@ -351,7 +353,7 @@ If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a s
 - NEAR Intents as the vault's payout path after an ALLOW (today Intents is used for customer payment links).
 - A mainnet report registry (needs about 1.7 NEAR; the script exists and has not been run).
 - Gas-allowance monitoring for the agent key.
-- Link expiry, partial payments, revoking a link and per-payee vault limits.
+- Partial payments, revoking a link, reminder emails for overdue links, and per-payee vault limits.
 
 ## Limits
 

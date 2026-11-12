@@ -5,6 +5,15 @@ Pay to: studio.near
 Amount: 120 USDC
 For: Logo design, November`;
 
+const MSG_ITEMS = `Notara payment link
+Pay to: studio.near
+Amount: 130 USDC
+For: Brand refresh, November
+Due: 2026-12-01
+Items:
+- 2 x Logo concepts @ 50 USDC
+- 1 x Colour palette @ 30 USDC`;
+
 export function PaymentLinks() {
   return (
     <>
@@ -16,13 +25,18 @@ export function PaymentLinks() {
       </P>
       <Code title="The message your wallet signs (example values)">{MSG}</Code>
       <P>
+        A link can also have a <strong>due date</strong> and <strong>line items</strong>. When it does, they are part of the signed text too, so nobody can change a date, a quantity or a price after you sign. With line items, the amount is exactly their total: quantity
+        times price for each line (quantities can have two decimals, like 7.5 hours), added up.
+      </P>
+      <Code title="With a due date and line items (example values)">{MSG_ITEMS}</Code>
+      <P>
         The signature is made for the recipient <C>notara</C> and carries a NEP-413 nonce that starts with the signing time, so an old signature can't be passed off as new.
       </P>
 
       <H2>How a link is checked</H2>
       <P>Notara's server checks a signature in four steps before it saves a link, and again whenever the link is shown:</P>
       <OL>
-        <li>The signed text matches the link's payee, amount, asset and description exactly.</li>
+        <li>The signed text matches the link's payee, amount, asset and description exactly, and its due date and line items when it has them.</li>
         <li>The ed25519 signature is valid for the public key that signed it.</li>
         <li>That key is a full-access key of the merchant's account, read live from NEAR on the link's own network.</li>
         <li>The account that signed is the payee. A link signed by anyone else is refused.</li>
@@ -33,7 +47,8 @@ export function PaymentLinks() {
 
       <H2>What the customer sees</H2>
       <UL>
-        <li>The amount, what it's for and the merchant's account.</li>
+        <li>The amount, what it's for and the merchant's account, plus the due date and each line item when the link has them.</li>
+        <li>An <strong>Overdue</strong> label if the link is still unpaid after its due date.</li>
         <li>Whether the link is signed, and the merchant's proven website if there is one.</li>
         <li>
           An <A href="/docs/signals">account check</A> on the merchant before paying. On BLOCK, Notara won't create a payment address.
@@ -196,7 +211,7 @@ export function WebsiteProof() {
 export function InvoicesCsv() {
   return (
     <>
-      <Lead>Every link has a status, and the Transactions page exports exactly the rows you're looking at as a CSV for your accountant.</Lead>
+      <Lead>Every link has a status, and both exports give an accountant one row per payment, with exact amounts and a link to check each payment on chain.</Lead>
 
       <H2>Link statuses</H2>
       <Table
@@ -204,13 +219,16 @@ export function InvoicesCsv() {
         rows={[
           [<C key="u">unpaid</C>, "Nobody has paid yet."],
           [<C key="p">processing</C>, "A deposit from another chain was seen and NEAR Intents is working on it."],
-          [<C key="pa">paid</C>, "The full amount reached the merchant."],
+          [<C key="pa">paid</C>, "The full amount reached the merchant. A paid link never goes back to an earlier status."],
           [<C key="pe">pending_approval</C>, "An agent payment the vault parked for the owner (WARN)."],
           [<C key="r">refused</C>, "The payment was refused, for example on a BLOCK."],
           [<C key="rf">refunded</C>, "NEAR Intents returned the deposit to the customer."],
-          [<C key="f">failed</C>, "The payment didn't complete."],
+          [<C key="f">failed</C>, "The payment didn't complete. The link can still be paid."],
         ]}
       />
+      <P>
+        <strong>Overdue</strong> isn't a separate status: it's shown on top of <C>unpaid</C> or <C>failed</C> once the link's due date has passed. A link paid on its due day isn't late.
+      </P>
 
       <H2>Export from the Transactions page</H2>
       <P>
@@ -219,29 +237,136 @@ export function InvoicesCsv() {
       <Table
         head={["Column", "Contains"]}
         rows={[
-          ["Date", "When it happened, in your timezone"],
+          ["Date", "When it was paid or sent, else when it was created, in your timezone"],
           ["Direction", "In or Out"],
           ["Type", "Payment link, Send link, Direct send or Agent invoice"],
-          ["Counterparty", "The other account"],
-          ["Amount", "In USDC with two decimals; other assets in their smallest unit"],
+          ["Counterparty", "The other account: who paid you, when Notara knows, or who you sent to"],
+          ["Amount", "Exact, never rounded, in the asset's own unit (USDC has 6 decimals)"],
           ["Asset", "USDC, or the asset id"],
           ["Memo", "What it was for"],
-          ["Status", "The payment's status"],
+          ["Line items", "Each line as quantity x description @ price = line total, separated by ;"],
+          ["Due date", "The day the customer should pay by, if the link has one"],
+          ["Overdue", "Yes if it's unpaid and past its due date"],
+          ["Status", "Paid, Pending, Processing, Failed, Refunded or Sent"],
+          ["Paid with", "NEAR wallet, AI agent vault, or the token and chain used through NEAR Intents"],
           ["Network", "mainnet or testnet"],
           ["Transaction", "The NEAR transaction hash"],
+          ["Transaction link", "That transaction on the NEAR explorer"],
           ["Id", "The link or payment id"],
         ]}
       />
 
       <H3>For accounting tools: the API export</H3>
       <P>
-        <C>GET /api/invoices.csv?merchant=you.near</C>, signed by the merchant's wallet (see the <A href="/docs/api">API reference</A>), returns their links with these columns: <C>invoice_id</C>, <C>created_at</C>, <C>description</C>, <C>amount</C> (in the asset's own unit), <C>currency</C>,{" "}
-        <C>asset_contract</C>, <C>merchant</C>, <C>status</C>, <C>decision</C>, <C>vault_payment_id</C>, <C>tx_hash</C>, <C>explorer_url</C> and <C>paid_at</C>.
+        <C>GET /api/invoices.csv?merchant=you.near</C>, signed by the merchant's wallet (see the <A href="/docs/api">API reference</A>), returns all of the merchant's links, one row each:
       </P>
+      <Table
+        head={["Column", "Contains"]}
+        rows={[
+          [<C key="1">invoice_id</C>, "The link id, as on the pay page"],
+          [<C key="2">type</C>, "payment link or send link"],
+          [<C key="3">created_at</C>, "When the link was made (UTC)"],
+          [<C key="4">due_date</C>, "Pay-by day (YYYY-MM-DD), if set"],
+          [<C key="5">status</C>, "One of the statuses above"],
+          [<C key="6">overdue</C>, "yes or no"],
+          [<C key="7">description</C>, "What it's for"],
+          [<C key="8">line_items</C>, "quantity x description @ price = line total, separated by ;"],
+          [<C key="9">amount</C>, "Exact decimal in the currency below"],
+          [<C key="10">currency</C>, "USDC or NEAR"],
+          [<C key="11">network</C>, "mainnet or testnet"],
+          [<C key="12">payee_account</C>, "The NEAR account that receives the money"],
+          [<C key="13">payer_account</C>, "The NEAR account that paid, when known (a NEAR wallet, or the agent's vault). Empty for payments from other chains."],
+          [<C key="14">paid_with</C>, "NEAR wallet, AI agent vault, or the token and chain used through NEAR Intents"],
+          [<C key="15">paid_at</C>, "When it was paid (UTC)"],
+          [<C key="16">payment_tx</C>, "The NEAR transaction that paid it"],
+          [<C key="17">payment_tx_url</C>, "That transaction on the NEAR explorer"],
+          [<C key="18">refund_reason</C>, "Why NEAR Intents refunded a deposit, if it did"],
+          [<C key="19">signed_by_payee</C>, "yes if the payee's wallet signed the link"],
+          [<C key="20">agent_safety_check</C>, "Agent payments only: Notara's verdict, ALLOW, WARN or BLOCK"],
+          [<C key="21">vault_payment_id</C>, "Agent payments only: the payment's number in the vault contract"],
+          [<C key="22">token_contract</C>, "The token's NEAR contract (empty for NEAR)"],
+        ]}
+      />
       <Callout kind="note" title="Safe to open in a spreadsheet">
         <p>
           In both exports, a cell that starts with <C>=</C>, <C>+</C>, <C>-</C> or <C>@</C> gets an apostrophe in front, so a description or memo can't run as a formula when the file is opened.
         </p>
+      </Callout>
+    </>
+  );
+}
+
+export function Bookkeeping() {
+  return (
+    <>
+      <Lead>For the person who keeps the books: how to read a Notara export, match each payment to the money that arrived, and spot what's still owed. No crypto background needed.</Lead>
+
+      <H2>What you're looking at</H2>
+      <UL>
+        <li>Each row is one payment link (an invoice) or one money transfer.</li>
+        <li>
+          Amounts are in <strong>USDC</strong>, a digital dollar: 1 USDC is meant to be worth 1 US dollar. Amounts are exact; USDC has 6 decimal places, so <C>30.500002</C> is a real value, not a rounding error.
+        </li>
+        <li>
+          Rows marked <C>testnet</C> are free test money with no value. Leave them out of the books; only <C>mainnet</C> rows are real money.
+        </li>
+      </UL>
+
+      <H2>Every month, in four steps</H2>
+      <Steps>
+        <Step title="Export">
+          <P>
+            Ask the business owner to open <A href="/transactions">Transactions</A>, set the month's dates and press <strong>Export CSV</strong>. The file opens in Excel, Google Sheets or Numbers.
+          </P>
+        </Step>
+        <Step title="Keep only real money">
+          <P>
+            Filter <strong>Network</strong> to <C>mainnet</C>.
+          </P>
+        </Step>
+        <Step title="Record what was received">
+          <P>
+            Rows with <strong>Status</strong> <C>Paid</C> are money received. <strong>Amount</strong> is what arrived, <strong>Memo</strong> and <strong>Line items</strong> say what for, <strong>Counterparty</strong> is who paid (when known), and{" "}
+            <strong>Paid with</strong> says how.
+          </P>
+        </Step>
+        <Step title="Chase what's owed">
+          <P>
+            Rows that are <C>Pending</C> haven't been paid yet. Those with <strong>Overdue</strong> <C>Yes</C> are past their due date.
+          </P>
+        </Step>
+      </Steps>
+
+      <H2>Proving a payment</H2>
+      <P>
+        Every paid row has a <strong>Transaction link</strong>. Opening it shows the payment on NEAR's public explorer: who sent it, who received it, the amount and the time. Nobody, Notara included, can change or delete it. That page is the
+        receipt.
+      </P>
+
+      <H2>Statuses in plain words</H2>
+      <Table
+        head={["Status", "For the books"]}
+        rows={[
+          ["Paid", "Money received. Record it."],
+          ["Pending", "Not paid yet. Still owed."],
+          ["Processing", "A payment from another blockchain is on its way, or an AI agent payment is waiting for the owner's approval. Not received yet."],
+          ["Refunded", "The customer's payment was sent back to them. Nothing received."],
+          ["Failed", "A payment attempt didn't go through. Nothing received; the customer can try again."],
+          ["Sent", "Money you sent out. Record it as paid out."],
+        ]}
+      />
+
+      <H2>Good to know</H2>
+      <UL>
+        <li>Notara never holds the money: it goes straight to the business's own account, so there's no payout to wait for.</li>
+        <li>Network fees are paid by whoever sends the payment, not taken from the amount received.</li>
+        <li>A payment from another blockchain arrives as USDC. The token the customer used is in <strong>Paid with</strong>; the amount received is always in USDC.</li>
+        <li>
+          The full list of columns, for both exports, is on <A href="/docs/invoices-csv">Links, status and CSV export</A>.
+        </li>
+      </UL>
+      <Callout kind="note" title="This is a prototype">
+        <p>Notara is a hackathon prototype and has not been audited. Check figures against the business's own account before relying on them.</p>
       </Callout>
     </>
   );

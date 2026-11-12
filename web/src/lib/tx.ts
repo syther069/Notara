@@ -3,6 +3,7 @@
 import type { Decision, Invoice } from "./api";
 import type { LocalSend } from "./local";
 import { EXPLORER, linkNetwork, USDC_MAINNET, USDC_TESTNET } from "./format";
+import { fromUnits, isOverdue, lineTotal } from "./invoice";
 
 export type TxStatus = "Paid" | "Pending" | "Processing" | "Failed" | "Refunded" | "Sent";
 export interface Tx {
@@ -26,6 +27,28 @@ export interface Tx {
   check?: { decision: Decision; reason: string; coverage: string };
   agent?: { decision?: Decision; reasons?: string[]; vaultPaymentId?: string };
   signed?: boolean;
+  /** Unpaid and past its due date. */
+  overdue?: boolean;
+  dueDate?: string;
+  /** "2 x Logo @ 25 = 50; …", for the export. */
+  items?: string;
+  /** How the customer paid: "USDC on base (NEAR Intents)", "NEAR wallet", "AI agent vault". */
+  paidWith?: string;
+}
+
+function paidWith(l: Invoice): string | undefined {
+  if (l.status !== "paid") return undefined;
+  const c = l.checkouts?.find((x) => x.status === "SUCCESS");
+  if (c) return `${c.label} (NEAR Intents)`;
+  if (l.nearTx) return "NEAR wallet";
+  if (l.vaultPaymentId !== undefined) return "AI agent vault";
+  return undefined;
+}
+
+/** Token units as an exact decimal ("2500000" USDC -> "2.5"), never rounded. */
+export function exactAmount(units: string, asset: string): string {
+  const d = isUsdc(asset) ? 6 : asset === "NEAR" ? 24 : 0;
+  return d ? fromUnits(BigInt(units), d) : units;
 }
 
 const STATUS: Record<Invoice["status"], TxStatus> = { unpaid: "Pending", pending_approval: "Processing", processing: "Processing", paid: "Paid", refused: "Failed", refunded: "Refunded", failed: "Failed" };
@@ -40,7 +63,7 @@ export function buildTxs(links: Invoice[], sends: LocalSend[]): Tx[] {
       at: l.paidAt ?? l.createdAt,
       direction: l.kind === "send" ? "out" : "in",
       kind: l.kind === "send" ? "Send link" : linkNetwork(l.asset) ? "Payment link" : "Agent invoice",
-      counterparty: null,
+      counterparty: l.kind === "send" ? null : (l.paidBy ?? null),
       amount: l.amount,
       asset: l.asset,
       memo: l.description,
@@ -51,6 +74,10 @@ export function buildTxs(links: Invoice[], sends: LocalSend[]): Tx[] {
       href: l.kind === "send" ? null : linkNetwork(l.asset) ? `/pay/${l.id}` : `/invoices/${l.id}`,
       agent: l.decision || l.vaultPaymentId ? { decision: l.decision, reasons: l.reasons, vaultPaymentId: l.vaultPaymentId } : undefined,
       signed: l.signed,
+      overdue: isOverdue(l),
+      dueDate: l.dueDate,
+      items: l.items?.map((i) => `${i.quantity} x ${i.description} @ ${exactAmount(i.unitAmount, l.asset)} = ${exactAmount(lineTotal(i).toString(), l.asset)}`).join("; "),
+      paidWith: paidWith(l),
     };
   });
   const fromSends: Tx[] = sends.map((s) => ({
@@ -110,6 +137,24 @@ export function toCsv(txs: Tx[], timeZone: string): string {
     return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
   };
   const fmt = new Intl.DateTimeFormat("en-CA", { timeZone, dateStyle: "short", timeStyle: "medium", hour12: false });
-  const rows = txs.map((t) => [fmt.format(new Date(t.at)), t.direction === "in" ? "In" : "Out", t.kind, t.counterparty ?? "", isUsdc(t.asset) ? (Number(t.amount) / 1e6).toFixed(2) : t.amount, isUsdc(t.asset) ? "USDC" : t.asset, t.memo, t.status, t.network, t.txHash ?? "", t.id]);
-  return [["Date", "Direction", "Type", "Counterparty", "Amount", "Asset", "Memo", "Status", "Network", "Transaction", "Id"], ...rows].map((r) => r.map((c) => esc(String(c))).join(",")).join("\n");
+  // Exact amounts (never rounded), the due date and lines, how it was paid, and a link to check it on chain.
+  const rows = txs.map((t) => [
+    fmt.format(new Date(t.at)),
+    t.direction === "in" ? "In" : "Out",
+    t.kind,
+    t.counterparty ?? "",
+    exactAmount(t.amount, t.asset),
+    isUsdc(t.asset) ? "USDC" : t.asset,
+    t.memo,
+    t.items ?? "",
+    t.dueDate ?? "",
+    t.overdue ? "Yes" : "No",
+    t.status,
+    t.paidWith ?? "",
+    t.network,
+    t.txHash ?? "",
+    t.txUrl ?? "",
+    t.id,
+  ]);
+  return [["Date", "Direction", "Type", "Counterparty", "Amount", "Asset", "Memo", "Line items", "Due date", "Overdue", "Status", "Paid with", "Network", "Transaction", "Transaction link", "Id"], ...rows].map((r) => r.map((c) => esc(String(c))).join(",")).join("\n");
 }

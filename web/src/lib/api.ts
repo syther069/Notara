@@ -138,10 +138,26 @@ export interface PayToken {
   contract?: string;
 }
 
+/** One invoice line. quantity: decimal, up to 2 places; unitAmount: token units. */
+export interface LineItem {
+  description: string;
+  quantity: string;
+  unitAmount: string;
+}
+/** A line as the form sends it: the price as a decimal. */
+export type LineItemInput = { description: string; quantity: string; unitDecimal: string };
+
 export interface Invoice {
   id: string;
   merchant: string;
   description: string;
+  /** YYYY-MM-DD the customer should pay by. */
+  dueDate?: string;
+  items?: LineItem[];
+  /** The NEAR account the payment came from, when known. */
+  paidBy?: string;
+  /** Paid straight from a NEAR wallet: that transaction. */
+  nearTx?: string;
   amount: string;
   asset: string;
   status: "unpaid" | "pending_approval" | "processing" | "paid" | "refused" | "refunded" | "failed";
@@ -215,7 +231,7 @@ export const api = {
   /** The exact text a merchant's wallet signs to see their own links. */
   linksListMessage: (account: string) => post<{ recipient: string; message: string }>("/api/links/list-message", { account }),
   invoice: (id: string) => req<Invoice>(`/api/invoices/${encodeURIComponent(id)}`),
-  linkMessage: (b: { merchant: string; description: string; amountDecimal: string; asset: string }) => post<{ message: string }>("/api/links/message", b),
+  linkMessage: (b: { merchant: string; description: string; amountDecimal: string; asset: string; dueDate?: string; items?: LineItemInput[] }) => post<{ message: string }>("/api/links/message", b),
   merchant: (account: string) => req<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}`),
   checkWebsite: (account: string, website: string) => post<MerchantProfile>(`/api/merchants/${encodeURIComponent(account)}/website`, { website }),
   /** The exact text the sender's wallet signs for a send link. */
@@ -229,7 +245,7 @@ export const api = {
   nearTx: (id: string, b: { txHash: string; signerId: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/near-tx`, b),
   payTokens: () => req<{ tokens: PayToken[] }>("/api/checkout/tokens"),
   quote: (id: string, b: { originAsset: string; refundTo: string }) => post<Invoice>(`/api/invoices/${encodeURIComponent(id)}/quote`, b),
-  createInvoice: (b: { description: string; amountDecimal: string; asset: string; merchant?: string; signedToken?: string }) => post<Invoice>("/api/invoices", b),
+  createInvoice: (b: { description: string; amountDecimal: string; asset: string; merchant?: string; signedToken?: string; dueDate?: string; items?: LineItemInput[] }) => post<Invoice>("/api/invoices", b),
   payInvoice: (id: string) => post<{ invoice: Invoice; check?: CheckResponse; log: string[] }>(`/api/invoices/${encodeURIComponent(id)}/pay`, {}),
 };
 

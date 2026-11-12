@@ -67,7 +67,7 @@ export function DeviceStage({ children, label }: { children: ReactNode; label: s
 }
 
 /** Notara's public payment (or claim) page, at preview size. */
-export function PagePreview({ path, host, who, website, forText, emptyFor, amount, unit, checks, primary, secondary }: {
+export function PagePreview({ path, host, who, website, forText, emptyFor, amount, unit, checks, primary, secondary, due, items }: {
   path: string;
   /** Shown in the address bar; the app shows the real host, the landing page a fixed one. */
   host?: string;
@@ -81,6 +81,10 @@ export function PagePreview({ path, host, who, website, forText, emptyFor, amoun
   checks: PreviewCheck[];
   primary: string;
   secondary?: string;
+  /** "1 Dec 2026", when the link has a due date. */
+  due?: string;
+  /** Lines as shown: "2 x Logo", "50". */
+  items?: { label: string; total: string }[];
 }) {
   return (
     <div role="img" aria-label={`Preview of the page your link opens: ${forText || emptyFor}, ${amount} ${unit}`}>
@@ -102,10 +106,21 @@ export function PagePreview({ path, host, who, website, forText, emptyFor, amoun
             {website && <p className="mt-0.5 text-[11px] text-success">Website proven: {website}</p>}
           </div>
           <p className={cn("text-[14px] font-semibold leading-snug [overflow-wrap:anywhere]", !forText && "text-muted/70")}>{forText || emptyFor}</p>
+          {items && items.length > 0 && (
+            <ul className="-mt-1.5 flex flex-col gap-1 border-y border-border py-2">
+              {items.map((it, n) => (
+                <li key={n} className="flex items-baseline justify-between gap-3 text-[11.5px]">
+                  <span className="min-w-0 truncate text-muted">{it.label}</span>
+                  <span className="tnum shrink-0 font-semibold">{it.total}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <p className="tnum flex items-baseline gap-1.5 text-[34px] font-extrabold leading-none tracking-[-0.04em]">
             <AnimatedNumber value={amount} />
             <span className="text-[13px] font-bold tracking-normal text-muted">{unit}</span>
           </p>
+          {due && <p className="-mt-2 text-[11.5px] font-semibold text-muted">Due {due}</p>}
           <ul className="flex flex-col gap-1.5 border-t border-border pt-3">
             {checks.map((c) => (
               <li key={c.text} className={cn("flex items-start gap-1.5 text-[11.5px] font-medium leading-snug", c.state === "ok" ? "text-success" : c.state === "bad" ? "text-danger" : "text-muted")}>

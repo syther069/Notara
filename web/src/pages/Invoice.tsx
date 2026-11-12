@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { InvoiceLines } from "@/components/app/InvoiceLines";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, Bot, LoaderCircle, RefreshCw } from "../components/icons";
 import { api, type CheckResponse, type Invoice } from "../lib/api";
@@ -83,6 +84,7 @@ export function InvoicePage() {
             <div className="amount">
               {formatAsset(inv.amount, inv.asset)}
             </div>
+            <InvoiceLines inv={inv} />
             <dl className="kv" style={{ marginTop: 16 }}>
               <dt>Pay to</dt>
               <dd>

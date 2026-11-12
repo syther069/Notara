@@ -164,7 +164,14 @@ export function Api() {
       </Endpoint>
       <Endpoint method="POST" path="/api/links/message">
         <p>
-          Returns the exact text a merchant's wallet signs for a link, and the NEP-413 recipient: <C>{"{ recipient, message }"}</C>. Body: <C>merchant</C>, <C>description</C>, <C>amountDecimal</C>, <C>asset</C>.
+          Returns the exact text a merchant's wallet signs for a link, and the NEP-413 recipient: <C>{"{ recipient, message }"}</C>. Body: <C>merchant</C>, <C>description</C>, <C>amountDecimal</C>, <C>asset</C>, and optionally <C>dueDate</C> and{" "}
+          <C>items</C> (the same as below).
+        </p>
+      </Endpoint>
+      <Endpoint method="POST" path="/api/invoices">
+        <p>
+          Creates a payment link. Body: <C>merchant</C>, <C>description</C>, <C>asset</C>, <C>amountDecimal</C>, optional <C>signedToken</C> (the wallet's NEP-413 signature of the message above), optional <C>dueDate</C> (<C>YYYY-MM-DD</C>, today up to a
+          year ahead) and optional <C>items</C>: up to 20 of <C>{"{ description, quantity, unitDecimal }"}</C>, quantity with up to two decimals. With items, the amount is their total and <C>amountDecimal</C> is ignored.
         </p>
       </Endpoint>
       <Endpoint method="GET" path="/api/merchants/{account}">

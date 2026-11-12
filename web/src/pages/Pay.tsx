@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { InvoiceLines } from "@/components/app/InvoiceLines";
 import { useParams } from "react-router-dom";
 import { CircleCheck, ExternalLink, LoaderCircle } from "../components/icons";
 import { Link } from "react-router-dom";
@@ -219,6 +220,7 @@ export function PayPage() {
         <div className="invoice-sheet">
           <div className="amount">{formatAsset(inv.amount, inv.asset)}</div>
         </div>
+        <InvoiceLines inv={inv} />
         <p className="muted" style={{ marginTop: 8 }}>
           {isSend ? "You're funding a send link. The money waits in a one-time account until someone opens the link." : <>To <AccountLink id={inv.merchant} explorer={EXPLORER[net]} /> · <Link to={`/m/${inv.merchant}`}>See this merchant's profile</Link></>}
         </p>

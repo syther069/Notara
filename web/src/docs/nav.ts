@@ -1,5 +1,5 @@
 // The docs' table of contents. It drives the sidebar, previous/next, search and the page titles.
-// `file` is where the page's text lives, for the "Edit on GitHub" link.
+// `file` is where the page's text lives.
 
 export interface DocPage {
   slug: string; // "" is the docs home
@@ -23,7 +23,8 @@ export const DOCS: DocPage[] = [
   { slug: "any-chain", group: "Get paid", title: "Pay from any chain", file: "getpaid.tsx", description: "Customers pay from the chain they already use; NEAR Intents delivers exact USDC on NEAR.", keywords: "near intents 1click cross-chain ethereum arbitrum bitcoin solana", mainnet: true },
   { slug: "mainnet-proof", group: "Get paid", title: "Mainnet proof: NEAR Intents", file: "getpaid.tsx", description: "A real payment from ETH on Arbitrum to USDC on NEAR, with every transaction linked.", keywords: "proof evidence transaction mainnet intents arbiscan nearblocks", mainnet: true },
   { slug: "website-proof", group: "Get paid", title: "Prove your website", file: "getpaid.tsx", description: "Tie your domain to your NEAR account with a .well-known/near.txt file.", keywords: "domain well-known near.txt verify" },
-  { slug: "invoices-csv", group: "Get paid", title: "Links, status and CSV export", file: "getpaid.tsx", description: "What each link status means and every column in the export.", keywords: "csv export accounting status paid" },
+  { slug: "invoices-csv", group: "Get paid", title: "Links, status and CSV export", file: "getpaid.tsx", description: "What each link status means, due dates and Overdue, and every column in both exports.", keywords: "csv export accounting status paid due overdue line items" },
+  { slug: "bookkeeping", group: "Get paid", title: "Guide for bookkeepers", file: "getpaid.tsx", description: "How to read a Notara export, match each payment to the money received, and see what's still owed. No crypto background needed.", keywords: "bookkeeper accountant accounting books reconcile month ledger" },
 
   { slug: "send-links", group: "Send money", title: "Send links", file: "send.tsx", description: "Send USDC as a link someone can claim without a wallet. 1 to 25 USDC, 7 days to take it back.", keywords: "send claim link cash gift testnet" },
 

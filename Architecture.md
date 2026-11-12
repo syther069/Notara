@@ -119,10 +119,10 @@ Stack choice: **Vite + React + TypeScript**, plain CSS. Reason: fast to build, e
 | `GET /api/demo/logs`, `GET /api/demo/logs/:name` | – | saved run logs |
 | `GET /api/demo/inbox` | – | the three invoice documents, with real account names filled in |
 | `GET /api/invoices` | – | invoices (pending ones re-synced from the vault) |
-| `POST /api/invoices` | `{ description, amountNear, merchant?, asset? }` | new invoice (merchant defaults to the demo merchant) |
+| `POST /api/invoices` | `{ description, amountDecimal, asset, merchant?, signedToken?, dueDate?, items? }` | new invoice (merchant defaults to the demo merchant). `dueDate` is `YYYY-MM-DD`; `items` is up to 20 `{ description, quantity, unitDecimal }`, and the amount is then their total. Both are part of the signed link text |
 | `GET /api/invoices/:id` | – | one invoice |
 | `POST /api/invoices/:id/pay` | – | the customer's agent pays through wrapper → vault; returns invoice, Notara report, log |
-| `GET /api/invoices.csv` | – | CSV for the accountant (formula-injection safe), amounts in the asset's own unit plus `currency` and `asset_contract` columns |
+| `GET /api/invoices.csv` | – | CSV for the accountant (formula-injection safe): exact decimal amounts, due date and overdue, line items, network, payer, how it was paid, payment transaction and link, refund reason. Columns are listed on the docs page "Links, status and CSV export" |
 | `GET /api/checkout/tokens` | – | tokens a customer can pay with (from 1Click, cached 5 minutes) |
 | `POST /api/invoices/:id/quote` | `{ originAsset, refundTo }` | one-time 1Click deposit address for a mainnet USDC payment link. Refused on BLOCK |
 | `POST /api/links/message` | `{ merchant, description, amountDecimal, asset }` | the exact text the merchant's wallet signs (NEP-413) |

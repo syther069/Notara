@@ -26,6 +26,13 @@ export interface Checkout {
   refundReason?: string;
 }
 
+/** One line on an invoice. quantity: a decimal with up to 2 places (hours can be 7.5); unitAmount: token units. */
+export interface LineItem {
+  description: string;
+  quantity: string;
+  unitAmount: string;
+}
+
 export interface Invoice {
   id: string;
   merchant: string;
@@ -54,6 +61,12 @@ export interface Invoice {
   sentBy?: string;
   /** Paid directly from a NEAR wallet: the transaction hash that paid it. */
   nearTx?: string;
+  /** The day the customer should pay by (YYYY-MM-DD). Past it and still unpaid, the link shows Overdue. */
+  dueDate?: string;
+  /** Optional lines; when present, amount is exactly their total. */
+  items?: LineItem[];
+  /** The NEAR account the payment came from, when we know it: the customer's wallet, or the agent's vault. */
+  paidBy?: string;
   /** NEP-413 token: the merchant's wallet signed this exact link. */
   signedToken?: string;
   reportHash?: string;
@@ -75,13 +88,60 @@ export const getInvoice = (id: string): Promise<Invoice | undefined> => store.ge
 export const setInvoiceFlag = (id: string, field: keyof Invoice, value = new Date().toISOString()) => store.setOnce(id, field, value);
 export const clearInvoiceFlag = (id: string, field: keyof Invoice) => store.unset(id, field);
 
-export async function createInvoice(input: { merchant: string; description: string; amount: string; asset?: string }): Promise<Invoice> {
+const QTY_RE = /^\d{1,6}(\.\d{1,2})?$/;
+export const MAX_ITEMS = 20;
+
+/** quantity x unit price, in token units, rounded to the nearest unit (quantity has at most 2 decimals). */
+export function lineTotal(i: LineItem): bigint {
+  const [w, f = ""] = i.quantity.split(".");
+  const hundredths = BigInt(w) * 100n + BigInt(f.padEnd(2, "0"));
+  return (BigInt(i.unitAmount) * hundredths + 50n) / 100n;
+}
+export const itemsTotal = (items: LineItem[]) => items.reduce((sum, i) => sum + lineTotal(i), 0n);
+
+/** Checks and tidies line items; throws a plain-language error. */
+export function cleanItems(raw: unknown): LineItem[] | undefined {
+  if (raw === undefined || raw === null || (Array.isArray(raw) && raw.length === 0)) return undefined;
+  if (!Array.isArray(raw)) throw new Error("Line items must be a list");
+  if (raw.length > MAX_ITEMS) throw new Error(`At most ${MAX_ITEMS} line items`);
+  return raw.map((r: any, n) => {
+    const description = String(r?.description ?? "").trim();
+    const quantity = String(r?.quantity ?? "").trim();
+    const unitAmount = String(r?.unitAmount ?? "");
+    if (!description || description.length > 80) throw new Error(`Line ${n + 1}: a description is required (max 80 characters)`);
+    if (!QTY_RE.test(quantity) || Number(quantity) <= 0) throw new Error(`Line ${n + 1}: quantity must be a number like 1, 3 or 7.5`);
+    if (!/^\d+$/.test(unitAmount) || BigInt(unitAmount) <= 0n) throw new Error(`Line ${n + 1}: price must be more than zero`);
+    return { description, quantity: quantity.replace(/\.0+$/, ""), unitAmount };
+  });
+}
+
+/** A due date as YYYY-MM-DD, from today (UTC, a day of leeway for time zones) up to a year ahead. */
+export function cleanDueDate(raw: unknown, now = new Date()): string | undefined {
+  if (raw === undefined || raw === null || raw === "") return undefined;
+  const s = String(raw);
+  const d = new Date(`${s}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s) throw new Error("Due date must be a real date like 2026-12-01");
+  const day = 86_400_000;
+  if (d.getTime() < now.getTime() - 2 * day) throw new Error("Due date can't be in the past");
+  if (d.getTime() > now.getTime() + 366 * day) throw new Error("Due date must be within a year");
+  return s;
+}
+
+/** Still waiting for money and past its due date (a link paid on its due day isn't late). */
+export function isOverdue(i: Pick<Invoice, "status" | "dueDate">, today = new Date().toISOString().slice(0, 10)): boolean {
+  return !!i.dueDate && (i.status === "unpaid" || i.status === "failed") && i.dueDate < today;
+}
+
+export async function createInvoice(input: { merchant: string; description: string; amount: string; asset?: string; dueDate?: string; items?: LineItem[] }): Promise<Invoice> {
   const asset = input.asset ?? "NEAR";
   if (!getAsset(asset)) throw new Error(`Unsupported asset ${asset}. Supported: ${listAssets().map((a) => a.symbol).join(", ")}`);
   if (!ACCOUNT_RE.test(input.merchant) || input.merchant.length > 64) throw new Error("Invalid merchant account id");
   const description = String(input.description ?? "").trim();
   if (!description || description.length > 200) throw new Error("Description is required (max 200 characters)");
   if (!/^\d+$/.test(input.amount) || BigInt(input.amount) <= 0n) throw new Error("Amount must be a positive integer in the smallest unit");
+  const items = cleanItems(input.items);
+  if (items && itemsTotal(items).toString() !== input.amount) throw new Error("The amount must equal the total of the line items");
+  const dueDate = cleanDueDate(input.dueDate);
 
   const now = new Date().toISOString();
   // Random ids (48 bits), so nobody can walk INV-0001, INV-0002… to read other merchants' links.
@@ -93,6 +153,8 @@ export async function createInvoice(input: { merchant: string; description: stri
     description,
     amount: input.amount,
     asset,
+      ...(dueDate && { dueDate }),
+      ...(items && { items }),
       status: "unpaid",
       createdAt: now,
       updatedAt: now,
@@ -143,22 +205,65 @@ const csvCell = (v: unknown) => {
   return `"${safe.replace(/"/g, '""')}"`;
 };
 
-export function toCsv(list: Invoice[], explorer: string, formatAmount: (units: string, asset: string) => string): string {
-  const header = ["invoice_id", "created_at", "description", "amount", "currency", "asset_contract", "merchant", "status", "decision", "vault_payment_id", "tx_hash", "explorer_url", "paid_at"];
-  const rows = list.map((i) => [
-    i.id,
-    i.createdAt,
-    i.description,
-    formatAmount(i.amount, i.asset),
-    getAsset(i.asset)?.symbol ?? i.asset,
-    i.asset === "NEAR" ? "" : i.asset,
-    i.merchant,
-    i.status,
-    i.decision ?? "",
-    i.vaultPaymentId ?? "",
-    i.txHash ?? "",
-    i.txUrl ?? (i.txHash ? `${explorer}/txns/${i.txHash}` : ""),
-    i.paidAt ?? "",
-  ]);
+export interface CsvOptions {
+  /** "mainnet" or "testnet" for this invoice's asset. */
+  network: (asset: string) => string;
+  /** Explorer base URL for that network. */
+  explorer: (asset: string) => string;
+  /** Token units as a decimal, e.g. "2500000" USDC -> "2.5". */
+  formatAmount: (units: string, asset: string) => string;
+  today?: string;
+}
+
+/** How the customer paid, in words an accountant can read. */
+function paidWith(i: Invoice): string {
+  if (i.status !== "paid") return "";
+  const c = i.checkouts?.find((x) => x.status === "SUCCESS");
+  if (c) return `${c.label} (NEAR Intents)`;
+  if (i.nearTx) return "NEAR wallet";
+  if (i.vaultPaymentId !== undefined) return "AI agent vault";
+  return "";
+}
+
+/**
+ * The export for a bookkeeper: one row per link, plain column names, amounts as decimals in the
+ * stated currency, and every payment traceable to its transaction. Each column is explained on the
+ * docs page "Links, status and CSV export".
+ */
+export function toCsv(list: Invoice[], o: CsvOptions): string {
+  const header = [
+    "invoice_id", "type", "created_at", "due_date", "status", "overdue", "description", "line_items", "amount", "currency", "network",
+    "payee_account", "payer_account", "paid_with", "paid_at", "payment_tx", "payment_tx_url", "refund_reason", "signed_by_payee",
+    "agent_safety_check", "vault_payment_id", "token_contract",
+  ];
+  const today = o.today ?? new Date().toISOString().slice(0, 10);
+  const rows = list.map((i) => {
+    const sym = getAsset(i.asset)?.symbol ?? i.asset;
+    const items = (i.items ?? []).map((l) => `${l.quantity} x ${l.description} @ ${o.formatAmount(l.unitAmount, i.asset)} = ${o.formatAmount(lineTotal(l).toString(), i.asset)}`).join("; ");
+    return [
+      i.id,
+      i.kind === "send" ? "send link" : "payment link",
+      i.createdAt,
+      i.dueDate ?? "",
+      i.status,
+      isOverdue(i, today) ? "yes" : "no",
+      i.description,
+      items,
+      o.formatAmount(i.amount, i.asset),
+      sym,
+      o.network(i.asset),
+      i.merchant,
+      i.paidBy ?? "",
+      paidWith(i),
+      i.paidAt ?? "",
+      i.txHash ?? "",
+      i.txUrl ?? (i.txHash ? `${o.explorer(i.asset)}/txns/${i.txHash}` : ""),
+      i.checkouts?.at(-1)?.refundReason ?? "",
+      i.signedToken ? "yes" : "no",
+      i.decision ?? "",
+      i.vaultPaymentId ?? "",
+      i.asset === "NEAR" ? "" : i.asset,
+    ];
+  });
   return [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
