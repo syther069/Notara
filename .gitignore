@@ -1,26 +1,24 @@
-target/
+# Dependencies and build output
 node_modules/
 dist/
-.env
-*.local.json
-keys/
-demo/runs/
-passport/data/
-data/
-graphify-out/cache/
-
+target/
 .vercel
-.env*
-
-# TypeScript incremental build cache
 *.tsbuildinfo
 
-# Headless Chrome profile used for screenshots: holds cookies, login data and history. Never commit.
-.taste-skill/chrome-shoot/
+# Secrets and local state: never commit
+.env
+.env*
+*.local.json
+keys/
+data/
+passport/data/
+demo/runs/
 
-# Local tools and working files: kept on this machine, not part of the project
-.claude/skills/
+# Local editor and assistant tooling, and private working files
+CLAUDE.md
+.claude/
+graphify-out/
 .taste-skill/
+_private/
 *.zip
 *.docx
-skiper-components.md

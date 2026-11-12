@@ -11,3 +11,8 @@ web/node_modules/
 web/dist/
 graphify-out/
 *.local.json
+# Local tooling and private working files
+CLAUDE.md
+.claude/
+_private/
+.taste-skill/

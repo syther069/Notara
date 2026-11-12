@@ -25,7 +25,7 @@ test("a reply signature recovers to the TEE address that made it, and to no othe
 });
 
 test("the log says plainly when a model isn't TEE-hosted, and lists what wasn't checked", () => {
-  assert.match(formatAttestation({ model: "anthropic/x", verified: false, notTee: true, signingAddresses: [], checks: [], notChecked: [] })[0], /isn't TEE-hosted/);
+  assert.match(formatAttestation({ model: "provider/relayed-model", verified: false, notTee: true, signingAddresses: [], checks: [], notChecked: [] })[0], /isn't TEE-hosted/);
   const lines = formatAttestation({ model: "m", verified: true, signingAddresses: ["0x1"], checks: [{ name: "GPU", pass: true }], notChecked: ["Intel TDX quote"] });
   assert.deepEqual(lines, ["[tee] m: VERIFIED", "[tee]   ok   GPU", "[tee]   not checked: Intel TDX quote"]);
 });

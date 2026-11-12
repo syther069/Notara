@@ -2,9 +2,14 @@
   "name": "notara",
   "version": "0.1.0",
   "private": true,
-  "description": "Counterparty verification and payment enforcement for autonomous AI agents on NEAR",
+  "description": "Payment links people can trust and on-chain enforced spending for AI agents, built on NEAR",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/syther069/Notara.git"
+  },
+  "homepage": "https://notara-sable.vercel.app",
   "engines": {
     "node": ">=22.13"
   },

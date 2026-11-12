@@ -26,7 +26,7 @@ import { SIGN_RECIPIENT, freshNonce } from "./merchants.ts";
 /** sha256 of contracts/res/vault.wasm (base58), published with `near contract deploy-as-global ... as-global-hash`. */
 export const VAULT_CODE_HASH = "AjewPGjjqqFwDYD6GnYrKkkH7UyNmhBHgJ5M2r4sehCm";
 export const VAULT_STORAGE_NEAR = parseNearAmount("0.03")!; // account + vault state; the visitor funds payments
-export const MAX_VAULTS_PER_DAY = 50; // shortcut: global cap, bounds what the factory can spend in a day
+export const MAX_VAULTS_PER_DAY = 50; // global cap: bounds what the factory can spend in a day
 const RUN_GAP_MS = 15_000; // one agent run per vault at a time, roughly
 
 const net = "testnet" as const;

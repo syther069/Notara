@@ -1,4 +1,4 @@
-// Expanding pieces for the landing page, adapted from skiper-components.md and re-tokened to Notara:
+// Expanding pieces for the landing page, adapted from Skiper UI (skiper-ui.com) and re-tokened to Notara:
 // cards where one opens to fill its group (after Skiper 23), rows where the open one parts from its
 // neighbours (after Skiper 103), and a caret that glides between characters (after Skiper 106).
 import * as React from "react";

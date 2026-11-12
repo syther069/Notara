@@ -1,5 +1,5 @@
-// Scroll pieces for the landing page, adapted from the Skiper-based components in skiper-components.md
-// (written for another product, Next.js and its tokens). Each is re-tokened to Notara's theme, uses Motion
+// Scroll pieces for the landing page, adapted from Skiper UI (skiper-ui.com) components written for
+// Next.js. Each is re-tokened to Notara's theme, uses Motion
 // and the product's icon set, and is still and fully readable under reduced motion.
 import * as React from "react";
 import Lenis from "lenis";

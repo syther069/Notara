@@ -557,7 +557,7 @@ ol.steps { padding: 0; margin: 0; }
 }
 
 /* ---------------------------------------------------------------- touch and phone comfort
-   Field text at 16px on phones and touch screens, monospace and selects included (the design codex's readability
+   Field text at 16px on phones and touch screens, monospace and selects included (a readability
    floor, and what keeps iOS Safari from zooming on focus; not a WCAG requirement). Primary touch controls about
    44px tall (a usability starting point; WCAG 2.2 AA's own target-size minimum is 24px). */
 @media (pointer: coarse), (max-width: 640px) {

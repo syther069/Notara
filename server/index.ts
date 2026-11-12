@@ -8,7 +8,8 @@
 //   - The built website           web/dist (if present)
 //
 // Binds to 127.0.0.1. The owner console and demo runner sign testnet transactions, so this server
-// must not be exposed publicly without authentication (see rules.md).
+// must not be exposed publicly without authentication. The public deploy runs with NOTARA_PUBLIC=1,
+// which switches them off.
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from "node:fs";

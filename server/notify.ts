@@ -1,6 +1,6 @@
 // Optional Telegram alert when a payment link gets paid. Set TELEGRAM_BOT_TOKEN (from @BotFather)
 // and TELEGRAM_CHAT_ID (your chat with the bot) in .env. Without them this does nothing.
-// Shortcut: one chat for the whole server, not per merchant.
+// Limit: one chat for the whole server, not one per merchant.
 
 import type { Invoice } from "./invoices.ts";
 import { formatAmount } from "../passport/src/assets.ts";
