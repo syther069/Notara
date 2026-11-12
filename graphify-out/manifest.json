@@ -606,9 +606,9 @@
     "semantic_hash": ""
   },
   "web/src/components/MyVault.tsx": {
-    "mtime": 1794254577.0553818,
-    "seen": 1794254832.872914,
-    "ast_hash": "ff6e270d15674f85dfe2f0fe51515604",
+    "mtime": 1794477213.6261144,
+    "seen": 1794477292.456478,
+    "ast_hash": "34cc9e891fad7e70e312982aa4110790",
     "semantic_hash": ""
   },
   "web/src/components/icons.tsx": {
@@ -846,9 +846,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/guide.ts": {
-    "mtime": 1794419384.3326824,
-    "seen": 1794419469.203033,
-    "ast_hash": "55b3d4c2a4c9018de0a29db7a0c5b214",
+    "mtime": 1794477213.627154,
+    "seen": 1794477292.456478,
+    "ast_hash": "468ffb3bb91dfd785d56149839f3f350",
     "semantic_hash": ""
   },
   "web/src/lib/local.ts": {
@@ -888,9 +888,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/VaultConsole.tsx": {
-    "mtime": 1794464833.796311,
-    "seen": 1794464882.6723876,
-    "ast_hash": "a7baa6ecdea9edcddb64af3c69cb7a14",
+    "mtime": 1794477204.8684676,
+    "seen": 1794477292.456478,
+    "ast_hash": "6af16240885a0d001f367a833b92e82f",
     "semantic_hash": ""
   },
   "web/src/components/app/SpinThemeToggle.tsx": {

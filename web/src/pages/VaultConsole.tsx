@@ -6,13 +6,13 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { api, type MyVault as MyVaultInfo, type Payment, type VaultSummary } from "@/lib/api";
 import { useWallet } from "@/lib/wallet";
 import { useLocal } from "@/lib/local";
-import { asSentence, formatAsset, nearAmount, timeAgo, unitsToDecimal } from "@/lib/format";
+import { asSentence, formatAsset, nearAmount, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { NotDeployed, useDeployment, useToast } from "@/components/Layout";
-import { ExternalLink, Pause, Play, RefreshCw, ShieldAlert, Sparks } from "@/components/icons";
+import { ExternalLink, HelpCircle, Pause, Play, RefreshCw, ShieldAlert, Sparks } from "@/components/icons";
 import StatsCounter from "@/components/vengeance/stats-counter";
 import { MyVault } from "@/components/MyVault";
-import { PageHead } from "@/components/shell/AppShell";
+import { PageHead, useShell } from "@/components/shell/AppShell";
 import { handle } from "@/components/app/wallet";
 import { Button, Card, Chip, EASE, FormField, Hint, Notice, Shimmer, TextArea, TextInput } from "@/components/app/ui";
 import { VerdictChip } from "@/components/app/verdict";
@@ -123,15 +123,20 @@ export function VaultConsolePage() {
   const [loading, setLoading] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [confirmPause, setConfirmPause] = useState(false);
-  const [sim, setSim] = useState(false);
+  const { openGuide } = useShell();
+  // null until the visitor opens or closes the simulation; until then it follows firstRun below.
+  const [sim, setSim] = useState<boolean | null>(null);
   const [limits, setLimits] = useState(false);
   const seq = useRef(0);
 
   // Which vault: the one in the address, else your own, else the shared demo vault.
-  useEffect(() => {
-    setMine(null);
+  const loadMine = useCallback(() => {
     if (w.accountId && w.network === "testnet") api.myVault(w.accountId).then(setMine, () => {});
   }, [w.accountId, w.network]);
+  useEffect(() => {
+    setMine(null);
+    loadMine();
+  }, [loadMine]);
   const vault = params.get("vault") ?? (mine?.exists ? mine.vault : undefined);
   const isMine = !!mine?.exists && vault === mine.vault;
 
@@ -168,6 +173,15 @@ export function VaultConsolePage() {
   const paused = !!summary?.config.paused;
   const pending = payments?.filter((p) => p.status === "PendingApproval") ?? [];
   const cap = summary?.config.caps.NEAR;
+  // No vault of your own yet: the "try it" steps come first and open, instead of hiding at the bottom.
+  const firstRun = !mine?.exists;
+  const open = sim ?? firstRun;
+  // Something changed in your vault (created, funded, a scenario ran): read both again, so the
+  // approval queue and the events show it without pressing Refresh.
+  const changed = useCallback(() => {
+    loadMine();
+    load();
+  }, [loadMine, load]);
 
   async function setPaused(next: boolean) {
     if (!summary) return;
@@ -184,6 +198,33 @@ export function VaultConsolePage() {
     }
   }
 
+  // Your own vault and the attack simulation: first on a first visit, last afterwards.
+  const tryIt = (
+      <Card className={firstRun ? "mb-4" : "mt-4"}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="max-w-[60ch]">
+            <h2 className="flex items-center gap-2 text-[19px] font-bold tracking-[-0.02em]">
+              <ShieldAlert size={20} aria-hidden /> {firstRun ? "Start here: run the agent on your own vault" : "Simulate an attack"}
+            </h2>
+            <p className="mt-1 text-[14.5px] leading-relaxed text-muted">An AI agent reads four invoices and tries to pay them from a vault you own. One hides an instruction to pay an attacker. Free test money; every result links to its transaction.</p>
+          </div>
+          <Button variant={open ? "secondary" : "primary"} onClick={() => setSim(!open)} aria-expanded={open}>
+            <Sparks size={17} aria-hidden /> {open ? "Hide the simulation" : "Simulate an attack"}
+          </Button>
+        </div>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }} transition={{ duration: 0.45, ease: EASE }} className="overflow-hidden">
+              <div className="legacy pt-6">
+                <MyVault onChange={changed} />
+                {dep && !dep.public && <DemoPage embedded />}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+  );
+
   if (dep && !dep.deployed)
     return (
       <>
@@ -198,9 +239,14 @@ export function VaultConsolePage() {
         title="Vault Console"
         sub="A spending account for an AI agent. The agent can only ask; the vault pays within your limits and holds anything unusual for you."
         actions={
-          <Button variant="secondary" onClick={load} busy={loading && !!summary}>
-            <RefreshCw size={15} aria-hidden /> Refresh
-          </Button>
+          <>
+            <Button variant="secondary" onClick={openGuide}>
+              <HelpCircle size={15} aria-hidden /> How it works
+            </Button>
+            <Button variant="secondary" onClick={load} busy={loading && !!summary}>
+              <RefreshCw size={15} aria-hidden /> Refresh
+            </Button>
+          </>
         }
       />
 
@@ -209,6 +255,8 @@ export function VaultConsolePage() {
           <p>{asSentence(error)} Nothing was changed.</p>
         </Notice>
       )}
+
+      {firstRun && tryIt}
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         {/* Left: live state */}
@@ -257,9 +305,10 @@ export function VaultConsolePage() {
             )}
             {summary?.usdc.enabled && (
               <p className="mt-4 text-[13.5px] text-muted">
-                USDC: holds <strong className="tnum text-foreground">{formatAsset(summary.usdc.balance, summary.usdc.asset)}</strong>
-                {summary.usdc.perTx && <>, up to {unitsToDecimal(summary.usdc.perTx, summary.usdc.asset)} per payment</>}
-                {summary.usdc.dailyUnits && <>, {unitsToDecimal(summary.usdc.dailyUnits, summary.usdc.asset)} a day</>}.
+                {/* The server sends these as decimals already ("2", "50"), not token units. */}
+                USDC: holds <strong className="tnum text-foreground">{summary.usdc.balance} USDC</strong>
+                {summary.usdc.perTx && <>, up to {summary.usdc.perTx} per payment</>}
+                {summary.usdc.daily && <>, {summary.usdc.daily} a day</>}.
               </p>
             )}
             <p className="mt-3 text-[12.5px] text-muted">Limits apply to every payee alike; the vault has no per-payee limit yet.</p>
@@ -330,7 +379,7 @@ export function VaultConsolePage() {
         <div className="flex flex-col gap-4">
           <Card>
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-[17px] font-bold tracking-[-0.02em]">Approval queue</h2>
+              <h2 id="approval-queue" className="scroll-mt-24 text-[17px] font-bold tracking-[-0.02em]">Approval queue</h2>
               {payments && <Chip tone={pending.length ? "warning" : "outline"} hint="Payments the vault is holding until the owner decides.">{pending.length} waiting</Chip>}
             </div>
             {!payments || !summary ? (
@@ -388,38 +437,29 @@ export function VaultConsolePage() {
             )}
           </Card>
 
-          {summary && (
-            <div className="legacy rounded-2xl border border-border/70 bg-surface p-5 shadow-card">
-              <OwnerSteps summary={summary} onChange={load} />
-            </div>
-          )}
+          {summary &&
+            (isOwner || isMine || summary.localOwnerKey ? (
+              <div className="legacy rounded-2xl border border-border/70 bg-surface p-5 shadow-card">
+                <OwnerSteps summary={summary} onChange={load} />
+              </div>
+            ) : (
+              <Card>
+                <h2 className="text-[17px] font-bold tracking-[-0.02em]">Who approves</h2>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-muted">
+                  This is the shared demo vault, owned by Notara's demo account ({handle(summary.config.owner)}), so only that account can approve, pause or change limits here.{" "}
+                  {mine?.exists ? "Your own vault is one click away." : "Create your own vault to do all of that with your wallet."}
+                </p>
+                {mine?.exists && (
+                  <Button size="sm" variant="secondary" className="mt-3" onClick={() => setParams({}, { replace: true })}>
+                    Show my vault
+                  </Button>
+                )}
+              </Card>
+            ))}
         </div>
       </div>
 
-      {/* The attack demo, in place */}
-      <Card className="mt-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="max-w-[60ch]">
-            <h2 className="flex items-center gap-2 text-[19px] font-bold tracking-[-0.02em]">
-              <ShieldAlert size={20} aria-hidden /> Simulate an attack
-            </h2>
-            <p className="mt-1 text-[14.5px] leading-relaxed text-muted">An AI agent reads four invoices and tries to pay them from a vault you own. One hides an instruction to pay an attacker. Free test money; every result links to its transaction.</p>
-          </div>
-          <Button variant={sim ? "secondary" : "primary"} onClick={() => setSim((s) => !s)} aria-expanded={sim}>
-            <Sparks size={17} aria-hidden /> {sim ? "Hide the simulation" : "Simulate an attack"}
-          </Button>
-        </div>
-        <AnimatePresence initial={false}>
-          {sim && (
-            <motion.div initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }} transition={{ duration: 0.45, ease: EASE }} className="overflow-hidden">
-              <div className="legacy pt-6">
-                <MyVault />
-                {dep && !dep.public && <DemoPage embedded />}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Card>
+      {!firstRun && tryIt}
     </>
   );
 }

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { ExternalLink, LoaderCircle, Play, Wallet } from "./icons";
 import { api, type AgentRun, type MyVault as MyVaultInfo } from "../lib/api";
 import { useWallet } from "../lib/wallet";
@@ -20,7 +19,7 @@ const SCENARIOS: { key: string; title: string; expect: string }[] = [
  * Anyone with a NEAR testnet wallet: create your own vault (you own it, nobody holds a key to it),
  * fund it with test NEAR, and watch the agent try to pay from it.
  */
-export function MyVault() {
+export function MyVault({ onChange }: { onChange?: () => void }) {
   const w = useWallet();
   const [info, setInfo] = useState<MyVaultInfo | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -47,14 +46,19 @@ export function MyVault() {
     setError(null);
     try {
       await fn();
+      onChange?.();
     } catch (e: any) {
-      setError(e.message);
+      setError(asSentence(e.message));
     } finally {
       setBusy(null);
     }
   }
 
   const funded = info?.exists && BigInt(info.balance) >= 3n * 10n ** 23n; // 0.3 NEAR: enough for the scenarios
+  const ran = Object.keys(runs).length > 0;
+  // Where you are in the four steps, so a first-time visitor always knows what comes next.
+  const stage = !w.accountId || w.network !== "testnet" ? 0 : !info?.exists ? 1 : !funded ? 2 : 3;
+  const STEPS = ["Connect a testnet wallet", "Create your vault", "Add 1 test NEAR", "Run the scenarios"];
 
   return (
     <div className="card stack" style={{ marginBottom: 24 }}>
@@ -66,6 +70,33 @@ export function MyVault() {
           only by its contract rules. Then an AI agent tries to pay invoices from it. Free test NEAR only.
         </p>
       </div>
+
+      <ol aria-label="Steps" style={{ display: "flex", flexWrap: "wrap", gap: 8, listStyle: "none", margin: 0, padding: 0 }}>
+        {STEPS.map((label, i) => {
+          const done = i < stage || (i === 3 && ran);
+          const now = i === stage && !done;
+          return (
+            <li
+              key={label}
+              aria-current={now ? "step" : undefined}
+              className="small"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 10px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+                fontWeight: now ? 700 : 500,
+                opacity: done || now ? 1 : 0.6,
+              }}
+            >
+              <span aria-hidden>{done ? "✓" : i + 1}</span> {label}
+              {done && <span className="sr-only"> (done)</span>}
+            </li>
+          );
+        })}
+      </ol>
 
       {!w.accountId ? (
         <div>
@@ -111,7 +142,7 @@ export function MyVault() {
         <>
           <p className="small" style={{ margin: 0 }}>
             Vault <span className="mono">{info.vault}</span> · balance {near(info.balance)} NEAR ·{" "}
-            <Link to={`/vault?vault=${encodeURIComponent(info.vault)}`}>open it, approve or reject →</Link>
+            <a href="#approval-queue">payments waiting for you are in the Approval queue above ↑</a>
           </p>
           {!funded && (
             <div className="row">
@@ -138,7 +169,7 @@ export function MyVault() {
                   <div style={{ flex: 1, minWidth: 220 }}>
                     <strong>{s.title}</strong>
                     <div className="muted small">Expected: {s.expect}</div>
-                    {r ? <RunResult run={r} vault={info.vault} /> : <div className="muted small">Actual: not run yet</div>}
+                    {r ? <RunResult run={r} /> : <div className="muted small">Actual: not run yet</div>}
                   </div>
                   <button
                     className="btn btn-secondary btn-sm"
@@ -159,14 +190,14 @@ export function MyVault() {
       )}
       {error && info && (
         <Banner kind="error">
-          <p>{error}</p>
+          <p>{error} Nothing else was changed.</p>
         </Banner>
       )}
     </div>
   );
 }
 
-function RunResult({ run, vault }: { run: AgentRun; vault: string }) {
+function RunResult({ run }: { run: AgentRun }) {
   if (run.scenario === "tamper")
     return (
       <ul className="small" style={{ margin: "6px 0 0", paddingLeft: 18 }}>
@@ -196,7 +227,7 @@ function RunResult({ run, vault }: { run: AgentRun; vault: string }) {
           {c.status === "pending_human_approval" && (
             <>
               {" · "}
-              <Link to={`/vault?vault=${encodeURIComponent(vault)}`}>approve or reject it with your wallet →</Link>
+              <a href="#approval-queue">approve or reject it in the Approval queue above ↑</a>
             </>
           )}
         </li>

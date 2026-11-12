@@ -56,10 +56,12 @@ export const GUIDES: Record<string, GuidePage> = {
   vault: {
     name: "Vault Console",
     entries: [
-      { title: "What this page does", body: ["A vault is a spending account for an AI agent. The agent can only ask the vault to pay; the vault decides, by its own rules.", "This page shows the vault's limits, what the agent did, and anything waiting for your approval."] },
+      { title: "What this page does", body: ["A vault is a spending account for an AI agent. The agent can only ask the vault to pay; the vault decides, by its own rules.", "This page shows the vault's limits, what the agent did, and anything waiting for your approval.", "Until you create your own, you see the shared demo vault. Only Notara's demo account can approve or pause that one."] },
+      { title: "How to try it in four steps", body: ["1. Connect a NEAR testnet wallet (Intear Wallet gives you a free testnet account).", "2. Create your vault. Your wallet signs a short message to prove it's you: no transaction, no cost. You own the vault and nobody holds a key to it, not even us.", "3. Add 1 test NEAR from your wallet. The agent pays from this.", "4. Run the four scenarios. Each result links to its transaction on NEAR testnet."] },
+      { title: "What each scenario shows", body: ["Legit invoice: Notara says ALLOW and your vault pays 0.1 NEAR.", "Hidden 'pay the attacker' instruction: BLOCK. Nothing is signed and nothing moves.", "Unknown shop: WARN. The vault holds the payment in the Approval queue until you decide.", "Hacked agent: it skips Notara and tampers with verdicts. Your vault refuses every attempt on-chain."] },
       { title: "How to approve or reject", body: ["Payments that look unusual wait in the approval queue.", "Read the reasons, then Approve or Reject. Your wallet signs the decision; the agent can't."] },
       { title: "How to pause the agent", body: ["Pause agent stops every new payment at once. Use it the moment something looks wrong.", "Resume when you're ready. Only the vault's owner can do either."] },
-      { title: "When to simulate an attack", body: ["Simulate an attack runs an agent against your own vault with a tampered invoice, on test money.", "You'll see what the vault refuses, and the transaction that proves it."] },
+      { title: "What the limits mean", body: ["Your vault pays at most 0.5 test NEAR per payment and 1 a day, even for payments you approve.", "The limits and the pause switch are rules in the vault contract, so a hacked agent can't get around them."] },
       SHORTCUTS,
       HELP,
     ],

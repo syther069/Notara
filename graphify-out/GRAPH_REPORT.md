@@ -1,17 +1,17 @@
 # Graph Report - near  (2026-11-12)
 
 ## Corpus Check
-- 156 files · ~200,399 words
+- 156 files · ~200,995 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 10 file(s) not represented in the graph (top: .css 4, (none) 2, .wasm 2)
 
 ## Summary
-- 3925 nodes · 9566 edges · 205 communities (168 shown, 37 thin omitted)
+- 3925 nodes · 9568 edges · 205 communities (168 shown, 37 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 317 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `06daf7d3`
+- Built from commit: `7000f8ee`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -215,12 +215,12 @@
   Architecture.md → .claude/skills/design-taste-frontend/assets/objects/product-render/build.js
 - `Software` --references--> `chat()`  [INFERRED]
   .claude/skills/design-taste-frontend/references/sections-library.md → agent/src/agent.ts
-- `1. First real payment through a link [S] 💰` --references--> `ensureUsdcStorage()`  [INFERRED]
-  IMPLEMENTATION.md → server/sends.ts
 - `Commands` --references--> `check()`  [INFERRED]
   .claude/skills/design-taste-frontend/references/icons.md → passport/src/check.ts
 - `The violet rule (a judgement, stated)` --references--> `check()`  [INFERRED]
   .claude/skills/design-taste-frontend/references/icons.md → passport/src/check.ts
+- `1. First real payment through a link [S] 💰` --references--> `ensureUsdcStorage()`  [INFERRED]
+  IMPLEMENTATION.md → server/sends.ts
 
 ## Import Cycles
 - None detected.
@@ -264,8 +264,8 @@ Cohesion: 0.07
 Nodes (30): 10. The Role of Animation and Motion in UX: Nielsen Norman Group, 11. Response Times: The Three Important Limits: Nielsen Norman Group, 12. Product Page UX: Provide at Least One In-Scale Image: Baymard, 13. Use Delivery Date, Not Shipping Speed: Baymard, 14. The Effect of Electronic Word of Mouth on Sales: A Meta-Analytic Review, 15. Final Rule Banning Fake Reviews and Testimonials: FTC Announcement, 16. WCAG 2.2 SC 2.5.8: Target Size (Minimum): W3C, 17. Source and evidence register (+22 more)
 
 ### Community 9 - "Dashboard.tsx"
-Cohesion: 0.11
-Nodes (51): FlowChart(), money(), path(), Sparkline(), usePrefs(), EmptyArt(), STATUS_HINT, StatusChip() (+43 more)
+Cohesion: 0.10
+Nodes (52): FlowChart(), money(), path(), Sparkline(), usePrefs(), EmptyArt(), STATUS_HINT, StatusChip() (+44 more)
 
 ### Community 10 - "poolCap"
 Cohesion: 0.24
@@ -305,11 +305,11 @@ Nodes (17): 10. Timeline, 1. One-line summary, 2. The problem, 3. Who it is for,
 
 ### Community 19 - "VaultConsole.tsx"
 Cohesion: 0.04
-Nodes (142): react-router-dom, token(), TONE, Tone, isFixture(), SignalRow(), SOURCE, VERDICT (+134 more)
+Nodes (139): token(), TONE, Tone, isFixture(), SignalRow(), SOURCE, VERDICT, CheckResult() (+131 more)
 
 ### Community 20 - "linkKey.ts"
-Cohesion: 0.17
-Nodes (20): usdc(), MainnetBadge(), SendState, EXPLORER, fromFragment(), fromSecret(), isValidNewName(), LinkKey (+12 more)
+Cohesion: 0.21
+Nodes (17): usdc(), MainnetBadge(), fromFragment(), fromSecret(), isValidNewName(), LinkKey, newLinkKey(), SEND_LINK_DAYS (+9 more)
 
 ### Community 21 - "db.ts"
 Cohesion: 0.18
@@ -377,7 +377,7 @@ Nodes (3): NEAR Hackathon: rules we build against, Submission requirements, Team
 
 ### Community 39 - "profile.tsx"
 Cohesion: 0.08
-Nodes (55): FundsPanel(), LINK_ICON, LINK_PLACEHOLDER, LinkChip(), ProfileEditor(), SectionTitle(), squareImage(), Avatar() (+47 more)
+Nodes (57): FundsPanel(), LINK_ICON, LINK_PLACEHOLDER, LinkChip(), ProfileEditor(), SectionTitle(), squareImage(), Avatar() (+49 more)
 
 ### Community 45 - "invoices.ts"
 Cohesion: 0.07
@@ -404,8 +404,8 @@ Cohesion: 0.13
 Nodes (15): 2. Laws and principles, precisely, Autonomy, competence and intrinsic motivation, Fitts's Law: target acquisition in context, Gamification: element-specific and context-specific, Habit formation and voluntary return cues, Hick-Hyman Law: response uncertainty, not a universal item limit, Jakob's Law: familiarity without cloning, Labor illusion: visible genuine effort can affect perceived value (+7 more)
 
 ### Community 53 - "cn"
-Cohesion: 0.05
-Nodes (101): motion, react, Button(), buttonClass(), Reveal(), RevealItem(), ArrowRight, ChevronsUpDown (+93 more)
+Cohesion: 0.04
+Nodes (119): @heroui/react, motion, react, BTN, Button(), buttonClass(), ButtonOwn, ButtonVariant (+111 more)
 
 ### Community 54 - "UI Guide: Universal Principles for Visual Composition, Components and Motion"
 Cohesion: 0.15
@@ -576,8 +576,8 @@ Cohesion: 0.50
 Nodes (4): scripts, build, dev, preview
 
 ### Community 96 - "Send.tsx"
-Cohesion: 0.07
-Nodes (83): @base-ui/react, @heroui/react, AmountInput(), DeviceStage(), DrawnCheck(), PagePreview(), PreviewCheck, useDebounced() (+75 more)
+Cohesion: 0.09
+Nodes (65): @base-ui/react, AmountInput(), DeviceStage(), DrawnCheck(), PagePreview(), PreviewCheck, useDebounced(), CharCount() (+57 more)
 
 ### Community 97 - "moments.mjs"
 Cohesion: 0.09
@@ -896,19 +896,19 @@ Cohesion: 0.25
 Nodes (7): customer-proof-row, Heroes, logo-row, Proof, quote-stat, Section library, What every recipe assumes
 
 ### Community 212 - "icons.tsx"
-Cohesion: 0.06
-Nodes (69): 10. Implementation notes, SpinThemeToggle(), Hint(), IconButton(), Sheet(), matches(), order(), WalletChip() (+61 more)
+Cohesion: 0.05
+Nodes (73): 10. Implementation notes, react-router-dom, SpinThemeToggle(), Hint(), IconButton(), Sheet(), WalletChip(), WalletModal() (+65 more)
 
 ## Knowledge Gaps
 - **21 isolated node(s):** `Allow`, `Block`, `Warn`, `Executed`, `Executing` (+16 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1594 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1592 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **37 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `near-api-js` connect `config.ts` to `check.ts`, `package.json`, `demo.ts`, `signals/index.ts`, `server/index.ts`, `linkKey.ts`, `merchants.ts`, `web/package.json`?**
-  _High betweenness centrality (0.187) - this node is a cross-community bridge._
+  _High betweenness centrality (0.218) - this node is a cross-community bridge._
 - **Are the 51 inferred relationships involving `lib()` (e.g. with `arrive()` and `audit()`) actually correct?**
   _`lib()` has 51 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Allow`, `Block`, `Warn` to the rest of the system?**
@@ -916,8 +916,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Vault` be split into smaller, more focused modules?**
   _Cohesion score 0.0625694187338023 - nodes in this community are weakly interconnected._
 - **Why does `lib()` connect `lib` to `consistency.mjs`?**
-  _High betweenness centrality (0.077) - this node is a cross-community bridge._
+  _High betweenness centrality (0.080) - this node is a cross-community bridge._
 - **Should `registry/src/lib.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.09322033898305085 - nodes in this community are weakly interconnected._
 - **Why does `react` connect `cn` to `Send.tsx`, `lib/wallet.tsx`, `profile.tsx`, `Dashboard.tsx`, `animation.ts`, `VaultConsole.tsx`, `icons.tsx`, `kit.tsx`, `linkKey.ts`, `share-sheet.tsx`, `web/package.json`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
