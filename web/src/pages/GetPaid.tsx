@@ -19,7 +19,7 @@ import { AmountInput, DeviceStage, DrawnCheck, PagePreview, useDebounced, type P
 import { Button, Card, CharCount, Chip, CopyChip, EASE, EmptyState, FormField, Hint, LinkButton, Notice, Segmented, Shimmer, TextArea, TextInput } from "@/components/app/ui";
 import { StatusChip, useMoney } from "@/components/app/TxTable";
 import { buildTxs } from "@/lib/tx";
-import { formatDue, fromUnits, lineUnits, PRICE_RE, QTY_RE, rowsTotal, todayIso, toUnits, type ItemRow } from "@/lib/invoice";
+import { formatDue, fromUnits, isoDay, lineUnits, PRICE_RE, QTY_RE, rowsTotal, todayIso, toUnits, type ItemRow } from "@/lib/invoice";
 
 const DESC_MAX = 180;
 
@@ -168,7 +168,7 @@ export function GetPaidPage() {
       : !/^\d+(\.\d{1,6})?$/.test(amount) || Number(amount) <= 0
         ? "Enter a number like 25 or 12.50."
         : null;
-  const maxDue = new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10);
+  const maxDue = isoDay(new Date(Date.now() + 365 * 86_400_000));
   const dueErr = due && (!/^\d{4}-\d{2}-\d{2}$/.test(due) || due < todayIso() || due > maxDue) ? "Pick a date from today up to a year ahead." : null;
   const itemsInput = itemize ? rows.map((r) => ({ description: r.description.trim(), quantity: r.quantity.trim(), unitDecimal: r.unit.trim() })) : undefined;
   const setRow = (n: number, patch: Partial<ItemRow>) => setRows((rs) => rs.map((r, i) => (i === n ? { ...r, ...patch } : r)));

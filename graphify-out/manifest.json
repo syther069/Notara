@@ -204,15 +204,15 @@
     "semantic_hash": ""
   },
   "server/index.ts": {
-    "mtime": 1794478877.3832169,
-    "seen": 1794479458.6992252,
-    "ast_hash": "3b888cbcad97bd3d3cd32793089d7399",
+    "mtime": 1794489929.7052538,
+    "seen": 1794490117.892694,
+    "ast_hash": "6766a7112af537adf3bbc9dc69778f84",
     "semantic_hash": ""
   },
   "server/invoices.ts": {
-    "mtime": 1794478877.3600557,
-    "seen": 1794479458.6992252,
-    "ast_hash": "a4c67c9a01bd67dcc799db1cf7608394",
+    "mtime": 1794489929.7032406,
+    "seen": 1794490117.892694,
+    "ast_hash": "d16aee7e5fdea3a81499902a7fcea6b1",
     "semantic_hash": ""
   },
   "server/merchants.ts": {
@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "server/test/invoices.test.ts": {
-    "mtime": 1794478953.1665132,
-    "seen": 1794479458.6992252,
-    "ast_hash": "251b522cb4eebb5125d17c712783851d",
+    "mtime": 1794489968.5742352,
+    "seen": 1794490117.892694,
+    "ast_hash": "90f178fbfa4bb2e943a01ed9aedb9cec",
     "semantic_hash": ""
   },
   "server/test/merchants.test.ts": {
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/api.ts": {
-    "mtime": 1794479214.2800813,
-    "seen": 1794479458.7002277,
-    "ast_hash": "23c0638f7af73a79d1d8b807dfd70fb5",
+    "mtime": 1794489929.7101266,
+    "seen": 1794490117.892694,
+    "ast_hash": "d9b299c646c01e22b9d1143eaf9fed67",
     "semantic_hash": ""
   },
   "web/src/lib/format.ts": {
@@ -420,9 +420,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1794489238.7081037,
-    "seen": 1794489296.8180509,
-    "ast_hash": "782648762fdbf59cbc4965074664f949",
+    "mtime": 1794490065.8297186,
+    "seen": 1794490117.892694,
+    "ast_hash": "07ea46d3ec0548da691824f9fee8ac63",
     "semantic_hash": ""
   },
   "demo/inbox/invoice-injected.md": {
@@ -858,9 +858,9 @@
     "semantic_hash": ""
   },
   "web/src/lib/tx.ts": {
-    "mtime": 1794479214.2800813,
-    "seen": 1794479458.7002277,
-    "ast_hash": "06ae97a11dab75bfc082b4f3ffa622ea",
+    "mtime": 1794489929.708111,
+    "seen": 1794490117.892694,
+    "ast_hash": "9d14ffd9f17a153e70fbefa26c133955",
     "semantic_hash": ""
   },
   "web/src/lib/utils.ts": {
@@ -870,9 +870,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/GetPaid.tsx": {
-    "mtime": 1794479178.5853877,
-    "seen": 1794479458.7002277,
-    "ast_hash": "520e9bed0fb2059b6ba0b04f159abb84",
+    "mtime": 1794489929.708111,
+    "seen": 1794490117.892694,
+    "ast_hash": "ed1e3591e4b419a43c04a571a2ed1d64",
     "semantic_hash": ""
   },
   "web/src/pages/Landing.tsx": {
@@ -948,9 +948,9 @@
     "semantic_hash": ""
   },
   "web/src/docs/pages/getpaid.tsx": {
-    "mtime": 1794479317.3732157,
-    "seen": 1794479458.7002277,
-    "ast_hash": "e58107a53ee7eeac94e4bf7b4cf98b06",
+    "mtime": 1794490065.8317275,
+    "seen": 1794490117.892694,
+    "ast_hash": "35d6342c8ea539ed066d8bcdd2b71092",
     "semantic_hash": ""
   },
   "web/src/docs/pages/index.ts": {
@@ -996,15 +996,15 @@
     "semantic_hash": ""
   },
   "web/src/lib/invoice.test.ts": {
-    "mtime": 1794479253.8990712,
-    "seen": 1794479458.7002277,
-    "ast_hash": "f2a35b7ed7984dce76c6da1360019a8d",
+    "mtime": 1794489968.5742352,
+    "seen": 1794490117.892694,
+    "ast_hash": "126a091139a17ad9d828ac8a61f25cc9",
     "semantic_hash": ""
   },
   "web/src/lib/invoice.ts": {
-    "mtime": 1794479030.4604669,
-    "seen": 1794479458.7002277,
-    "ast_hash": "e9824b14092f4cab99a4328cf7bb72eb",
+    "mtime": 1794489968.5742352,
+    "seen": 1794490117.892694,
+    "ast_hash": "252e545af2d09c6fea1af30415b50c6f",
     "semantic_hash": ""
   },
   "agent/src/attest.ts": {
@@ -1029,6 +1029,24 @@
     "mtime": 1794489210.5207314,
     "seen": 1794489296.8180509,
     "ast_hash": "92b01caec40f60a8f772797884571ccf",
+    "semantic_hash": ""
+  },
+  "server/errors.ts": {
+    "mtime": 1794489929.7052538,
+    "seen": 1794490117.892694,
+    "ast_hash": "214ad0f63580d975de7745ca3772f42d",
+    "semantic_hash": ""
+  },
+  "server/test/errors.test.ts": {
+    "mtime": 1794489968.5742352,
+    "seen": 1794490117.892694,
+    "ast_hash": "c02a419c98a22370c0245b10ca93da2e",
+    "semantic_hash": ""
+  },
+  "web/src/lib/invoice-rules.ts": {
+    "mtime": 1794489890.8193178,
+    "seen": 1794490117.892694,
+    "ast_hash": "a50355a5d496a19b4259b0616c987413",
     "semantic_hash": ""
   },
   "package-lock.json": {

@@ -42,7 +42,7 @@ export function PaymentLinks() {
         <li>The account that signed is the payee. A link signed by anyone else is refused.</li>
       </OL>
       <P>
-        When a link is first created, the signature must be less than 10 minutes old. The customer's page then shows <strong>Signed by the merchant's wallet</strong>.
+        When a link is first created, the signature must be less than 10 minutes old. The customer's page then shows <strong>Signed by the merchant's wallet</strong>. Links can also be made without a signature (the customer then sees <strong>Not signed</strong>); those are capped at 500 a day across the site, while signed links have no cap.
       </P>
 
       <H2>What the customer sees</H2>

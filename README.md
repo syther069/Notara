@@ -11,7 +11,7 @@ Built on NEAR · Payment links signed by your wallet · Account checks before yo
 
 [![Built on NEAR](https://img.shields.io/badge/Built_on-NEAR-0a1f17?style=flat-square)](https://near.org)
 [![Status](https://img.shields.io/badge/status-prototype%2C_not_audited-c8a96a?style=flat-square)](#limits)
-[![Tests](https://img.shields.io/badge/tests-95_TypeScript_%C2%B7_39_Rust-2a4a3a?style=flat-square)](#tests)
+[![Tests](https://img.shields.io/badge/tests-98_TypeScript_%C2%B7_39_Rust-2a4a3a?style=flat-square)](#tests)
 [![Live](https://img.shields.io/badge/live-notara--sable.vercel.app-2a4a3a?style=flat-square)](https://notara-sable.vercel.app)
 
 [**Live app**](https://notara-sable.vercel.app) · [**Documentation**](https://notara-sable.vercel.app/docs) · [**Mainnet proof**](https://notara-sable.vercel.app/docs/mainnet-proof) · [**Architecture**](Architecture.md)
@@ -244,7 +244,7 @@ On 2026-11-12, `Qwen/Qwen3.8-27B` (now the agent's default on NEAR AI Cloud) ver
 - **Wallet payments are matched exactly:** a NEAR-wallet payment marks a link paid only if the USDC token's own `ft_transfer` event shows the full amount reaching the merchant with the link's id as the memo. An unrelated transfer to the same merchant can't mark a link paid, one transfer can't pay two links, and a transfer that was refunded doesn't count.
 - **Paid is final:** once a link is paid, only "paid" or "refunded" can follow. A slower request holding an older reading can't move it back, and that check runs in the same database statement as the write.
 - **One payment at a time:** while one payment is in progress on the pay page, every other pay button is disabled, so a customer can't start a wallet payment and an any-chain deposit for the same link.
-- **Private link lists:** a merchant's list of links and its CSV export need that merchant's wallet signature (NEP-413, valid 24 hours). New links get random ids (`INV-` and 12 hex digits), so nobody can read them in order.
+- **Private link lists:** a merchant's list of links and its CSV export need that merchant's wallet signature (NEP-413, valid 24 hours). New links get random ids (`INV-` and 12 hex digits), so nobody can read them in order. Links made without a wallet signature are capped at 500 a day across the site; signed links have no cap.
 - **Website proof:** a merchant can publish their account in `https://theirshop.com/.well-known/near.txt` and verify it on their Merchant Passport page (`/m/<account>`).
 
 **Send links**
@@ -327,7 +327,7 @@ npm test
 cargo test
 ```
 
-`npm test` runs 95 tests: the policy table (including USDC limits), TEE reply-signature recovery, the signing format (including due dates and line items), the wrapper, the invoice store and its status flow, line-item totals, due dates and the accountant CSV, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode, the database import, alerts, EVM call encoding and link networks. `cargo test` runs 39 contract unit tests (29 vault, 10 registry), one of which checks a signature made by the TypeScript signer inside the contract. On Windows, set `AWS_LC_SYS_PREBUILT_NASM=1` first.
+`npm test` runs 98 tests: the policy table (including USDC limits), TEE reply-signature recovery, the unsigned-link cap, safe error messages, the due-date picker's local day, the signing format (including due dates and line items), the wrapper, the invoice store and its status flow, line-item totals, due dates and the accountant CSV, the backend guards, checkout status, link signing, send-link keys, NEAR-wallet payment checks, public mode, the database import, alerts, EVM call encoding and link networks. `cargo test` runs 39 contract unit tests (29 vault, 10 registry), one of which checks a signature made by the TypeScript signer inside the contract. On Windows, set `AWS_LC_SYS_PREBUILT_NASM=1` first.
 
 ### Read-only check of a real mainnet account (no keys)
 
@@ -396,10 +396,12 @@ If the linker fails with `LNK1104` on a long path, set `CARGO_TARGET_DIR` to a s
 - **Build:** `vercel.json` runs `scripts/build-vercel.mjs`: the website as static files, and the backend bundled (esbuild) into one Node function behind `/api/*` and `/v1/*`.
 - **Storage:** Neon Postgres (`DATABASE_URL`); locally, the same code uses a SQLite file. Every write is one atomic statement (merge, insert-if-new, set-once flags, merge-unless-paid), because several copies of the function run at once.
 - **Secrets:** sponsor and signer keys are sensitive Vercel environment variables. `.vercelignore` keeps `keys/`, `.env*` and local data out of every upload.
+- **Errors:** an unexpected server error shows visitors only "Something went wrong on our side"; the details stay in the server log, so a database or RPC failure can't leak internal hosts. Errors we raise on purpose keep their plain message.
 
 ## Recent changes
 
 **2026-11-12**
+- From a security review: links made without a wallet signature are capped at 500 a day; unexpected server errors no longer show their raw text on the live site; the due-date picker uses the viewer's own date, not UTC's; the invoice rules (line totals, Overdue, "paid with") live in one file the server and the website share.
 - Every requirement of the three tracks Notara enters is listed with its evidence, in the README and on a new docs page, [Hackathon tracks](https://notara-sable.vercel.app/docs/hackathon).
 - The demo vault is locked: its full-access key was deleted ([tx](https://testnet.nearblocks.io/txns/BKYAA6TskXprBX8ovMYcjBCTpnMWKFWpW7KHzaCLjcJ1)), after giving the agent a fresh key with 2 NEAR of gas.
 - New attack check 3g: the hacked agent calls another contract (USDC `ft_transfer`) and the protocol rejects it. All of 3a to 3g were re-run on the locked vault and refused.

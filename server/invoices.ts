@@ -6,6 +6,9 @@ import { randomBytes } from "node:crypto";
 import { docs } from "./db.ts";
 import { getAsset, listAssets } from "../passport/src/assets.ts";
 import { notifyPaid } from "./notify.ts";
+import { isOverdue, itemsTotal, lineTotal, paidWith, type LineItem } from "../web/src/lib/invoice-rules.ts";
+
+export { isOverdue, itemsTotal, lineTotal, type LineItem };
 
 export type InvoiceStatus = "unpaid" | "pending_approval" | "processing" | "paid" | "refused" | "refunded" | "failed";
 
@@ -26,12 +29,6 @@ export interface Checkout {
   refundReason?: string;
 }
 
-/** One line on an invoice. quantity: a decimal with up to 2 places (hours can be 7.5); unitAmount: token units. */
-export interface LineItem {
-  description: string;
-  quantity: string;
-  unitAmount: string;
-}
 
 export interface Invoice {
   id: string;
@@ -90,14 +87,15 @@ export const clearInvoiceFlag = (id: string, field: keyof Invoice) => store.unse
 
 const QTY_RE = /^\d{1,6}(\.\d{1,2})?$/;
 export const MAX_ITEMS = 20;
+/** Links made without a wallet signature, across the whole site, per UTC day. Signed links have no cap. */
+export const MAX_UNSIGNED_LINKS_PER_DAY = 500;
 
-/** quantity x unit price, in token units, rounded to the nearest unit (quantity has at most 2 decimals). */
-export function lineTotal(i: LineItem): bigint {
-  const [w, f = ""] = i.quantity.split(".");
-  const hundredths = BigInt(w) * 100n + BigInt(f.padEnd(2, "0"));
-  return (BigInt(i.unitAmount) * hundredths + 50n) / 100n;
+/** Why an unsigned link can't be made today, or null. `today` is the UTC day, YYYY-MM-DD. */
+export function unsignedLimitReason(list: Pick<Invoice, "createdAt" | "signedToken" | "kind">[], today: string): string | null {
+  const n = list.filter((i) => !i.signedToken && i.kind !== "send" && i.createdAt.startsWith(today)).length;
+  return n >= MAX_UNSIGNED_LINKS_PER_DAY ? "Today's limit for unsigned links is reached. Sign the link with your wallet, or try again tomorrow." : null;
 }
-export const itemsTotal = (items: LineItem[]) => items.reduce((sum, i) => sum + lineTotal(i), 0n);
+
 
 /** Checks and tidies line items; throws a plain-language error. */
 export function cleanItems(raw: unknown): LineItem[] | undefined {
@@ -127,10 +125,6 @@ export function cleanDueDate(raw: unknown, now = new Date()): string | undefined
   return s;
 }
 
-/** Still waiting for money and past its due date (a link paid on its due day isn't late). */
-export function isOverdue(i: Pick<Invoice, "status" | "dueDate">, today = new Date().toISOString().slice(0, 10)): boolean {
-  return !!i.dueDate && (i.status === "unpaid" || i.status === "failed") && i.dueDate < today;
-}
 
 export async function createInvoice(input: { merchant: string; description: string; amount: string; asset?: string; dueDate?: string; items?: LineItem[] }): Promise<Invoice> {
   const asset = input.asset ?? "NEAR";
@@ -215,15 +209,6 @@ export interface CsvOptions {
   today?: string;
 }
 
-/** How the customer paid, in words an accountant can read. */
-function paidWith(i: Invoice): string {
-  if (i.status !== "paid") return "";
-  const c = i.checkouts?.find((x) => x.status === "SUCCESS");
-  if (c) return `${c.label} (NEAR Intents)`;
-  if (i.nearTx) return "NEAR wallet";
-  if (i.vaultPaymentId !== undefined) return "AI agent vault";
-  return "";
-}
 
 /**
  * The export for a bookkeeper: one row per link, plain column names, amounts as decimals in the

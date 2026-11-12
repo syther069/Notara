@@ -138,12 +138,8 @@ export interface PayToken {
   contract?: string;
 }
 
-/** One invoice line. quantity: decimal, up to 2 places; unitAmount: token units. */
-export interface LineItem {
-  description: string;
-  quantity: string;
-  unitAmount: string;
-}
+export type { LineItem } from "./invoice-rules";
+import type { LineItem } from "./invoice-rules";
 /** A line as the form sends it: the price as a decimal. */
 export type LineItemInput = { description: string; quantity: string; unitDecimal: string };
 

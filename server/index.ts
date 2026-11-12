@@ -45,7 +45,8 @@ import {
   usdcBalance,
 } from "./sends.ts";
 import { SIGN_RECIPIENT, checkWebsite, getMerchant, linkMessage, linksMessage, verifyLinkToken, verifyLinksProof } from "./merchants.ts";
-import { INV_ID, cleanItems, clearInvoiceFlag, createInvoice, getInvoice, type Invoice, itemsTotal, listInvoices, setInvoiceFlag, statusFromVault, toCsv, updateInvoice } from "./invoices.ts";
+import { INV_ID, cleanItems, clearInvoiceFlag, createInvoice, getInvoice, type Invoice, itemsTotal, listInvoices, setInvoiceFlag, statusFromVault, toCsv, unsignedLimitReason, updateInvoice } from "./invoices.ts";
+import { clientError } from "./errors.ts";
 import { SCENARIOS, createVisitorVault, getVisitorVault, isVisitorVault, runVisitorScenario } from "./vaults.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -92,7 +93,6 @@ function requireDeployment() {
 
 const explorerTx = (h: string) => `${NETWORKS[NET].explorer}/txns/${h}`;
 
-/** Decimal amount in the asset's unit ("12.5" USDC) -> smallest units. */
 /**
  * A link's signed fields from a request body: the same for the message the wallet signs and for the
  * link that is created, so the two always match. With line items, the amount is their total.
@@ -115,6 +115,7 @@ function linkFields(b: any, merchant: string, asset: string) {
   };
 }
 
+/** Decimal amount in the asset's unit ("12.5" USDC) -> smallest units. */
 function toAssetUnits(amount: unknown, assetId = "NEAR"): string {
   const asset = resolveAsset(assetId);
   if (!asset) throw new HttpError(400, `Unsupported asset ${assetId}`);
@@ -708,6 +709,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       const net = linkNetwork(assetId);
       if (net && !(await viewAccount(net, merchant))) throw new HttpError(400, `${merchant} does not exist on NEAR ${net}`);
       const fields = linkFields(b, merchant, assetId);
+      if (PUBLIC && !b.signedToken) {
+        const why = unsignedLimitReason(await listInvoices(), new Date().toISOString().slice(0, 10));
+        if (why) throw new HttpError(429, why);
+      }
       if (b.signedToken) await verifyLinkToken(String(b.signedToken), fields, true).catch((e) => { throw new HttpError(400, `Signature check failed: ${e.message}`); });
       // Only for wallet-signed links: the signature proves the merchant asked, so nobody can make the
       // sponsor pay USDC storage for arbitrary accounts. Unsigned links still work: the "Pay with NEAR
@@ -737,7 +742,7 @@ export function app(req: IncomingMessage, res: ServerResponse) {
   handle(req, res).catch((e: any) => {
     const status = e instanceof HttpError ? e.status : 500;
     if (status === 500) console.error(e);
-    if (!res.headersSent) send(res, status, { error: e?.message ?? "Internal error" });
+    if (!res.headersSent) send(res, status, { error: clientError(status, e?.message, PUBLIC) });
     else res.end();
   });
 }

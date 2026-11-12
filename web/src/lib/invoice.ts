@@ -1,6 +1,9 @@
-// Invoice due dates and line items on the website. The maths matches server/invoices.ts, so the total
-// a merchant sees before signing is the total the server stores.
-import type { Invoice, LineItem } from "./api";
+// Invoice due dates and line items on the website. Totals and the Overdue rule come from
+// invoice-rules.ts, which the server uses too, so the total a merchant signs is the total stored.
+import type { Invoice } from "./api";
+import { isOverdue as sharedOverdue, lineTotal, lineUnits } from "./invoice-rules";
+
+export { lineTotal, lineUnits };
 
 /** Rows as typed in the form: prices as decimals. */
 export interface ItemRow {
@@ -27,12 +30,6 @@ export function fromUnits(units: bigint, decimals: number): string {
   return f ? `${w}.${f}` : w;
 }
 
-/** quantity x unit price, rounded to the nearest unit (quantity has at most 2 decimals). */
-export function lineUnits(quantity: string, unitUnits: bigint): bigint {
-  const [w, f = ""] = quantity.split(".");
-  return (unitUnits * (BigInt(w) * 100n + BigInt(f.padEnd(2, "0"))) + 50n) / 100n;
-}
-
 /** The total of the typed rows, or null while any row is incomplete. */
 export function rowsTotal(rows: ItemRow[], decimals: number): bigint | null {
   let sum = 0n;
@@ -44,12 +41,12 @@ export function rowsTotal(rows: ItemRow[], decimals: number): bigint | null {
   return rows.length ? sum : null;
 }
 
-export const lineTotal = (i: LineItem) => lineUnits(i.quantity, BigInt(i.unitAmount));
+/** A date as YYYY-MM-DD in the viewer's own time zone (not UTC), so "today" is the day they see. */
+export const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+export const todayIso = () => isoDay(new Date());
 
-export const todayIso = () => new Date().toISOString().slice(0, 10);
-
-/** Still waiting for money and past its due date (paid on the due day isn't late). Same rule as the server. */
-export const isOverdue = (i: Pick<Invoice, "status" | "dueDate">, today = todayIso()) => !!i.dueDate && (i.status === "unpaid" || i.status === "failed") && i.dueDate < today;
+/** Overdue, judged by the viewer's own day. The rule itself is shared with the server. */
+export const isOverdue = (i: Pick<Invoice, "status" | "dueDate">, today = todayIso()) => sharedOverdue(i, today);
 
 /** "2026-12-01" -> "1 Dec 2026", read as a calendar day (no time-zone shift). */
 export const formatDue = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });

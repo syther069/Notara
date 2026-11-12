@@ -96,6 +96,15 @@ test("the CSV reads like an accountant's ledger: due date, overdue, items, payer
   assert.match(row, /"https:\/\/testnet.nearblocks.io\/txns\/TX1"/);
 });
 
+test("unsigned links have a daily cap across the site; signed links and send links don't count", () => {
+  const today = "2026-11-13";
+  const unsigned = Array.from({ length: inv.MAX_UNSIGNED_LINKS_PER_DAY }, () => ({ createdAt: `${today}T10:00:00.000Z` }));
+  assert.match(inv.unsignedLimitReason(unsigned, today) ?? "", /limit for unsigned links/);
+  assert.equal(inv.unsignedLimitReason(unsigned.slice(1), today), null);
+  assert.equal(inv.unsignedLimitReason([...unsigned.slice(1), { createdAt: `${today}T11:00:00.000Z`, signedToken: "t" }, { createdAt: `${today}T11:00:00.000Z`, kind: "send" as const }], today), null);
+  assert.equal(inv.unsignedLimitReason(unsigned, "2026-11-14"), null); // yesterday's links don't count today
+});
+
 test("set-once flags: only the first caller wins, and a flag can be cleared to retry", async () => {
   const i = await inv.createInvoice({ merchant: "m.testnet", description: "flag", amount: NEAR });
   const results = await Promise.all([1, 2, 3].map(() => inv.setInvoiceFlag(i.id, "linkFundedAt")));

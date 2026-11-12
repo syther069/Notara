@@ -4,6 +4,7 @@ import type { Decision, Invoice } from "./api";
 import type { LocalSend } from "./local";
 import { EXPLORER, linkNetwork, USDC_MAINNET, USDC_TESTNET } from "./format";
 import { fromUnits, isOverdue, lineTotal } from "./invoice";
+import { paidWith } from "./invoice-rules";
 
 export type TxStatus = "Paid" | "Pending" | "Processing" | "Failed" | "Refunded" | "Sent";
 export interface Tx {
@@ -36,14 +37,6 @@ export interface Tx {
   paidWith?: string;
 }
 
-function paidWith(l: Invoice): string | undefined {
-  if (l.status !== "paid") return undefined;
-  const c = l.checkouts?.find((x) => x.status === "SUCCESS");
-  if (c) return `${c.label} (NEAR Intents)`;
-  if (l.nearTx) return "NEAR wallet";
-  if (l.vaultPaymentId !== undefined) return "AI agent vault";
-  return undefined;
-}
 
 /** Token units as an exact decimal ("2500000" USDC -> "2.5"), never rounded. */
 export function exactAmount(units: string, asset: string): string {
@@ -77,7 +70,7 @@ export function buildTxs(links: Invoice[], sends: LocalSend[]): Tx[] {
       overdue: isOverdue(l),
       dueDate: l.dueDate,
       items: l.items?.map((i) => `${i.quantity} x ${i.description} @ ${exactAmount(i.unitAmount, l.asset)} = ${exactAmount(lineTotal(i).toString(), l.asset)}`).join("; "),
-      paidWith: paidWith(l),
+      paidWith: paidWith(l) || undefined,
     };
   });
   const fromSends: Tx[] = sends.map((s) => ({
