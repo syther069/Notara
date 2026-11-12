@@ -347,7 +347,10 @@ export function VaultConsolePage() {
           </Card>
 
           <Card>
-            <h2 className="mb-4 text-[17px] font-bold tracking-[-0.02em]">Recent agent events</h2>
+            <div className="mb-4 flex items-baseline justify-between gap-3">
+              <h2 className="text-[17px] font-bold tracking-[-0.02em]">Recent agent events</h2>
+              {payments && payments.length > 0 && <span className="tnum text-[12.5px] font-semibold text-muted">Latest {Math.min(payments.length, 50)}</span>}
+            </div>
             {!payments ? (
               <div className="flex flex-col gap-3" aria-busy="true">
                 {[0, 1, 2].map((i) => (
@@ -357,8 +360,15 @@ export function VaultConsolePage() {
             ) : payments.length === 0 ? (
               <p className="text-[14px] leading-relaxed text-muted">No events yet. Simulate an attack below to see the agent ask and the vault answer.</p>
             ) : (
+              // A fixed-height box that scrolls on its own, so a long history doesn't stretch the page.
+              <div
+                tabIndex={0}
+                role="region"
+                aria-label="Recent agent events, scrollable"
+                className="-mx-2 max-h-[440px] overflow-y-auto overscroll-contain rounded-xl border border-border/60 bg-background/40 px-4 py-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] focus-visible:outline-2"
+              >
               <ol className="relative flex flex-col gap-4 before:absolute before:bottom-2 before:left-[7px] before:top-2 before:w-px before:bg-border">
-                {payments.slice(0, 10).map((p) => {
+                {payments.slice(0, 50).map((p) => {
                   const st = STATUS[p.status];
                   return (
                     <li key={p.id} className="relative pl-7">
@@ -374,6 +384,7 @@ export function VaultConsolePage() {
                   );
                 })}
               </ol>
+              </div>
             )}
           </Card>
 

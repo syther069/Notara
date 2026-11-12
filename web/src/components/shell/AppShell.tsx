@@ -248,18 +248,17 @@ export function ConnectPanel({ title, body }: { title: string; body: string }) {
   const w = useWallet();
   const { openConnect } = useShell();
   return (
-    <div className="mx-auto flex max-w-lg flex-col items-center gap-5 rounded-3xl border border-border/70 bg-surface px-6 py-14 text-center shadow-card">
+    <div className="mx-auto mt-4 flex w-full max-w-[520px] flex-col items-center rounded-3xl border border-border/70 bg-surface px-6 py-12 text-center shadow-card sm:px-10 sm:py-14">
       <span className="inline-flex size-14 items-center justify-center rounded-2xl bg-accent-soft">
         <Wallet size={26} aria-hidden />
       </span>
-      <div>
-        <h1 className="text-[26px] font-extrabold tracking-[-0.03em]">{title}</h1>
-        <p className="mt-2 text-[15.5px] leading-relaxed text-muted">{body}</p>
-      </div>
-      <Button size="lg" onClick={openConnect} disabled={!w.ready}>
+      {/* !max-w-none and mx-auto: the legacy page styles cap every h1 at 20ch, which pushed the title off-centre. */}
+      <h1 className="mx-auto mt-6 !max-w-none text-[26px] font-extrabold leading-tight tracking-[-0.03em] [text-wrap:balance]">{title}</h1>
+      <p className="mx-auto mt-2.5 max-w-[40ch] text-[15.5px] leading-relaxed text-muted [text-wrap:balance]">{body}</p>
+      <Button size="lg" onClick={openConnect} disabled={!w.ready} className="mt-7">
         <Wallet size={18} aria-hidden /> {w.ready ? "Connect NEAR wallet" : "Loading wallets…"}
       </Button>
-      <p className="text-[13px] text-muted">Connecting only signs you in. Nothing is sent or spent.</p>
+      <p className="mx-auto mt-3.5 max-w-[36ch] text-[13px] leading-relaxed text-muted">Connecting only signs you in. Nothing is sent or spent.</p>
     </div>
   );
 }

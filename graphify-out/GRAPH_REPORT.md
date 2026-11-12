@@ -1,17 +1,17 @@
 # Graph Report - near  (2026-11-12)
 
 ## Corpus Check
-- 156 files · ~200,226 words
+- 156 files · ~200,317 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 10 file(s) not represented in the graph (top: .css 4, (none) 2, .wasm 2)
 
 ## Summary
-- 3911 nodes · 9551 edges · 206 communities (169 shown, 37 thin omitted)
+- 3911 nodes · 9550 edges · 205 communities (168 shown, 37 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 324 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `521041fb`
+- Built from commit: `4cefb01d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -25,7 +25,6 @@
 - web/package.json
 - lib
 - 17. Source and evidence register
-- react
 - dot-object/object.js
 - Notara: Architecture
 - fontLink
@@ -212,8 +211,6 @@
 10. `inFixed()` - 42 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `1. First real payment through a link [S] 💰` --references--> `ensureUsdcStorage()`  [INFERRED]
-  IMPLEMENTATION.md → server/sends.ts
 - `3. API (server)` --references--> `done()`  [INFERRED]
   Architecture.md → .claude/skills/design-taste-frontend/assets/objects/product-render/build.js
 - `Software` --references--> `chat()`  [INFERRED]
@@ -222,11 +219,13 @@
   .claude/skills/design-taste-frontend/references/icons.md → passport/src/check.ts
 - `The violet rule (a judgement, stated)` --references--> `check()`  [INFERRED]
   .claude/skills/design-taste-frontend/references/icons.md → passport/src/check.ts
+- `1. First real payment through a link [S] 💰` --references--> `ensureUsdcStorage()`  [INFERRED]
+  IMPLEMENTATION.md → server/sends.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (206 total, 37 thin omitted)
+## Communities (205 total, 37 thin omitted)
 
 ### Community 0 - "Vault"
 Cohesion: 0.06
@@ -263,10 +262,6 @@ Nodes (135): lib(), add(), arrive(), audit(), backdrop(), barRoot(), beneath(), 
 ### Community 8 - "17. Source and evidence register"
 Cohesion: 0.07
 Nodes (30): 10. The Role of Animation and Motion in UX: Nielsen Norman Group, 11. Response Times: The Three Important Limits: Nielsen Norman Group, 12. Product Page UX: Provide at Least One In-Scale Image: Baymard, 13. Use Delivery Date, Not Shipping Speed: Baymard, 14. The Effect of Electronic Word of Mouth on Sales: A Meta-Analytic Review, 15. Final Rule Banning Fake Reviews and Testimonials: FTC Announcement, 16. WCAG 2.2 SC 2.5.8: Target Size (Minimum): W3C, 17. Source and evidence register (+22 more)
-
-### Community 9 - "react"
-Cohesion: 0.06
-Nodes (59): motion, react, ArrowLeft, Github, Menu, Pencil, LINES, prefersReduced() (+51 more)
 
 ### Community 10 - "dot-object/object.js"
 Cohesion: 0.21
@@ -405,8 +400,8 @@ Cohesion: 0.13
 Nodes (15): 2. Laws and principles, precisely, Autonomy, competence and intrinsic motivation, Fitts's Law: target acquisition in context, Gamification: element-specific and context-specific, Habit formation and voluntary return cues, Hick-Hyman Law: response uncertainty, not a universal item limit, Jakob's Law: familiarity without cloning, Labor illusion: visible genuine effort can affect perceived value (+7 more)
 
 ### Community 53 - "cn"
-Cohesion: 0.08
-Nodes (66): BTN, Button(), buttonClass(), ButtonOwn, ButtonVariant, EASE_EXIT, Eyebrow(), FloatInput() (+58 more)
+Cohesion: 0.04
+Nodes (109): motion, react, BTN, Button(), buttonClass(), ButtonOwn, ButtonVariant, EASE_EXIT (+101 more)
 
 ### Community 54 - "UI Guide: Universal Principles for Visual Composition, Components and Motion"
 Cohesion: 0.15
@@ -578,7 +573,7 @@ Nodes (4): clamp(), ease(), spread(), unease()
 
 ### Community 96 - "Dashboard.tsx"
 Cohesion: 0.09
-Nodes (72): FlowChart(), money(), path(), Sparkline(), usePrefs(), EmptyArt(), STATUS_HINT, StatusChip() (+64 more)
+Nodes (71): FlowChart(), money(), path(), Sparkline(), usePrefs(), EmptyArt(), STATUS_HINT, StatusChip() (+63 more)
 
 ### Community 97 - "moments.mjs"
 Cohesion: 0.09
@@ -898,7 +893,7 @@ Nodes (18): booking-form, calendar-frame, close-photo, close-type, close-word, C
 
 ### Community 212 - "icons.tsx"
 Cohesion: 0.05
-Nodes (59): 10. Implementation notes, SpinThemeToggle(), IconButton(), Sheet(), matches(), order(), WalletChip(), WalletModal() (+51 more)
+Nodes (76): 10. Implementation notes, SpinThemeToggle(), IconButton(), Sheet(), matches(), order(), WalletChip(), WalletModal() (+68 more)
 
 ### Community 213 - "smooth-button/index.tsx"
 Cohesion: 0.36
@@ -913,7 +908,7 @@ Nodes (7): class-variance-authority, class-variance-authority@^0.7.1, mergeRefs(
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `near-api-js` connect `config.ts` to `check.ts`, `package.json`, `invoices.ts`, `demo.ts`, `signals/index.ts`, `server/index.ts`, `VaultConsole.tsx`, `Send.tsx`, `merchants.ts`, `web/package.json`?**
-  _High betweenness centrality (0.187) - this node is a cross-community bridge._
+  _High betweenness centrality (0.185) - this node is a cross-community bridge._
 - **Are the 51 inferred relationships involving `lib()` (e.g. with `arrive()` and `audit()`) actually correct?**
   _`lib()` has 51 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Allow`, `Block`, `Warn` to the rest of the system?**
@@ -921,8 +916,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Vault` be split into smaller, more focused modules?**
   _Cohesion score 0.0625694187338023 - nodes in this community are weakly interconnected._
 - **Why does `lib()` connect `lib` to `consistency.mjs`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Should `registry/src/lib.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.09322033898305085 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `react` to `Dashboard.tsx`, `lib/wallet.tsx`, `profile.tsx`, `scroll.tsx`, `animation.ts`, `VaultConsole.tsx`, `Send.tsx`, `cn`, `icons.tsx`, `smooth-button/index.tsx`, `kit.tsx`, `share-sheet.tsx`, `web/package.json`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `react` connect `cn` to `Dashboard.tsx`, `lib/wallet.tsx`, `profile.tsx`, `scroll.tsx`, `animation.ts`, `VaultConsole.tsx`, `Send.tsx`, `icons.tsx`, `smooth-button/index.tsx`, `kit.tsx`, `share-sheet.tsx`, `web/package.json`?**
+  _High betweenness centrality (0.050) - this node is a cross-community bridge._

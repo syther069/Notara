@@ -744,9 +744,9 @@
     "semantic_hash": ""
   },
   "web/src/components/shell/AppShell.tsx": {
-    "mtime": 1794421498.245953,
-    "seen": 1794424046.4654565,
-    "ast_hash": "234d56b7801bb21f803c124eab09b3de",
+    "mtime": 1794464817.4772227,
+    "seen": 1794464882.6723876,
+    "ast_hash": "41b06454324449b8de00f76e34d1679c",
     "semantic_hash": ""
   },
   "web/src/components/shell/MarketingShell.tsx": {
@@ -888,9 +888,9 @@
     "semantic_hash": ""
   },
   "web/src/pages/VaultConsole.tsx": {
-    "mtime": 1794329144.844657,
-    "seen": 1794413511.554728,
-    "ast_hash": "8fb2f7dfee1a055f873ebf4637628336",
+    "mtime": 1794464833.796311,
+    "seen": 1794464882.6723876,
+    "ast_hash": "a7baa6ecdea9edcddb64af3c69cb7a14",
     "semantic_hash": ""
   },
   "web/src/components/app/SpinThemeToggle.tsx": {
