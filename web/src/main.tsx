@@ -17,7 +17,6 @@ const SendPage = lazy(() => import("./pages/Send").then((m) => ({ default: m.Sen
 const VaultConsolePage = lazy(() => import("./pages/VaultConsole").then((m) => ({ default: m.VaultConsolePage })));
 const CheckPage = lazy(() => import("./pages/Check").then((m) => ({ default: m.CheckPage })));
 const ProfilePage = lazy(() => import("./pages/Profile").then((m) => ({ default: m.ProfilePage })));
-const SettingsPage = lazy(() => import("./pages/Profile").then((m) => ({ default: m.SettingsPage })));
 const InvoicePage = lazy(() => import("./pages/Invoice").then((m) => ({ default: m.InvoicePage })));
 const PayPage = lazy(() => import("./pages/Pay").then((m) => ({ default: m.PayPage })));
 const MerchantPage = lazy(() => import("./pages/Merchant").then((m) => ({ default: m.MerchantPage })));
@@ -66,7 +65,8 @@ createRoot(document.getElementById("root")!).render(
               <Route path="agents/check" element={page(<CheckPage />)} />
               <Route path="transactions" element={page(<TransactionsPage />)} />
               <Route path="profile" element={page(<ProfilePage />)} />
-              <Route path="settings" element={page(<SettingsPage />)} />
+              {/* Settings were merged into Profile: old links land on its Preferences section. */}
+              <Route path="settings" element={<Moved to="/profile#preferences" />} />
             </Route>
 
             <Route element={wait(<PublicShell />)}>

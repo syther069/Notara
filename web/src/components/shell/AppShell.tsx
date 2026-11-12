@@ -12,7 +12,7 @@ import { useLocal } from "@/lib/local";
 import { formatAsset, timeAgo, validAccount } from "@/lib/format";
 import { NotaraMark } from "@/components/Layout";
 import Combobox, { type ComboboxOption } from "@/components/smoothui/combobox";
-import { Bell, Book, Bot, ChevronDown, ChevronRight, Dashboard, ArrowUpRight, Link2, LogOut, Menu, Page, SidebarCollapse, SidebarExpand, Search, Send, Settings2, ShieldCheck, TriangleAlert, User, Wallet, X } from "@/components/icons";
+import { Bell, Book, Bot, ChevronDown, ChevronRight, Dashboard, ArrowUpRight, Link2, LogOut, Menu, Page, SidebarCollapse, SidebarExpand, Search, Send, HelpCircle, ShieldCheck, TriangleAlert, User, Wallet, X } from "@/components/icons";
 import { Button, EASE, Hint, IconButton, Sheet } from "@/components/app/ui";
 import { WalletChip, WalletModal } from "@/components/app/wallet";
 import { SpinThemeToggle } from "@/components/app/SpinThemeToggle";
@@ -33,8 +33,6 @@ const NAV: Item[] = [
     ],
   },
   { to: "/transactions", label: "Transactions", icon: Page },
-  { to: "/profile", label: "Profile", icon: User },
-  { to: "/settings", label: "Settings", icon: Settings2 },
 ];
 
 /** Where you are, for the breadcrumb and the Guide. */
@@ -45,7 +43,6 @@ function place(path: string): { crumbs: string[]; guide: keyof typeof GUIDES } {
   if (path.startsWith("/agents")) return { crumbs: ["Agents", "Vault Console"], guide: "vault" };
   if (path.startsWith("/transactions")) return { crumbs: ["Transactions"], guide: "transactions" };
   if (path.startsWith("/profile")) return { crumbs: ["Profile"], guide: "profile" };
-  if (path.startsWith("/settings")) return { crumbs: ["Settings"], guide: "settings" };
   return { crumbs: ["Dashboard"], guide: "dashboard" };
 }
 
@@ -63,6 +60,7 @@ function Rail({ onNavigate, pinned }: { onNavigate?: () => void; pinned?: boolea
     if (inAgents) setAgentsOpen(true);
   }, [inAgents]);
   const reduce = useReducedMotion();
+  const { openGuide } = useShell();
   // Closed rail: icons only, each named on hover (title) and for screen readers (sr-only label).
   const label = cn("whitespace-nowrap text-[14.5px] font-semibold", !pinned && "sr-only");
   const tip = (t: string) => (pinned ? undefined : t);
@@ -100,8 +98,27 @@ function Rail({ onNavigate, pinned }: { onNavigate?: () => void; pinned?: boolea
           </NavLink>
         ),
       )}
-      {/* Pinned to the bottom of the rail: the docs, a separate section of the site, opened in a new tab. */}
-      <div className="mt-auto border-t border-border/70 pt-2">
+      {/* Pinned to the bottom of the rail: your profile, this page's guide, and the docs (a separate
+          section of the site, opened in a new tab). */}
+      <div className="mt-auto flex flex-col gap-1 border-t border-border/70 pt-2">
+        <NavLink to="/profile" onClick={onNavigate} title={tip("Profile")} className={({ isActive }) => cn(row, isActive && active)}>
+          <User size={20} className="shrink-0" aria-hidden />
+          <span className={label}>Profile</span>
+        </NavLink>
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            openGuide();
+          }}
+          title={tip("Guide: tips for this page")}
+          className={cn(row, "w-full text-left")}
+        >
+          <HelpCircle size={20} className="shrink-0" aria-hidden />
+          <span className={label}>
+            Guide<span className="sr-only">: tips for this page</span>
+          </span>
+        </button>
         <a href="/docs" target="_blank" rel="noopener" onClick={onNavigate} title={tip("Docs (opens in a new tab)")} className={row}>
           <Book size={20} className="shrink-0" aria-hidden />
           <span className={cn(label, "flex-1")}>
@@ -126,7 +143,7 @@ function GlobalSearch({ open, setOpen }: { open: boolean; setOpen: (o: boolean) 
       { value: "/agents/check", label: "Check an Account", description: "Agents" },
       { value: "/transactions", label: "Transactions", description: "Every payment, with filters and export" },
       { value: "/profile", label: "Profile", description: "Name, picture, links, funds" },
-      { value: "/settings", label: "Settings", description: "Theme, notifications, timezone" },
+      { value: "/profile#preferences", label: "Preferences", description: "Theme, notifications, timezone (on your profile)" },
     ];
     const mine = (links ?? []).slice(0, 40).map((l) => ({ value: `/transactions?q=${encodeURIComponent(l.id)}`, label: l.description || l.id, description: `${l.id} · ${formatAsset(l.amount, l.asset)}` }));
     return [...pages, ...mine];
@@ -391,11 +408,6 @@ function Frame({ children }: { children: ReactNode }) {
                 </div>
                 <Notifications />
                 <SpinThemeToggle />
-                <Hint text="Tips for this page (press ?)">
-                  <button type="button" onClick={() => setGuide(true)} aria-label="Guide: tips for this page" className="inline-flex h-10 items-center gap-2 rounded-full px-2.5 text-[14px] font-semibold transition-colors duration-200 hover:bg-default xl:px-3.5">
-                    <Book size={18} aria-hidden /> <span className="hidden xl:inline">Guide</span>
-                  </button>
-                </Hint>
                 <WalletChip compact onConnect={() => setConnect(true)} onOpenProfile={() => setProfile(true)} />
                 {w.accountId && (
                   <Hint text="Disconnect wallet. Your money and links stay where they are.">

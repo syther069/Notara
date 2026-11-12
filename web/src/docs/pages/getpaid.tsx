@@ -214,7 +214,7 @@ export function InvoicesCsv() {
 
       <H2>Export from the Transactions page</H2>
       <P>
-        <strong>Export CSV</strong> on the <A href="/transactions">Transactions</A> page saves the rows you're looking at, after your filters, with dates in the timezone set in Settings.
+        <strong>Export CSV</strong> on the <A href="/transactions">Transactions</A> page saves the rows you're looking at, after your filters, with dates in the timezone set in your Profile preferences.
       </P>
       <Table
         head={["Column", "Contains"]}

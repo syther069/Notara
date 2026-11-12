@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { useWallet } from "@/lib/wallet";
 import { ConnectPanel, PageHead } from "@/components/shell/AppShell";
 import { ProfileEditor } from "@/components/app/profile";
@@ -12,7 +11,7 @@ export function ProfilePage() {
     <>
       <PageHead
         title="Profile"
-        sub="How you appear on Notara, and what your wallet holds."
+        sub="How you appear on Notara, what your wallet holds, and your preferences."
         actions={
           <LinkButton to={`/m/${encodeURIComponent(w.accountId)}`} variant="secondary">
             <Globe size={16} aria-hidden /> Open my public page
@@ -20,19 +19,6 @@ export function ProfilePage() {
         }
       />
       <ProfileEditor />
-    </>
-  );
-}
-
-export function SettingsPage() {
-  const w = useWallet();
-  if (!w.accountId) return <ConnectPanel title="Settings" body="Connect a NEAR wallet to set your theme, notifications, currency label and timezone." />;
-  return (
-    <>
-      <PageHead title="Settings" sub={<>Preferences live with your profile. <Link to="/profile#preferences" className="font-semibold text-foreground underline underline-offset-4">Open them on your profile</Link>, or change them here.</>} />
-      <div className="max-w-xl">
-        <ProfileEditor compact />
-      </div>
     </>
   );
 }

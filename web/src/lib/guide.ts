@@ -1,4 +1,4 @@
-// The Guide: a few short, plain-language notes for each page, opened from the top bar.
+// The Guide: a few short, plain-language notes for each page, opened from the bottom of the sidebar.
 
 export interface GuideEntry {
   title: string;
@@ -90,18 +90,10 @@ export const GUIDES: Record<string, GuidePage> = {
   profile: {
     name: "Profile",
     entries: [
-      { title: "What this page does", body: ["It sets how you appear: your name, picture, a short About, and your links. It also shows what your wallet holds."] },
+      { title: "What this page does", body: ["It sets how you appear: your name, picture, a short About, and your links. It also shows what your wallet holds, and your preferences."] },
       { title: "How to edit", body: ["Click Edit details, change what you need, then Save changes. Your picture saves as soon as you choose it.", "Your profile is kept on this device. Clearing your browser data removes it."] },
+      { title: "How preferences work", body: ["Preferences sets the theme, notifications, how amounts are labelled, and your timezone.", "Notifications are browser alerts when a watched account's check changes. They only fire while Notara is open in this browser."] },
       { title: "When to prove your website", body: ["Proving a website ties your domain to your account, and that one does show to every customer. Open your public page from the Dashboard to do it."] },
-      SHORTCUTS,
-      HELP,
-    ],
-  },
-  settings: {
-    name: "Settings",
-    entries: [
-      { title: "What this page does", body: ["Theme, notifications, how amounts are labelled, and your timezone."] },
-      { title: "How notifications work", body: ["Turn them on to get a browser alert when a watched account's check changes.", "They only fire while Notara is open in this browser."] },
       SHORTCUTS,
       HELP,
     ],

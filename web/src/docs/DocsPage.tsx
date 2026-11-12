@@ -7,7 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { NotaraMark } from "@/components/Layout";
 import { SpinThemeToggle } from "@/components/app/SpinThemeToggle";
-import { ArrowLeft, ArrowRight, ChevronDown, Github, Menu, Pencil, Search, X } from "@/components/icons";
+import { ArrowLeft, ArrowRight, ChevronDown, Github, Menu, Search, X } from "@/components/icons";
 import { EASE } from "@/components/app/ui";
 import { DOCS, GROUPS, REPO, UPDATED, docPath, type DocPage } from "./nav";
 import { PAGES } from "./pages";
@@ -322,11 +322,8 @@ export function DocsPage() {
                 <Body />
               </motion.div>
 
-              <div className="mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-6 text-[13px] text-muted">
+              <div className="mt-16 border-t border-border/70 pt-6 text-[13px] text-muted">
                 <span>Last updated {UPDATED}</span>
-                <a href={`${REPO}/blob/main/web/src/docs/pages/${doc.file}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-semibold hover:text-foreground">
-                  <Pencil size={13} aria-hidden /> Edit this page on GitHub
-                </a>
               </div>
               <nav aria-label="Previous and next" className="mt-6 grid gap-3 sm:grid-cols-2">
                 {prev ? (
