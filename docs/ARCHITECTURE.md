@@ -1,6 +1,6 @@
 # Architecture
 
-How Notara is put together: the contracts, the checking service, the agent, the backend and the website, and how money and decisions flow between them. For a guided tour with every on-chain proof, see the [documentation site](https://notara-sable.vercel.app/docs).
+How Notara is put together: the contracts, the checking service, the agent, the backend and the website and how money and decisions flow between them. For a guided tour with every on-chain proof, see the [documentation site](https://notara-sable.vercel.app/docs).
 
 ## Overview
 
@@ -11,12 +11,12 @@ How Notara is put together: the contracts, the checking service, the agent, the 
 └───────────────┬──────────────────────────────────────────────────────────┘
                 │ JSON over HTTPS
 ┌───────────────▼──────────────── Backend (server/) ───────────────────────┐
-│  One Node request handler: a local server, or one Vercel function        │
+│  One Node request handler: a local server or one Vercel function         │
 │   ├─ Account check: signals → policy → report → signed verdict           │
 │   ├─ Payment links, send links, Merchant Passport, CSV exports           │
 │   ├─ Visitor vaults: create, fund, run scenarios                         │
 │   └─ Local only: owner console, attack-demo runner                       │
-│  Storage: Neon Postgres (DATABASE_URL), or SQLite locally                │
+│  Storage: Neon Postgres (DATABASE_URL) or SQLite locally                 │
 └───────┬──────────────────────┬───────────────────────┬───────────────────┘
         │ read                 │ quotes and status     │ read and write
 ┌───────▼────────┐   ┌─────────▼─────────┐   ┌─────────▼────────────────────┐
@@ -45,10 +45,10 @@ Rust, near-sdk 5.30. Holds an agent's spending money and enforces every rule on-
 | `approve(id)`, `reject(id)` | owner | Decides a parked payment. Caps are checked again. Unanswered payments expire after 24 hours. |
 | `set_cap`, `set_signer_public_key`, `set_agent`, `set_ttls`, `set_paused`, `withdraw` | owner | Administration. |
 | `propose_owner`, `accept_owner` | owner, then the new owner | Two-step handover, so a typo can't lock the vault. |
-| `on_payout` | the vault itself | Marks a payout Executed or Failed, and releases the cap reservation on failure. |
+| `on_payout` | the vault itself | Marks a payout Executed or Failed and releases the cap reservation on failure. |
 | `get_config`, `get_payment(s)`, `get_payments_to`, `get_spent_today`, `is_nonce_used` | anyone | Views. |
 
-Payment states: `PendingApproval → Executing → Executed | Failed`, or `PendingApproval → Rejected | Expired`. NEP-141 payouts attach the required 1 yoctoNEAR from the vault's own balance, because a function-call key can't attach a deposit.
+Payment states: `PendingApproval → Executing → Executed | Failed` or `PendingApproval → Rejected | Expired`. NEP-141 payouts attach the required 1 yoctoNEAR from the vault's own balance, because a function-call key can't attach a deposit.
 
 The vault code is also published once as a NEAR **global contract**. The factory `vaults.agentspend-1104-p6zw.testnet` creates each visitor vault in one transaction, with the visitor's wallet as owner and no access key at all.
 
@@ -72,7 +72,7 @@ request ─► collect signals ─► evaluate policy ─► build report ─►
 
 | File | Job |
 |---|---|
-| `src/signals/index.ts` | Signal collectors: account state, activity history, contract deployments, code changes, prior interactions, shared reports, allow and deny lists, and token registration for NEP-141 assets. Each returns its status, source, endpoint, fetch time, data and caveats. |
+| `src/signals/index.ts` | Signal collectors: account state, activity history, contract deployments, code changes, prior interactions, shared reports, allow and deny lists and token registration for NEP-141 assets. Each returns its status, source, endpoint, fetch time, data and caveats. |
 | `src/policy.ts` | Rules to ALLOW, WARN or BLOCK. No I/O; a missing signal means at least WARN. |
 | `src/check.ts` | Runs one check and signs the verdict when asked. |
 | `src/verdict.ts` | The canonical verdict text, the report hash and the signer key. |
@@ -98,15 +98,15 @@ One request handler, used both by `npm run serve` and by the Vercel function (`s
 | File | Job |
 |---|---|
 | `index.ts` | Routing, input checks, the public-mode switch and the error handler. |
-| `db.ts` | Document storage. Every write is one atomic statement: merge, insert-if-new, set-once flags, and merge-unless-paid. |
+| `db.ts` | Document storage. Every write is one atomic statement: merge, insert-if-new, set-once flags and merge-unless-paid. |
 | `invoices.ts` | Payment links: creation and validation, the status flow (a paid link never moves back), the unsigned-link cap and the CSV export. |
 | `merchants.ts`, `nep413.ts` | The text a merchant's wallet signs for a link, NEP-413 verification on the right network, website proof. |
 | `nearpay.ts` | Confirms a NEAR-wallet payment from the USDC contract's own transfer event and memo, net of refunds. |
 | `checkout.ts` | NEAR Intents 1Click: tokens, quotes, deposit addresses and status. |
-| `sends.ts` | Send links: the signed message, daily limits, and checking and relaying the NEP-366 claim. |
+| `sends.ts` | Send links: the signed message, daily limits and checking and relaying the NEP-366 claim. |
 | `vaults.ts` | Visitor vaults: creation through the factory, scenario runs, owner proof. |
 | `notify.ts` | Optional Telegram alert when a link is paid. |
-| `guard.ts`, `errors.ts` | Request guards for the local server, and safe error messages for the public deploy. |
+| `guard.ts`, `errors.ts` | Request guards for the local server and safe error messages for the public deploy. |
 
 Shared invoice rules (line totals, Overdue, how a link was paid) live in `web/src/lib/invoice-rules.ts`, a file with no imports that the server and the website both use.
 
@@ -121,19 +121,19 @@ Vite, React 19 and Tailwind CSS v4. Wallets connect through NEAR Connect (`@hot-
 | Customer pages | `/pay/:id`, `/claim/:id`, `/m/:account`, `/invoices/:id` |
 | Documentation | `/docs` and its pages |
 
-In development, Vite proxies `/api` and `/v1` to the backend. In production the backend, or Vercel, serves the built files.
+In development, Vite proxies `/api` and `/v1` to the backend. In production the backend or Vercel, serves the built files.
 
 ## Main flows
 
-**Check an account.** The browser posts to `/v1/check`. The service collects the signals in parallel, the policy returns a decision with reasons, and the page shows the verdict, the evidence with its sources, and the caveats.
+**Check an account.** The browser posts to `/v1/check`. The service collects the signals in parallel, the policy returns a decision with reasons and the page shows the verdict, the evidence with its sources and the caveats.
 
-**An agent pays an invoice.** The agent reads an invoice and calls `pay(recipient, amount)`. The wrapper asks for a signed verdict. On BLOCK nothing is signed. On ALLOW or WARN the wrapper calls `request_payment` with the function-call key, and the vault verifies everything again: ALLOW pays, WARN parks.
+**An agent pays an invoice.** The agent reads an invoice and calls `pay(recipient, amount)`. The wrapper asks for a signed verdict. On BLOCK nothing is signed. On ALLOW or WARN the wrapper calls `request_payment` with the function-call key and the vault verifies everything again: ALLOW pays, WARN parks.
 
 **The owner approves a parked payment.** The owner's own NEAR wallet signs `approve(id)` or `reject(id)` from the Vault Console. The site never holds the owner's key.
 
 **A hacked agent bypasses the wrapper.** The agent's key can call only `request_payment` on the vault. The vault refuses BLOCK, edited, forged, reused or redirected verdicts. The NEAR protocol refuses direct transfers, owner-method calls and calls to any other contract made with that key.
 
-**A customer pays a payment link.** The pay page shows the merchant's signature status and an account check. The customer pays from a NEAR wallet, and the server confirms the transfer from the token's own event. On mainnet they can also pay from another chain through a one-time 1Click deposit address, and the merchant receives exact USDC on NEAR.
+**A customer pays a payment link.** The pay page shows the merchant's signature status and an account check. The customer pays from a NEAR wallet and the server confirms the transfer from the token's own event. On mainnet they can also pay from another chain through a one-time 1Click deposit address and the merchant receives exact USDC on NEAR.
 
 **Someone claims a send link.** The link's key lives only in the URL fragment, which never reaches the server. The browser signs one USDC transfer as a NEP-366 delegate action; the server checks it is exactly that transfer and relays it through the sponsor, which pays the gas.
 
@@ -180,13 +180,13 @@ Trust assumptions:
 | Registry contract | testnet | reports | few reporters so far |
 | Vault contract | testnet | payment history | only payments through that vault |
 | NEAR Intents 1Click | mainnet | quotes, deposit addresses, status | no testnet |
-| NEAR AI Cloud | — | the agent's model and its TEE attestation | relayed models have no attestation |
+| NEAR AI Cloud | n/a | the agent's model and its TEE attestation | relayed models have no attestation |
 
 ## Deployment
 
 | Part | Where |
 |---|---|
 | Contracts | NEAR testnet, as subaccounts of the owner account (`npm run setup:testnet`). No contract on mainnet. |
-| Website and backend | Vercel, in public mode (`NOTARA_PUBLIC=1`): the owner console and the local demo runner are off, and `/v1/check` never returns a signed verdict. |
+| Website and backend | Vercel, in public mode (`NOTARA_PUBLIC=1`): the owner console and the local demo runner are off and `/v1/check` never returns a signed verdict. |
 | Storage | Neon Postgres on Vercel; SQLite locally. |
 | Mainnet | USDC payment links (NEAR wallet or NEAR Intents) and read-only account checks. |
