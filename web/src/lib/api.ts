@@ -154,6 +154,9 @@ export interface Invoice {
   paidBy?: string;
   /** Paid straight from a NEAR wallet: that transaction. */
   nearTx?: string;
+  /** Send links: when the money was claimed, and into which account. */
+  claimedAt?: string;
+  claimedTo?: string;
   amount: string;
   asset: string;
   status: "unpaid" | "pending_approval" | "processing" | "paid" | "refused" | "refunded" | "failed";

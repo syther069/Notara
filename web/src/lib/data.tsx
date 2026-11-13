@@ -4,15 +4,12 @@ import { ApiError, api, type Invoice } from "./api";
 import { useWallet } from "./wallet";
 import { CHECKS_KEY, PREFS_KEY, WATCH_EVERY_MS, WATCH_KEY, defaultPrefs, readLocal, useLocal, writeLocal, type LocalCheck, type Prefs, type Watch } from "./local";
 import { formatAsset } from "./format";
+import { newLinkNotes, notesFor, type NewNote, type Note } from "./notes";
 
-export interface Note {
-  id: string;
-  text: string;
-  href: string;
-  at: string;
-  read: boolean;
-}
+export type { Note } from "./notes";
 const NOTES_KEY = "notara-notes";
+/** How often the open app looks for new payments and claims. */
+const POLL_MS = 45_000;
 
 type Data = {
   /** Links this wallet created (payment links and send links), newest first. null: not loaded yet. */
@@ -20,6 +17,7 @@ type Data = {
   linksError: string | null;
   linksLoading: boolean;
   reloadLinks: () => void;
+  /** This wallet's notes (and watched-account notes), newest first. */
   notes: Note[];
   markNotesRead: () => void;
   clearNotes: () => void;
@@ -27,7 +25,7 @@ type Data = {
 const Ctx = createContext<Data>({ links: null, linksError: null, linksLoading: false, reloadLinks: () => {}, notes: [], markNotesRead: () => {}, clearNotes: () => {} });
 export const useAccountData = () => useContext(Ctx);
 
-function pushNote(n: Omit<Note, "read" | "at">) {
+function pushNote(n: NewNote) {
   const all = readLocal<Note[]>(NOTES_KEY, []);
   if (all.some((x) => x.id === n.id)) return;
   writeLocal(NOTES_KEY, [{ ...n, at: new Date().toISOString(), read: false }, ...all].slice(0, 30));
@@ -56,10 +54,14 @@ export function AccountDataProvider({ children }: { children: ReactNode }) {
   const [links, setLinks] = useState<Invoice[] | null>(null);
   const [linksError, setLinksError] = useState<string | null>(null);
   const [linksLoading, setLinksLoading] = useState(false);
-  const [notes, setNotes] = useLocal<Note[]>(NOTES_KEY, []);
+  const [allNotes, setNotes] = useLocal<Note[]>(NOTES_KEY, []);
   const seq = useRef(0);
 
-  const reloadLinks = useCallback(() => {
+  /**
+   * Loads this wallet's links. `silent` is the background refresh: it never asks the wallet to sign
+   * (a missing or expired signature just skips the refresh) and never shows a loading state or an error.
+   */
+  const load = useCallback((silent: boolean) => {
     const acct = w.accountId;
     const mine = ++seq.current;
     if (!acct) {
@@ -67,7 +69,7 @@ export function AccountDataProvider({ children }: { children: ReactNode }) {
       setLinksError(null);
       return;
     }
-    setLinksLoading(true);
+    if (!silent) setLinksLoading(true);
     const net = w.network;
     const proofKey = `notara-links-proof:${net}:${acct}`;
     // The public site lists your links only with your wallet's signature: asked once, then reused for a day.
@@ -78,7 +80,7 @@ export function AccountDataProvider({ children }: { children: ReactNode }) {
       try {
         return await api.invoices(acct, fresh ? { proof: fresh, network: net } : undefined);
       } catch (e) {
-        if (!(e instanceof ApiError) || e.status !== 401) throw e;
+        if (!(e instanceof ApiError) || e.status !== 401 || silent) throw e;
         const { token, accountId } = await w.signLink(async (a) => (await api.linksListMessage(a)).message, net);
         if (accountId !== acct) throw new Error(`Your wallet signed as ${accountId}, not ${acct}`);
         writeLocal(proofKey, { token, at: Date.now() });
@@ -91,21 +93,39 @@ export function AccountDataProvider({ children }: { children: ReactNode }) {
         const list = r.invoices.filter((i) => i.merchant === acct).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
         setLinks(list);
         setLinksError(null);
-        // A link that turned paid since the last look becomes a notification, once.
-        const seenKey = `notara-seen-paid:${acct}`;
-        const seen = readLocal<string[] | null>(seenKey, null);
-        const paid = list.filter((i) => i.status === "paid" && i.kind !== "send");
-        if (seen) for (const i of paid) if (!seen.includes(i.id)) pushNote({ id: `paid-${i.id}`, text: `${i.description || i.id} was paid: ${formatAsset(i.amount, i.asset)}.`, href: "/transactions" });
-        writeLocal(seenKey, paid.map((i) => i.id));
+        // A link paid, or a send link claimed, since the last look becomes a notification, once.
+        const seenKey = `notara-seen-events:${acct}`;
+        const r2 = newLinkNotes(list, readLocal<string[] | null>(seenKey, null), acct, (i) => formatAsset(i.amount, i.asset));
+        for (const n of r2.notes) pushNote(n);
+        writeLocal(seenKey, r2.seen);
       })
-      .catch((e) => mine === seq.current && setLinksError(e.message))
-      .finally(() => mine === seq.current && setLinksLoading(false));
+      .catch((e) => !silent && mine === seq.current && setLinksError(e.message))
+      .finally(() => !silent && mine === seq.current && setLinksLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [w.accountId, w.network]);
+  const reloadLinks = useCallback(() => load(false), [load]);
   useEffect(() => {
     setLinks(null);
     reloadLinks();
   }, [reloadLinks]);
+
+  // While the app is open and visible, look again for payments and claims, and at once when the tab
+  // comes back into view, so a payment shows up in the bell without a page reload.
+  useEffect(() => {
+    if (!w.accountId) return;
+    const tick = () => document.visibilityState === "visible" && load(true);
+    const t = setInterval(tick, POLL_MS);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("focus", tick);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", tick);
+      window.removeEventListener("focus", tick);
+    };
+  }, [w.accountId, load]);
+
+  const notes = useMemo(() => notesFor(allNotes, w.accountId), [allNotes, w.accountId]);
+  const mine = useCallback((n: Note) => !n.account || n.account === w.accountId, [w.accountId]);
 
   // Watched accounts: re-checked every few hours while Notara is open here. A changed result is a notification.
   useEffect(() => {
@@ -148,10 +168,11 @@ export function AccountDataProvider({ children }: { children: ReactNode }) {
       linksLoading,
       reloadLinks,
       notes,
-      markNotesRead: () => void setNotes((n) => n.map((x) => ({ ...x, read: true }))),
-      clearNotes: () => void setNotes([]),
+      // Only this wallet's notes: another wallet on this device keeps its own.
+      markNotesRead: () => void setNotes((n) => n.map((x) => (mine(x) ? { ...x, read: true } : x))),
+      clearNotes: () => void setNotes((n) => n.filter((x) => !mine(x))),
     }),
-    [links, linksError, linksLoading, reloadLinks, notes, setNotes],
+    [links, linksError, linksLoading, reloadLinks, notes, setNotes, mine],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

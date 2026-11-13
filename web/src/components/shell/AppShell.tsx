@@ -183,7 +183,11 @@ function Notifications() {
         <Popover.Trigger asChild>
           <button type="button" aria-label={unread ? `Notifications, ${unread} new` : "Notifications"} className="relative inline-flex size-10 items-center justify-center rounded-full transition-colors duration-200 hover:bg-default">
             <Bell size={19} />
-            {unread > 0 && <span className="absolute right-2 top-2 size-2.5 rounded-full border-2 border-background bg-gold" />}
+            {unread > 0 && (
+              <span aria-hidden className="absolute right-0.5 top-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-background bg-gold px-1 text-[10.5px] font-bold leading-none text-[#1d1a12]">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
           </button>
         </Popover.Trigger>
       </Hint>
@@ -198,11 +202,13 @@ function Notifications() {
             )}
           </div>
           {notes.length === 0 ? (
-            <p className="px-3 pb-4 pt-1 text-[14px] leading-relaxed text-muted">Nothing yet. You'll hear here when a link is paid or a watched account's check changes.</p>
+            <p className="px-3 pb-4 pt-1 text-[14px] leading-relaxed text-muted">Nothing yet. You'll hear here when one of your links is paid, a send link is claimed, or a watched account's check changes.</p>
           ) : (
             <ul className="flex max-h-[50vh] flex-col overflow-y-auto">
               {notes.map((n) => (
                 <li key={n.id}>
+                  {/* Opening a note closes the panel, which also marks the notes read. */}
+                  <Popover.Close asChild>
                   <Link to={n.href} className="flex gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-default">
                     <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.read ? "bg-border" : "bg-gold")} aria-hidden />
                     <span className="min-w-0">
@@ -210,6 +216,7 @@ function Notifications() {
                       <span className="block text-[12.5px] text-muted">{timeAgo(Date.parse(n.at))}</span>
                     </span>
                   </Link>
+                  </Popover.Close>
                 </li>
               ))}
             </ul>
