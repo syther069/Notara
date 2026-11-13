@@ -1,5 +1,5 @@
 // The public shell: the Notara mark at the left, a glass dock of section links in the centre, and the
-// theme toggle, Sign in and the app button at the right. It condenses on scroll and follows the visitor's
+// theme toggle and the app button at the right. It condenses on scroll and follows the visitor's
 // theme like the rest of the site. Leaving for the app plays one continuous wipe.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -14,7 +14,6 @@ import SocialFlipButton from "@/components/vengeance/social-flip-button";
 import { scrollToSection } from "@/components/skiper/scroll";
 import { replayPreloader } from "@/components/landing/Preloader";
 import { Button, EASE } from "@/components/app/ui";
-import { WalletModal } from "@/components/app/wallet";
 
 const GoCtx = createContext<(to: string) => void>(() => {});
 /** Leave the landing page for the app with the route transition. */
@@ -35,7 +34,6 @@ export function MarketingShell() {
   const reduce = useReducedMotion();
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);
-  const [connect, setConnect] = useState(false);
   const [leaving, setLeaving] = useState<string | null>(null);
   const [current, setCurrent] = useState<string | null>(null);
   const menuBtn = useRef<HTMLButtonElement>(null);
@@ -143,15 +141,6 @@ export function MarketingShell() {
               >
                 Docs
               </a>
-              {!w.accountId && (
-                <button
-                  type="button"
-                  onClick={() => setConnect(true)}
-                  className={cn("hidden rounded-full px-3.5 text-[14.5px] font-semibold text-foreground/85 transition-colors hover:bg-foreground/10 hover:text-foreground sm:inline-flex sm:items-center", scrolled ? "h-8" : "h-9")}
-                >
-                  Sign in
-                </button>
-              )}
               <Button size="sm" onClick={() => go("/dashboard")} className={cn("max-sm:!h-11 max-sm:!px-4 max-sm:[&>svg]:hidden", scrolled && "sm:!h-8")}>
                 {appLabel} <ArrowRight size={15} aria-hidden />
               </Button>
@@ -209,18 +198,6 @@ export function MarketingShell() {
                 >
                   <Play size={15} aria-hidden /> Replay intro animation
                 </button>
-                {!w.accountId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenu(false);
-                      setConnect(true);
-                    }}
-                    className={cn(mobileLink, "sm:hidden")}
-                  >
-                    Sign in
-                  </button>
-                )}
               </motion.nav>
             )}
           </AnimatePresence>
@@ -310,8 +287,7 @@ export function MarketingShell() {
             />
           )}
         </AnimatePresence>
-        <WalletModal open={connect} onClose={() => setConnect(false)} />
-        {w.error && !connect && (
+        {w.error && (
           <div role="status" className="fixed inset-x-3 bottom-4 z-[90] mx-auto flex max-w-[560px] items-start justify-between gap-3 rounded-2xl border border-warning/30 bg-warning-soft px-4 py-3 text-[14px] text-foreground shadow-pop">
             <p>{w.error}</p>
             <button type="button" className="shrink-0 font-semibold underline underline-offset-4" onClick={w.clearError}>
