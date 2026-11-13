@@ -118,7 +118,7 @@ npm run web:build
 npm run serve
 ```
 
-Open http://127.0.0.1:8787. Run the tests with `npm test` (103 tests) and `cargo test` (39 contract tests). [JUDGE.md](JUDGE.md) has the full quickstart and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains the design.
+Open http://127.0.0.1:8787. Run the tests with `npm test` (103 tests) and `cargo test` (39 contract tests; on Windows set `AWS_LC_SYS_PREBUILT_NASM=1` first). [JUDGE.md](JUDGE.md) has the full quickstart and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains the design.
 
 ## Project structure
 
