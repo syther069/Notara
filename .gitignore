@@ -22,3 +22,6 @@ graphify-out/
 _private/
 *.zip
 *.docx
+
+# Raw demo recordings (local only)
+demo script videos/

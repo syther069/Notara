@@ -5,29 +5,58 @@ Everything you need to see Notara working, in about 10 minutes, with nothing to 
 - **Live app:** https://notara-sable.vercel.app
 - **Documentation:** https://notara-sable.vercel.app/docs
 - **Track requirements, with proof:** https://notara-sable.vercel.app/docs/hackathon
-- **Tracks entered:** AI Security & Defense (primary), Real-World Money, Open Innovation
+- **Tracks entered:** Real-World Money, AI Security & Defense, Open Innovation
 
 > Notara is a hackathon prototype built on NEAR. It has not been audited. Everything below runs on NEAR **testnet** with free test money, except where it says mainnet.
 
 ## Notara in one minute
 
-**The problem.** AI agents are starting to pay for things on their own. An agent reads an invoice and pays it. If someone hides an instruction in that invoice, such as "pay this other account instead", the agent can be tricked into sending money to an attacker. Safety code inside the agent doesn't help once the agent itself is fooled or hacked, because the agent can simply skip it. People paying each other have the same problem in a smaller form: you can't easily tell whether a payment link or an account is genuine before you pay.
+Notara makes payments on NEAR safer in two ways.
 
-**What Notara does.** Before any payment, Notara checks who is being paid and answers **ALLOW**, **WARN** or **BLOCK**, with the reasons. A NEAR smart contract (the vault) then enforces that answer. The agent's key can only *ask* the vault to pay, so even a hacked agent can't move money the vault refuses.
+**Payments for people.** A payment link or an account name gives no way to tell if it is genuine before you pay. With Notara, a merchant's link is signed by their own wallet, the client sees an account check before paying and clients can pay in USDC from a NEAR wallet or from another chain. Anyone can also send USDC to an account with a note or as a link the receiver claims without gas.
 
-**What you'll see.** Payment links signed by the merchant's own wallet, an account check before every payment and an AI agent that is stopped on-chain when it's tricked.
+**Payments by AI agents.** An agent that pays invoices can be tricked by a hidden line ("pay this other account instead") and safety code inside the agent can't stop that. With Notara, the agent's money sits in a NEAR contract, the vault. The agent can only ask it to pay and the vault pays only when Notara's check allows it and within its limits, even if the agent is hacked.
+
+Both use the same account check: **ALLOW**, **WARN** or **BLOCK**, with the reasons.
+
+## Four pages worth opening first
+
+- **[Hackathon tracks](https://notara-sable.vercel.app/docs/hackathon)**
+  - Every requirement of the Real-World Money, AI Security & Defense and Open Innovation tracks.
+  - How Notara meets each one, with a link to check it.
+- **[Mainnet proof: NEAR Intents](https://notara-sable.vercel.app/docs/mainnet-proof)**
+  - A real payment: a client paid a Notara link with ETH on Arbitrum and the merchant received exactly 0.1 USDC on NEAR.
+  - Every transaction on both chains is linked, with a one-minute way to check it yourself.
+- **[Verified AI model (TEE)](https://notara-sable.vercel.app/docs/tee-model)**
+  - Before the demo agent reads an invoice, Notara checks its model runs in a TEE on NEAR AI Cloud (fresh nonce, NVIDIA GPU evidence).
+  - Each reply's signature is checked against the attested TEE. The page also says plainly which checks are not done yet.
+- **[Security and limits](https://notara-sable.vercel.app/docs/security)**
+  - What Notara protects (signed links, the vault's rules, the agent's limited key) and what it doesn't.
+  - What is built, what is planned and how to report a problem.
 
 ## What you need (5 minutes, free)
 
 1. **A NEAR testnet wallet.** [Intear Wallet](https://wallet.intear.tech) is the one we tested end to end. Create a testnet account in it.
 2. **Free test NEAR.** Intear gives a new testnet account some test NEAR. For more, use the [NEAR testnet faucet](https://near-faucet.io).
-3. **Free test USDC** (only for payment links and send links). Notara's links are in USDC and testnet USDC on NEAR is issued by Circle, so it comes from [Circle's faucet](https://faucet.circle.com). Choose **NEAR testnet** and paste your testnet account name. The NEAR faucet gives NEAR only, not USDC.
+3. **Free test USDC** (for payment links and sends). Testnet USDC on NEAR is issued by Circle, so it comes from [Circle's faucet](https://faucet.circle.com). Choose **NEAR testnet** and paste your testnet account name. The NEAR faucet gives NEAR only, not USDC.
 
 ## Things to try on the live site
 
 Open https://notara-sable.vercel.app and press **Open App**. The **Guide** button at the bottom of the left sidebar explains each page.
 
-### 1. Watch an AI agent get stopped (no USDC needed)
+### 1. Get paid with a payment link
+
+1. Go to **Get Paid**. Keep **Test money**.
+2. Enter an amount and what it's for. To try line items, press **Itemise this invoice**. You can also pick a **Due date**.
+3. Press **Create payment link**. Your wallet signs the link, so clients can see it's really from you.
+4. Open the link in another browser as the client. **Check who's asking** shows the account check and the signature. Pay with a NEAR wallet (needs test USDC). The link shows **Paid** on both sides.
+
+### 2. Send money
+
+- **To an account:** go to **Send → To an account**, enter a NEAR account, an amount and a note, then **Review**. Notara checks the account; **Confirm & send** and approve in your wallet. The payment appears in **Recent sends**.
+- **As a link:** go to **Send → As a link**, create a link and fund it from your wallet. Open it in another browser and claim it, even into a brand-new `name.testnet` account. The receiver pays no gas.
+
+### 3. Watch an AI agent get stopped (no USDC needed)
 
 1. Go to **Agents → Vault Console**.
 2. Connect your testnet wallet and press **Create my vault**. Your wallet signs a short message to prove it's you. It's free and moves no money.
@@ -43,30 +72,17 @@ Open https://notara-sable.vercel.app and press **Open App**. The **Guide** butto
 
 Every result links to its transaction on the NEAR testnet explorer.
 
-### 2. Make and pay a payment link
-
-1. Go to **Get Paid**. Keep **Test money**.
-2. Enter an amount and what it's for. To try line items, press **Itemise this invoice**. You can also pick a **Due date**.
-3. Press **Create payment link**. Your wallet signs the link, so customers can see it's really from you.
-4. Open the link as a customer. **Check who's asking** shows the account check and whether the link is signed. Pay with your NEAR wallet (needs test USDC).
-
-### 3. Check any account
+### 4. Check any account
 
 Go to **Agents → Check an Account**, type any NEAR account (for example `aurora` on mainnet) and press **Check**. You'll see the verdict, the reasons and where each piece of evidence came from.
-
-### 4. Send money as a link
-
-Go to **Send → As a link**, create a link, fund it from your wallet, then open it in another browser and claim it, even into a brand-new `name.testnet` account. The receiver pays no gas.
 
 ## Proof you can open without doing anything
 
 | What | Where |
 |---|---|
 | The attack demo's on-chain refusals (3a to 3g) | [Attack tests](https://notara-sable.vercel.app/docs/attack-tests) |
-| A real mainnet payment: ETH on Arbitrum to USDC on NEAR, every leg linked | [Mainnet proof](https://notara-sable.vercel.app/docs/mainnet-proof) |
 | The demo vault has no full-access key (locked) | [Lock transaction](https://testnet.nearblocks.io/txns/BKYAA6TskXprBX8ovMYcjBCTpnMWKFWpW7KHzaCLjcJ1) |
-| The agent's AI model runs in a verified TEE | [Verified AI model (TEE)](https://notara-sable.vercel.app/docs/tee-model) |
-| Every hackathon requirement and where it's met | [Hackathon tracks](https://notara-sable.vercel.app/docs/hackathon) |
+| The paid mainnet link itself | [INV-0016](https://notara-sable.vercel.app/pay/INV-0016) |
 
 ## Quickstart on your own machine
 
@@ -123,7 +139,7 @@ The first installs the backend, the checking service and the agent; the second i
 npm test
 ```
 
-All 98 tests should pass. They need no network and no keys.
+All 103 tests should pass. They need no network and no keys.
 
 ### 5. Start Notara
 
