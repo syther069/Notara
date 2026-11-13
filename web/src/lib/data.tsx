@@ -25,7 +25,8 @@ type Data = {
 const Ctx = createContext<Data>({ links: null, linksError: null, linksLoading: false, reloadLinks: () => {}, notes: [], markNotesRead: () => {}, clearNotes: () => {} });
 export const useAccountData = () => useContext(Ctx);
 
-function pushNote(n: NewNote) {
+/** Adds a note to the bell (once per id), and a browser alert if the visitor turned those on. */
+export function pushNote(n: NewNote) {
   const all = readLocal<Note[]>(NOTES_KEY, []);
   if (all.some((x) => x.id === n.id)) return;
   writeLocal(NOTES_KEY, [{ ...n, at: new Date().toISOString(), read: false }, ...all].slice(0, 30));

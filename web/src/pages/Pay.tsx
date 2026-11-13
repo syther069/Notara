@@ -8,6 +8,8 @@ import { EXPLORER, asSentence, formatAsset, linkNetwork, unitsToDecimal } from "
 import { AccountLink, Banner, CopyButton, MainnetBadge, Skeleton, StepBar } from "../components/ui";
 import { SafetyPanel } from "../components/SafetyPanel";
 import { TxFailedError, WalletTimeoutError, useWallet } from "../lib/wallet";
+import { recordSend } from "../lib/local";
+import { pushNote } from "../lib/data";
 import { useDeployment } from "../components/Layout";
 import { InvoiceStatus } from "../components/ui";
 import { evmAccount, evmPay, hasEvmWallet } from "../lib/evm";
@@ -59,7 +61,12 @@ export function PayPage() {
     setUnconfirmed(null);
     let sent: { txHash: string; signerId: string } | null = null;
     try {
-      sent = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, inv.id, linkNetwork(inv.asset) ?? "mainnet");
+      const net = linkNetwork(inv.asset) ?? "mainnet";
+      sent = await wallet.payUsdc(inv.asset, inv.merchant, inv.amount, inv.id, net);
+      // The money has moved: keep it in the payer's own history and tell them, before asking Notara to
+      // confirm it (that step can fail on its own; the payment still happened).
+      recordSend({ id: `P-${inv.id}`, from: sent.signerId, to: inv.merchant, amount: inv.amount, memo: inv.description, network: net, txHash: sent.txHash, at: new Date().toISOString(), link: inv.id });
+      pushNote({ id: `sent-${sent.txHash}`, account: sent.signerId, text: `You paid ${formatAsset(inv.amount, inv.asset)} to ${inv.merchant} for ${inv.description}.`, href: "/transactions" });
       setInv(await api.nearTx(inv.id, sent));
     } catch (err: any) {
       if (sent?.txHash) setUnconfirmed({ ...sent, why: "report", detail: err.message });

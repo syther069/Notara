@@ -12,7 +12,7 @@ export interface Tx {
   /** ISO time: when it was paid or sent, else when it was created. */
   at: string;
   direction: "in" | "out";
-  kind: "Payment link" | "Send link" | "Direct send" | "Agent invoice";
+  kind: "Payment link" | "Send link" | "Direct send" | "Paid a link" | "Agent invoice";
   /** Who is on the other side, when Notara knows. */
   counterparty: string | null;
   /** Smallest units of `asset`. */
@@ -77,7 +77,7 @@ export function buildTxs(links: Invoice[], sends: LocalSend[]): Tx[] {
     id: s.id,
     at: s.at,
     direction: "out",
-    kind: "Direct send",
+    kind: s.link ? "Paid a link" : "Direct send",
     counterparty: s.to,
     amount: s.amount,
     asset: s.network === "mainnet" ? USDC_MAINNET : USDC_TESTNET,
@@ -86,7 +86,7 @@ export function buildTxs(links: Invoice[], sends: LocalSend[]): Tx[] {
     network: s.network,
     txUrl: s.txHash ? `${EXPLORER[s.network]}/txns/${s.txHash}` : null,
     txHash: s.txHash || null,
-    href: null,
+    href: s.link ? `/pay/${s.link}` : null,
     check: s.check,
   }));
   return [...fromLinks, ...fromSends].sort((a, b) => b.at.localeCompare(a.at));

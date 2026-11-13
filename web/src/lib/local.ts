@@ -113,8 +113,18 @@ export interface LocalSend {
   /** The account check shown when the send was confirmed. */
   check?: { decision: Decision; reason: string; coverage: string };
   expense?: boolean;
+  /** Set when this was a payment of someone's payment link: that link's id. */
+  link?: string;
 }
 export const sendsKey = (account: string) => `notara-sends:${account}`;
+
+/** Saves a payment made from this device under the paying account, newest first. */
+export function recordSend(rec: LocalSend) {
+  const key = sendsKey(rec.from);
+  const all = readLocal<LocalSend[]>(key, []);
+  if (all.some((s) => s.txHash === rec.txHash)) return;
+  writeLocal(key, [rec, ...all].slice(0, 100));
+}
 
 // ------------------------------------------------------------------ account checks made from this device
 

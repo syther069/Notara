@@ -1,6 +1,7 @@
 // Send: compose on the left; on the right, review with a live account check, then confirm in your wallet.
 // A second mode makes a send link for someone who has no NEAR account yet.
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { pushNote } from "@/lib/data";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { Modal } from "@heroui/react";
@@ -342,6 +343,7 @@ function DirectMode() {
         expense: opts.includes("expense"),
       };
       setSends((s) => [rec, ...s].slice(0, 100));
+      pushNote({ id: `sent-${txHash}`, account: signerId, text: `You sent ${usdcFigure(units.toString())} USDC to ${recipient}.`, href: "/transactions" });
       setDone(rec);
       setReview(false);
       setTried(false);

@@ -36,3 +36,14 @@ test("each wallet sees its own notes, plus the watched-account notes", () => {
   assert.deepEqual(notesFor(all, "alice.testnet").map((x) => x.id), ["a", "watch"]);
   assert.deepEqual(notesFor(all, null).map((x) => x.id), ["watch"]);
 });
+
+test("a payment link you paid shows as money sent, linked to that link", async () => {
+  const { buildTxs, settled } = await import("./tx.ts");
+  const { USDC_TESTNET } = await import("./format.ts");
+  const [t] = buildTxs([], [{ id: "P-INV-1", from: "buyer.testnet", to: "shop.testnet", amount: "5000000", memo: "Logo design", network: "testnet", txHash: "TX9", at: "2026-11-13T10:00:00.000Z", link: "INV-1" }]);
+  assert.equal(t.kind, "Paid a link");
+  assert.equal(t.direction, "out");
+  assert.equal(t.asset, USDC_TESTNET);
+  assert.equal(t.href, "/pay/INV-1");
+  assert.equal(settled(t), true); // counted in the dashboard's "Sent this month"
+});
