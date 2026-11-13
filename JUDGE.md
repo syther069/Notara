@@ -1,6 +1,6 @@
 # Notara: guide for judges
 
-Everything you need to see Notara working, in about 10 minutes, with nothing to install. If you'd rather run it on your own machine, the [quickstart](#quickstart-on-your-own-machine) has every command.
+A 3-minute read covers what Notara does and where the proof is. Trying it yourself needs nothing installed. If you'd rather run it on your own machine, the [quickstart](#quickstart-on-your-own-machine) has every command.
 
 - **Live app:** https://notara-sable.vercel.app
 - **Documentation:** https://notara-sable.vercel.app/docs

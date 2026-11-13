@@ -19,7 +19,7 @@ Payment links and send links for people · A spending vault for AI agents · Bui
 </div>
 
 > [!TIP]
-> **Judges:** review [JUDGE.md](JUDGE.md). It has a 10-minute walkthrough of the live app and a quickstart with every command.
+> **Judges:** start with [JUDGE.md](JUDGE.md). It is a 3-minute read with the proof links, then a hands-on walkthrough of the live app and a quickstart with every command.
 
 ## Overview
 
