@@ -23,7 +23,7 @@ Payment links and send links for people · A spending vault for AI agents · Bui
 
 ## Overview
 
-Notara makes payments on NEAR safer in two ways: for **people** who pay and get paid and for **AI agents** that pay on someone's behalf.
+Notara is a universal checkout on NEAR: a signed payment link or website button that customers can pay from almost any chain through NEAR Intents, plus a vault that stops AI agents from paying attackers.
 
 ### The problem
 
